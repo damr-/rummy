@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using romme.Utility;
+using UniRx;
 using UnityEngine;
 
 namespace romme
@@ -7,7 +10,6 @@ namespace romme
     public class Card : MonoBehaviour
     {
         #region defs
-
         public enum CardColor
         {
             BLACK = 0,
@@ -16,7 +18,7 @@ namespace romme
 
         public enum CardNumber
         {
-            JOKER = -1,
+            JOKER = 1,
             TWO = 2,
             THREE = 3,
             FOUR = 4,
@@ -42,7 +44,7 @@ namespace romme
 
         public static readonly IDictionary<CardNumber, int> CardValues = new Dictionary<CardNumber, int>()
         {
-            { CardNumber.JOKER, -1 },
+            { CardNumber.JOKER, 0 },
             { CardNumber.TWO, 2 },
             { CardNumber.THREE, 3 },
             { CardNumber.FOUR, 4 },
@@ -58,7 +60,7 @@ namespace romme
             { CardNumber.ACE, 10 }
         };
 
-        public static readonly int CardNumbersCount = 13;
+        public static readonly int CardNumbersCount = 14;
         public static readonly int CardSymbolsCount = 4;
 
         #endregion
@@ -74,11 +76,53 @@ namespace romme
             }
         }
 
+        private bool isCardMoving;
+        private Vector3 targetPos;
+        public IObservable<Card> MoveFinished { get { return moveFinishedSubject; } }
+        private readonly ISubject<Card> moveFinishedSubject = new Subject<Card>();
+
+
         public string GetCardTypeString()
         {
             return Number + "_" + Symbol;
         }
 
+        public void SetCardVisible(bool visible)
+        {
+            transform.rotation = Quaternion.identity;
+            transform.rotation *= Quaternion.LookRotation(Vector3.forward, Vector3.up * (visible ? 1 : -1));
+        }
+
+        public void MoveCard(Vector3 targetPosition, bool animateMovement)
+        {
+            isCardMoving = true;
+            if (animateMovement)
+            {
+                targetPos = targetPosition;
+            }
+            else
+            {
+                FinishMove();
+            }
+        }
+
+        private void FinishMove()
+        {
+            transform.position = targetPos;
+            isCardMoving = false;
+            moveFinishedSubject.OnNext(this);
+        }
+
+        private void Update()
+        {
+            if(isCardMoving)
+            {
+                if(Vector3.Distance(transform.position, targetPos) <= 1f)
+                    FinishMove();
+                else
+                    transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);
+            }
+        }
 
     }
 }

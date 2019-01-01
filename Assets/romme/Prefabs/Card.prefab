@@ -108,6 +108,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Number: 2
   Symbol: 1
+  CardMoveSpeed: 100
 --- !u!114 &3651395446447094413
 MonoBehaviour:
   m_ObjectHideFlags: 0

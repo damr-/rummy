@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace romme.Utility
 {
@@ -15,6 +17,12 @@ namespace romme.Utility
                 list[k] = list[n];
                 list[n] = value;
             }
+        }
+
+        public static Stack<T> Shuffle<T>(this Stack<T> stack)
+        {
+            Random.InitState((int)(Time.time * 1000));
+            return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
     }
 
