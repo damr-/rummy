@@ -102,7 +102,7 @@ namespace romme
                 CardMoveSpeed = 5; //TODO REMOVE
                 Player curPlayer = Players[curPlayerIdx];
                 playerPlaySubscription = curPlayer.PlayerFinished.Subscribe(PlayerFinished);
-                curPlayer.Play();
+                curPlayer.BeginTurn();
             }
         }
 

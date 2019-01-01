@@ -15,7 +15,8 @@ namespace romme
         public float cardRadius = 5f;
         public float cardsAngleSpread = 180f;
         public bool IsLocalPlayer = false;
-        private bool isPlayingCards, isCardBeingLaidDown, isDiscardingCard, hasLaidDownBefore;
+        private bool isPlayingCards, isCardBeingLaidDown, isDiscardingCard, hasLaidDownBefore, isThinking;
+        private float thinkStartTime, thinkDuration = 2f;
 
         public Transform PlayerCardSpots;
         private List<List<Card>> layDownCards = new List<List<Card>>();
@@ -55,6 +56,12 @@ namespace romme
                 PlayerCards[i].transform.position = transform.position + new Vector3(x, -0.1f * i, z);
             }
 
+            if(isThinking && Time.time - thinkStartTime > thinkDuration)
+            {
+                isThinking = false;
+                Play();
+            }
+
             if (isPlayingCards)
             {
                 if (isCardBeingLaidDown || isDiscardingCard)
@@ -70,6 +77,12 @@ namespace romme
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
                 isCardBeingLaidDown = true;
             }
+        }
+
+        public void BeginTurn()
+        {
+            isThinking = true;
+            thinkStartTime = Time.time;
         }
 
         public void Play()
