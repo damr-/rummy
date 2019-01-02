@@ -27,19 +27,24 @@ namespace romme.Utility
             return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
-        public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSameNumber(this List<Card> PlayerCards)
+        public static IDictionary<Card.CardNumber, List<Card>> GetCardsByNumber(this List<Card> PlayerCards)
         {
-            IDictionary<Card.CardNumber, List<Card>> CardsByNumber = new Dictionary<Card.CardNumber, List<Card>>();
+            var cards = new Dictionary<Card.CardNumber, List<Card>>();
             for (int i = 0; i < PlayerCards.Count; i++)
             {
                 Card card = PlayerCards[i];
-                if (CardsByNumber.ContainsKey(card.Number))
-                    CardsByNumber[card.Number].Add(card);
+                if (cards.ContainsKey(card.Number))
+                    cards[card.Number].Add(card);
                 else
-                    CardsByNumber.Add(card.Number, new List<Card> { card });
+                    cards.Add(card.Number, new List<Card> { card });
             }
+            return cards;
+        }
 
-            IDictionary<Card.CardNumber, List<Card>> LayCardsSameNumber = new Dictionary<Card.CardNumber, List<Card>>();
+        public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSameNumber(this List<Card> PlayerCards)
+        {
+            var CardsByNumber = PlayerCards.GetCardsByNumber();
+            var LayCardsSameNumber = new Dictionary<Card.CardNumber, List<Card>>();
 
             foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in CardsByNumber)
             {
@@ -61,7 +66,7 @@ namespace romme.Utility
 
         public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSeries(this List<Card> PlayerCards)
         {
-            IDictionary<Card.CardNumber, List<Card>> LayCardsSeries = new Dictionary<Card.CardNumber, List<Card>>();
+            var LayCardsSeries = new Dictionary<Card.CardNumber, List<Card>>();
             //TODO
             Debug.LogWarning("GetLayCardsSeries not yet implemented");
             return LayCardsSeries;

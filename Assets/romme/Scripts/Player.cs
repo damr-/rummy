@@ -22,14 +22,14 @@ namespace romme
 
         public enum PlayerState
         {
-            NONE = 0,
+            IDLE = 0,
             DRAWING = 1,
             WAITING = 2,
             PLAYING = 3,
             LAYING = 4,
             DISCARDING = 5
         }
-        public PlayerState playerState = PlayerState.NONE;
+        public PlayerState playerState = PlayerState.IDLE;
 
         private List<Card> PlayerCards = new List<Card>();
         public int PlayerCardCount { get { return PlayerCards.Count; } }
@@ -105,7 +105,7 @@ namespace romme
             cardMoveSubscription.Dispose();
             AddCard(card);
             if (isServingCard)
-                playerState = PlayerState.NONE;
+                playerState = PlayerState.IDLE;
             else 
             { 
                 playerState = PlayerState.WAITING;
@@ -128,6 +128,17 @@ namespace romme
 
             IDictionary<Card.CardNumber, List<Card>> LayCardsSameNumber = PlayerCards.GetLayCardsSameNumber();
             //IDictionary<Card.CardNumber, List<Card>> LayCardsSerues = PlayerCards.GetLayCardsSeries(); TODO
+
+            //TODO
+            //Check if player has jokers which can fill up LayCardsSameNumber
+            var cardsByNumber = PlayerCards.GetCardsByNumber();
+            foreach(var entry in cardsByNumber)
+            {
+                if(entry.Value.Count > 0 && entry.Value.Count < 2)
+                {
+
+                }
+            }
 
             isCardBeingLaidDown = false;
 
@@ -206,7 +217,7 @@ namespace romme
         {
             Tb.I.DiscardStack.AddCard(card);
             turnFinishedSubject.OnNext(this);
-            playerState = PlayerState.NONE;
+            playerState = PlayerState.IDLE;
         }
 
         public CardSpot GetFirstEmptyCardSpot()

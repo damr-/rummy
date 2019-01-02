@@ -62,7 +62,7 @@ namespace romme
                     isCardBeingDealt = true;
                     CurPlayer.DrawCard(true);
                 }
-                else if(CurPlayer.playerState == Player.PlayerState.NONE)
+                else if(CurPlayer.playerState == Player.PlayerState.IDLE)
                 {
                     isCardBeingDealt = false;
                     currentPlayerID = (currentPlayerID + 1) % Players.Count;
@@ -76,7 +76,7 @@ namespace romme
             }
             else if(gameState == GameState.PLAYING)
             {
-                if(CurPlayer.playerState == Player.PlayerState.NONE)
+                if(CurPlayer.playerState == Player.PlayerState.IDLE)
                 {
                     playerPlaySub = CurPlayer.TurnFinished.Subscribe(PlayerFinished);
                     CurPlayer.BeginTurn();
