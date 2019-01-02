@@ -9,46 +9,49 @@ namespace romme
 
     public class Player : MonoBehaviour
     {
-        public static int CurrentPlayerIndex = 1;
-
+        public int PlayerNumber;
         public float startAngle;
         public float cardRadius = 5f;
         public float cardsAngleSpread = 180f;
-        public bool IsLocalPlayer = false;
-        private bool isPlayingCards, isCardBeingLaidDown, isDiscardingCard, hasLaidDownBefore, isThinking;
-        private float thinkStartTime, thinkDuration = 2f;
+        public bool ShowCards = false;
+        private bool isCardBeingLaidDown, hasLaidDownBefore;
+        private float waitStartTime;
+        private readonly float waitDuration = 2f;
 
-        public Transform PlayerCardSpots;
+        private IDisposable cardMoveSubscription = Disposable.Empty;
+
+        public enum PlayerState
+        {
+            NONE = 0,
+            DRAWING = 1,
+            WAITING = 2,
+            PLAYING = 3,
+            LAYING = 4,
+            DISCARDING = 5
+        }
+        public PlayerState playerState = PlayerState.NONE;
+
+        private List<Card> PlayerCards = new List<Card>();
+        public int PlayerCardCount { get { return PlayerCards.Count; } }
+
+        public List<CardSpot> PlayerCardSpots;
         private List<List<Card>> layDownCards = new List<List<Card>>();
         private int currentLayDownCardsIdx = 0, currentCardIdx = 0;
         private CardSpot currentCardSpot;
 
-        public IObservable<Player> PlayerFinished { get { return playerFinishedSubject; } }
-        private readonly ISubject<Player> playerFinishedSubject = new Subject<Player>();
-
-        [SerializeField]
-        private List<Card> PlayerCards = new List<Card>();
-
-        public int CardCount { get { return PlayerCards.Count; } }
-
-        public int PlayerNumber { get; private set; }
-
-        private void Start()
-        {
-            PlayerNumber = CurrentPlayerIndex++;
-        }
+        public IObservable<Player> TurnFinished { get { return turnFinishedSubject; } }
+        private readonly ISubject<Player> turnFinishedSubject = new Subject<Player>();
 
         public void AddCard(Card card)
         {
             PlayerCards.Add(card);
-            if (IsLocalPlayer)
-                card.SetCardVisible(true);
+            if (ShowCards)
+                card.SetVisible(true);
         }
 
         private void Update()
         {
             float deltaAngle = cardsAngleSpread / PlayerCards.Count;
-
             for (int i = 0; i < PlayerCards.Count; i++)
             {
                 float x = cardRadius * Mathf.Cos((startAngle + i * deltaAngle) * Mathf.PI / 180f);
@@ -56,15 +59,15 @@ namespace romme
                 PlayerCards[i].transform.position = transform.position + new Vector3(x, -0.1f * i, z);
             }
 
-            if(isThinking && Time.time - thinkStartTime > thinkDuration)
+            if (playerState == PlayerState.WAITING && Time.time - waitStartTime > waitDuration)
             {
-                isThinking = false;
+                playerState = PlayerState.PLAYING;
                 Play();
             }
 
-            if (isPlayingCards)
+            if (playerState == PlayerState.LAYING)
             {
-                if (isCardBeingLaidDown || isDiscardingCard)
+                if (isCardBeingLaidDown)
                     return;
 
                 if (currentCardSpot == null)
@@ -81,87 +84,84 @@ namespace romme
 
         public void BeginTurn()
         {
-            isThinking = true;
-            thinkStartTime = Time.time;
+            DrawCard(false);
         }
 
-        public void Play()
+        public void DrawCard(bool isServingCard)
+        {
+            playerState = PlayerState.DRAWING;
+
+            //TODO check if we can (!isServingCard and point limit) and want to draw from discard stack
+            //    if (fromDiscardStack)
+            //        return Tb.I.DiscardStack.DrawCard();
+            Card card = Tb.I.CardStack.DrawCard();
+
+            cardMoveSubscription = card.MoveFinished.Subscribe(c => DrawCardFinished(c, isServingCard));
+            card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
+        }
+
+        private void DrawCardFinished(Card card, bool isServingCard)
+        {
+            cardMoveSubscription.Dispose();
+            AddCard(card);
+            if (isServingCard)
+                playerState = PlayerState.NONE;
+            else 
+            { 
+                playerState = PlayerState.WAITING;
+                waitStartTime = Time.time;
+            }
+        }
+
+        private void Play()
         {
             //TODO 
             // - check cards on hand for number series to lay down
             // - check if single cards fit with already lying cards at card spots
 
-            //TODO it's not that simple...
-            //If it's the first round, just discard a random card and finish turn
+            //If it's the first round, just discard a card and finish turn
             if (Tb.I.GameMaster.RoundCount == 1)
             {
-                Debug.Log("First round, just discard a card.");
                 DiscardUnusableCard();
                 return;
             }
 
-            //Gather all cards with the same number
-            IDictionary<Card.CardNumber, List<Card>> SameNumberCards = new Dictionary<Card.CardNumber, List<Card>>();
-            for (int i = 0; i < PlayerCards.Count; i++)
-            {
-                Card card = PlayerCards[i];
-                if (SameNumberCards.ContainsKey(card.Number))
-                    SameNumberCards[card.Number].Add(card);
-                else
-                    SameNumberCards.Add(card.Number, new List<Card> { card });
-            }
+            IDictionary<Card.CardNumber, List<Card>> LayCardsSameNumber = PlayerCards.GetLayCardsSameNumber();
+            //IDictionary<Card.CardNumber, List<Card>> LayCardsSerues = PlayerCards.GetLayCardsSeries(); TODO
 
-
-            IDictionary<Card.CardNumber, List<Card>> ActualSameNumberCards = new Dictionary<Card.CardNumber, List<Card>>();
-            foreach (KeyValuePair<Card.CardNumber, List<Card>> number in SameNumberCards)
-            {
-                if (number.Value.Count < 3)
-                    continue;
-
-                //The actual unique cards with the same number
-                List<Card> actualCards = new List<Card>();
-
-                List<Card.CardSymbol> usedSymbols = new List<Card.CardSymbol>();
-
-                foreach (Card c in number.Value)
-                {
-                    if (!usedSymbols.Contains(c.Symbol))
-                    {
-                        usedSymbols.Add(c.Symbol);
-                        actualCards.Add(c);
-                    }
-                }
-                if (actualCards.Count >= 3)
-                    ActualSameNumberCards.Add(number.Key, actualCards);
-            }
-
-            isPlayingCards = true;
             isCardBeingLaidDown = false;
-            bool canLayDown = true;
 
-            //If never laid down before, check if enough points can be accumulated by laying the actual same number cards down
-            if (!hasLaidDownBefore)
+            if (LayCardsSameNumber.Count > 0)
             {
                 int sum = 0;
-                foreach (KeyValuePair<Card.CardNumber, List<Card>> number in ActualSameNumberCards)
-                    sum += Card.CardValues[number.Key] * number.Value.Count;
-                canLayDown = sum >= Tb.I.GameMaster.MinimumValueForLay;
-            }
-
-            if (canLayDown)
-            {
-                foreach (KeyValuePair<Card.CardNumber, List<Card>> number in ActualSameNumberCards)
+                if (!hasLaidDownBefore)
                 {
-                    Debug.Log("Laying down " + number.Value.Count + " " + number.Key);
-                    layDownCards.Add(number.Value);
+                    foreach (KeyValuePair<Card.CardNumber, List<Card>> number in LayCardsSameNumber)
+                        sum += Card.CardValues[number.Key] * number.Value.Count;
                 }
-                currentLayDownCardsIdx = 0;
-                currentCardIdx = 0;
 
-                if(!hasLaidDownBefore)
-                    hasLaidDownBefore = true;
+                if (hasLaidDownBefore || sum >= Tb.I.GameMaster.MinimumValueForLay)
+                {
+                    layDownCards.Clear();
+                    foreach (KeyValuePair<Card.CardNumber, List<Card>> number in LayCardsSameNumber)
+                    {
+                        Debug.Log("Laying down " + number.Value.Count + " " + number.Key);
+                        layDownCards.Add(number.Value);
+                    }
+                    currentLayDownCardsIdx = 0;
+                    currentCardIdx = 0;
+
+                    if (!hasLaidDownBefore)
+                        hasLaidDownBefore = true;
+
+                    playerState = PlayerState.LAYING;
+                }
+                else
+                {
+                    DiscardUnusableCard();
+                }
             }
-            else //nothing to do, time to discard a card
+            else
             {
                 DiscardUnusableCard();
             }
@@ -176,15 +176,12 @@ namespace romme
             {
                 currentCardIdx = 0;
                 currentLayDownCardsIdx++;
-
-                //Find a new spot for the new set of cards
+                //Find a new spot for the next set of cards
                 currentCardSpot = null;
 
-                //If all laydown series have been laid down, proceed with turn
                 if (currentLayDownCardsIdx == layDownCards.Count)
                 {
                     currentLayDownCardsIdx = 0;
-                    //we're done laying cards down, time to discard a card
                     DiscardUnusableCard();
                 }
             }
@@ -194,34 +191,28 @@ namespace romme
 
         private void DiscardUnusableCard()
         {
+            playerState = PlayerState.DISCARDING;
+
+            //TODO
+            //Card card = ChooseMostUselessCard();
             Card card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
+
             PlayerCards.Remove(card);
-            card.MoveFinished.Subscribe(DiscardCardFinished);
-            card.MoveCard(Tb.I.DiscardStack.transform.position + Vector3.up * 0.001f * Tb.I.DiscardStack.Cards.Count, 
-                            Tb.I.GameMaster.AnimateCardMovement);
-            isDiscardingCard = true;
+            card.MoveFinished.Subscribe(DiscardCardMoveFinished);
+            card.MoveCard(Tb.I.DiscardStack.GetNextCardPos(), Tb.I.GameMaster.AnimateCardMovement);
         }
 
-        private void DiscardCardFinished(Card card)
+        private void DiscardCardMoveFinished(Card card)
         {
-            Tb.I.DiscardStack.Cards.Add(card);
-            isDiscardingCard = false;
-            FinishTurn();
-        }
-
-        private void FinishTurn()
-        {
-            isPlayingCards = false;
-            layDownCards.Clear();
-            currentLayDownCardsIdx = 0;
-            playerFinishedSubject.OnNext(this);
+            Tb.I.DiscardStack.AddCard(card);
+            turnFinishedSubject.OnNext(this);
+            playerState = PlayerState.NONE;
         }
 
         public CardSpot GetFirstEmptyCardSpot()
         {
-            foreach(Transform child in PlayerCardSpots)
+            foreach(CardSpot spot in PlayerCardSpots)
             {
-                CardSpot spot = child.GetComponent<CardSpot>();
                 if (!spot.HasCards)
                     return spot;
             }

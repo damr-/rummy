@@ -3,13 +3,13 @@ using UnityEngine;
 using romme.Utility;
 using UniRx;
 using System;
-using System.Linq;
 
 namespace romme
 {
 
     public class GameMaster : MonoBehaviour
     {
+        public int Seed;
         public float GameSpeed = 1.0f;
         public int MinimumValueForLay = 40;
         public bool AnimateCardMovement = true;
@@ -17,134 +17,84 @@ namespace romme
 
         public int RoundCount { get; private set; }
 
-        public Transform CardStack;
-
-        public GameObject CardPrefab;
         public List<Player> Players = new List<Player>();
-        public Stack<Card> cardStack;
+        private Player CurPlayer { get { return Players[currentPlayerID]; } }
 
-        private bool isCardBeingDealt, isDealing, isPlayerPlaying;
-        private int curDealCardIdx, curPlayerIdx;
+        private bool isCardBeingDealt;
+        private int currentPlayerID;
 
-        private IDisposable cardMoveSubscription = Disposable.Empty;
-        private IDisposable playerPlaySubscription = Disposable.Empty;
+        public enum GameState
+        {
+            NONE = 0,
+            DEALING = 1,
+            PLAYING = 2
+        }
+        public GameState gameState = GameState.NONE;
+
+        private IDisposable playerPlaySub = Disposable.Empty;
 
         public static readonly int cardsPerPlayer = 13;
 
         private void Start()
         {
+            Extensions.Seed = Seed;
             Time.timeScale = GameSpeed;
             RoundCount = 1;
 
-            cardStack = CreateCardStack();
-            cardStack = cardStack.Shuffle();
+            Tb.I.CardStack.CreateCardStack();
+            Tb.I.CardStack.ShuffleCardStack();
 
-            foreach(Card c in cardStack)
-                c.SetCardVisible(false);
-
-            GameObject[] playersObjets = GameObject.FindGameObjectsWithTag("Player");
-            foreach (GameObject po in playersObjets)
-            {
-                Player player = po.GetComponent<Player>();
-                if (player != null)
-                    Players.Add(player);
-            }
             if (Players.Count == 0)
-                Debug.LogError("Could not find any object with tag 'Player'");
+                Debug.LogError("Missing Players in " + gameObject.name);
 
-            Players = Players.OrderBy(p => p.PlayerNumber).ToList();
+            for (int i = 0; i < Players.Count; i++)
+                Players[i].PlayerNumber = i;
 
-            isDealing = true;
-            isCardBeingDealt = false;
-            curDealCardIdx = 0;
-            curPlayerIdx = 0;
+            gameState = GameState.DEALING;
+            currentPlayerID = 0;
         }
 
         private void Update()
         {
-            if (isCardBeingDealt || isPlayerPlaying)
-                return;
-
-            if(RoundCount > 0)
-                Debug.Log("Dealing card to " + Players[curPlayerIdx].name);
-
-            Card card = cardStack.Pop();
-            cardMoveSubscription = card.MoveFinished.Subscribe(CardServeFinished);
-            card.MoveCard(Players[curPlayerIdx].transform.position, AnimateCardMovement);
-            isCardBeingDealt = true;
-        }
-
-        private void CardServeFinished(Card card)
-        {
-            cardMoveSubscription.Dispose();
-            isCardBeingDealt = false;
-            Players[curPlayerIdx].AddCard(card);
-
-            if (isDealing)
-            {
-                if (curPlayerIdx == Players.Count - 1)
+            if(gameState == GameState.DEALING) {
+                if (!isCardBeingDealt)
                 {
-                    curPlayerIdx = 0;
-                    curDealCardIdx++;
+                    isCardBeingDealt = true;
+                    CurPlayer.DrawCard(true);
+                }
+                else if(CurPlayer.playerState == Player.PlayerState.NONE)
+                {
+                    isCardBeingDealt = false;
+                    currentPlayerID = (currentPlayerID + 1) % Players.Count;
 
-                    if (curDealCardIdx == cardsPerPlayer)
+                    if(currentPlayerID == 0 && CurPlayer.PlayerCardCount == cardsPerPlayer)
                     {
-                        isDealing = false;
-                        curPlayerIdx = 0;
+                        gameState = GameState.PLAYING;
+                        CardMoveSpeed = 20; //TODO REMOVE
                     }
                 }
-                else
-                    curPlayerIdx++;
             }
-            else //we're playing
+            else if(gameState == GameState.PLAYING)
             {
-                isPlayerPlaying = true;
-                CardMoveSpeed = 5; //TODO REMOVE
-                Player curPlayer = Players[curPlayerIdx];
-                playerPlaySubscription = curPlayer.PlayerFinished.Subscribe(PlayerFinished);
-                curPlayer.BeginTurn();
+                if(CurPlayer.playerState == Player.PlayerState.NONE)
+                {
+                    playerPlaySub = CurPlayer.TurnFinished.Subscribe(PlayerFinished);
+                    CurPlayer.BeginTurn();
+                }
             }
         }
 
         private void PlayerFinished(Player player)
         {
-            playerPlaySubscription.Dispose();
-            isPlayerPlaying = false;
+            playerPlaySub.Dispose();
 
-            curPlayerIdx++;
-            if(curPlayerIdx == Players.Count)
+            currentPlayerID++;
+            if(currentPlayerID == Players.Count)
             {
-                curPlayerIdx = 0;
+                currentPlayerID = 0;
                 RoundCount++;
             }
         }
 
-        private Stack<Card> CreateCardStack()
-        {
-            Stack<Card> cards = new Stack<Card>();
-
-            //Spawn two decks of cards
-            for (int i = 0; i < 2; i++)
-            {
-                //Spawn normal cards for each symbol
-                for (int symbol = 1; symbol <= Card.CardSymbolsCount; symbol++)
-                {
-                    for (int number = 1; number <= Card.CardNumbersCount; number++)
-                    {
-                        //If symbol joker, only spawn if symbol is 1 or 3, 
-                        //so we only have one red and one black joker
-                        if ((Card.CardNumber)number == Card.CardNumber.JOKER && symbol % 2 != 1)
-                            continue;
-
-                        GameObject CardGO = Instantiate(CardPrefab, CardStack.position, Quaternion.identity);
-                        Card card = CardGO.GetComponent<Card>();
-                        card.Number = (Card.CardNumber)number;
-                        card.Symbol = (Card.CardSymbol)symbol;
-                        cards.Push(card);
-                    }
-                }
-            }
-            return cards;
-        }
     }
 }

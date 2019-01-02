@@ -87,7 +87,7 @@ namespace romme
             return Number + "_" + Symbol;
         }
 
-        public void SetCardVisible(bool visible)
+        public void SetVisible(bool visible)
         {
             transform.rotation = Quaternion.identity;
             transform.rotation *= Quaternion.LookRotation(Vector3.forward, Vector3.up * (visible ? 1 : -1));

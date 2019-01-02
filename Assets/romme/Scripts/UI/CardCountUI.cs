@@ -18,7 +18,7 @@ namespace romme.UI
 
         private void Update()
         {
-            text.text = Player.CardCount + "";
+            text.text = Player.PlayerCardCount + "";
         }
 
     }
