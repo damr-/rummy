@@ -41,27 +41,53 @@ namespace romme.Utility
             return cards;
         }
 
-        public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSameNumber(this List<Card> PlayerCards)
+        public static IDictionary<Card.CardNumber, List<Card>> GetUniqueCardsByNumber(this List<Card> PlayerCards)
         {
-            var CardsByNumber = PlayerCards.GetCardsByNumber();
-            var LayCardsSameNumber = new Dictionary<Card.CardNumber, List<Card>>();
+            IDictionary<Card.CardNumber, List<Card>> uniqueCardsByNumber = new Dictionary<Card.CardNumber, List<Card>>();
 
+            var CardsByNumber = PlayerCards.GetCardsByNumber();
             foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in CardsByNumber)
             {
-                if (entry.Value.Count < 3)
-                    continue;
-
-                //The actual unique cards with the same number
-                List<Card> uniqueCards = new List<Card>();
-                foreach (Card card in entry.Value)
-                {
-                    if (!uniqueCards.Any(c => c.Symbol == card.Symbol))
-                        uniqueCards.Add(card);
-                }
-                if (uniqueCards.Count >= 3)
-                    LayCardsSameNumber.Add(entry.Key, uniqueCards);
+                var uniqueCards = entry.Value.GetUniqueCards();
+                uniqueCardsByNumber.Add(entry.Key, uniqueCards);
             }
-            return LayCardsSameNumber;
+
+            return uniqueCardsByNumber;
+        }
+
+        public static List<Card> GetUniqueCards(this List<Card> Cards)
+        {
+            List<Card> uniqueCards = new List<Card>();
+            foreach (Card card in Cards)
+            {
+                if (!uniqueCards.Any(c => c.Symbol == card.Symbol))
+                    uniqueCards.Add(card);
+            }
+            return uniqueCards;
+        }
+
+        public static List<KeyValuePair<Card.CardNumber, List<Card>>> GetLayCardsSameNumber(this List<Card> PlayerCards)
+        {
+            //var CardsByNumber = PlayerCards.GetCardsByNumber();
+            //var LayCardsSameNumber = new Dictionary<Card.CardNumber, List<Card>>();
+
+            //foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in CardsByNumber)
+            //{
+            //    if (entry.Value.Count < 3)
+            //        continue;
+
+            //    //The actual unique cards with the same number
+            //    List<Card> uniqueCards = new List<Card>();
+            //    foreach (Card card in entry.Value)
+            //    {
+            //        if (!uniqueCards.Any(c => c.Symbol == card.Symbol))
+            //            uniqueCards.Add(card);
+            //    }
+            //    if (uniqueCards.Count >= 3)
+            //        LayCardsSameNumber.Add(entry.Key, uniqueCards);
+            //}
+            ////return LayCardsSameNumber;
+            return PlayerCards.GetUniqueCardsByNumber().Where(entry => entry.Value.Count >= 3).ToList();
         }
 
         public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSeries(this List<Card> PlayerCards)
