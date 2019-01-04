@@ -224,7 +224,7 @@ namespace romme
             int jokerCount = jokerCards.Count;
 
             //TODO check joker color
-            var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count + jokerCount >= 3);
+            var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count > 1 && entry.Value.Count + jokerCount >= 3);
 
             var possibleCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
             foreach(var entry in possibleCardsUnfiltered)
@@ -257,7 +257,6 @@ namespace romme
                 var uniqueEligibleCards = eligibleCards.GetUniqueCards();
                 possibleCards.Add(new KeyValuePair<Card.CardNumber, List<Card>>(entry.Key, uniqueEligibleCards));
             }
-
 
             if (!possibleCards.Any()) //return empty dictionary which won't do anything
                 return new Dictionary<int, List<KeyValuePair<Card.CardNumber, List<Card>>>>();
@@ -313,7 +312,8 @@ namespace romme
 
             //TODO
             //Card card = ChooseMostUselessCard();
-            Card card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
+            //Card card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
+            Card card = PlayerCards.GetCardsByNumber().First(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count == 1).Value[0];
 
             PlayerCards.Remove(card);
             card.MoveFinished.Subscribe(DiscardCardMoveFinished);
