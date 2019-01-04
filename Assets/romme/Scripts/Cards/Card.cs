@@ -4,7 +4,7 @@ using romme.Utility;
 using UniRx;
 using UnityEngine;
 
-namespace romme
+namespace romme.Cards
 {
 
     public class Card : MonoBehaviour
@@ -75,6 +75,7 @@ namespace romme
                 return CardColor.BLACK;
             }
         }
+        public int JokerCardValue = 0;
 
         private bool isCardMoving;
         private Vector3 targetPos;

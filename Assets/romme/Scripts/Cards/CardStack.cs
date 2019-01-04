@@ -2,14 +2,15 @@
 using romme.Utility;
 using UnityEngine;
 
-namespace romme
+namespace romme.Cards
 {
 
     public class CardStack : MonoBehaviour
     {
         public GameObject CardPrefab;
+        public int CardCount { get { return Cards.Count; } }
 
-        public Stack<Card> Cards = new Stack<Card>();
+        private Stack<Card> Cards = new Stack<Card>();
         private bool stackCreated;
 
         public void CreateCardStack()

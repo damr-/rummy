@@ -3,6 +3,7 @@ using UniRx;
 using System;
 using System.Linq;
 using UnityEngine;
+using romme.Cards;
 using romme.Utility;
 
 namespace romme
@@ -15,9 +16,10 @@ namespace romme
         public float cardRadius = 5f;
         public float cardsAngleSpread = 180f;
         public bool ShowCards = false;
-        private bool isCardBeingLaidDown, hasLaidDownBefore;
+
+        [SerializeField]
+        private float waitDuration = 2f;
         private float waitStartTime;
-        private readonly float waitDuration = 2f;
 
         private IDisposable cardMoveSubscription = Disposable.Empty;
 
@@ -36,16 +38,18 @@ namespace romme
         public int PlayerCardCount { get { return PlayerCards.Count; } }
 
         public Transform PlayerCardSpotsParent;
-        private List<CardSpot> playerCardSpots = new List<CardSpot>();
         public List<CardSpot> GetPlayerCardSpots()
         {
             if (playerCardSpots.Count == 0)
                 playerCardSpots = PlayerCardSpotsParent.GetComponentsInChildren<CardSpot>().ToList();
             return playerCardSpots;
         }
+        private List<CardSpot> playerCardSpots = new List<CardSpot>();
+        private CardSpot currentCardSpot;
+
         private List<List<Card>> layDownCards = new List<List<Card>>();
         private int currentLayDownCardsIdx = 0, currentCardIdx = 0;
-        private CardSpot currentCardSpot;
+        private bool isCardBeingLaidDown, hasLaidDownBefore;
 
         public IObservable<Player> TurnFinished { get { return turnFinishedSubject; } }
         private readonly ISubject<Player> turnFinishedSubject = new Subject<Player>();
@@ -141,34 +145,32 @@ namespace romme
             //Check if player has jokers which can fill up LayCardsSameNumber
             List<Card> jokerCards = PlayerCards.Where(c => c.Number == Card.CardNumber.JOKER).ToList();
             var LayCardsWithJoker = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
+            int jokerCount = jokerCards.Count;
 
-            if (jokerCards.Count > 0)
+            if (jokerCount > 0)
             {
-                Debug.Log(gameObject.name + " has " + jokerCards.Count + " joker" + (jokerCards.Count > 1 ? "s" : ""));
-                var possibleWithNJoker = DoJokerBusiness(jokerCards, LayCardsSameNumber);
+                var possibleWithJoker = GetPossibleSameNumberWithJoker(jokerCards, LayCardsSameNumber);
 
-                if(possibleWithNJoker.Count > 0)
+                if(possibleWithJoker.Count > 0)
                 {
-                    int currentJokerCount = jokerCards.Count;
                     List<Card> usedJokerCards = new List<Card>();
                     do
                     {
-                        int minNecessaryJokerCount = possibleWithNJoker.Min(c => c.Key);
+                        var entry = possibleWithJoker[0];
+                        possibleWithJoker.RemoveAt(0);
 
-                        if (minNecessaryJokerCount > currentJokerCount)
-                            break;
+                        var jokerCard = PlayerCards.FirstOrDefault(c => c.Number == Card.CardNumber.JOKER &&
+                                                                    !usedJokerCards.Contains(c) &&
+                                                                    c.Color == entry.Key);
 
-                        var entry = possibleWithNJoker[minNecessaryJokerCount].First();
-                        possibleWithNJoker[minNecessaryJokerCount].Remove(entry);
+                        if (jokerCard == null)
+                            continue;
 
-                        var jokerCard = PlayerCards.Where(c => c.Number == Card.CardNumber.JOKER && !usedJokerCards.Contains(c)).Take(minNecessaryJokerCount).ToList();
-                        usedJokerCards.AddRange(jokerCard);
-                        entry.Value.AddRange(jokerCard);
+                        usedJokerCards.Add(jokerCard);
+                        entry.Value.Value.Add(jokerCard);
+                        LayCardsWithJoker.Add(entry.Value);
 
-                        LayCardsWithJoker.Add(entry);
-
-                        currentJokerCount -= minNecessaryJokerCount;
-                    } while (currentJokerCount > 0);
+                    } while (possibleWithJoker.Count > 0 && usedJokerCards.Count < jokerCount);
                 }
             }
 
@@ -188,10 +190,16 @@ namespace romme
                     {
                         int cardValue = Card.CardValues[entry.Key];
                         sum += cardValue * entry.Value.Count;
+
+                        foreach(Card card in entry.Value)
+                        {
+                            if (card.Number == Card.CardNumber.JOKER)
+                                card.JokerCardValue = cardValue;
+                        }
                     }
                 }
 
-                if (hasLaidDownBefore || sum >= Tb.I.GameMaster.MinimumValueForLay)
+                if (hasLaidDownBefore || sum >= Tb.I.GameMaster.RequLaySum)
                 {
                     layDownCards.Clear();
                     foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in layCards)
@@ -219,12 +227,14 @@ namespace romme
             }
         }
 
-        private Dictionary<int, List<KeyValuePair<Card.CardNumber, List<Card>>>> DoJokerBusiness(List<Card> jokerCards, List<KeyValuePair<Card.CardNumber, List<Card>>> layCardsSameNumber)
+        private List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>
+                                            GetPossibleSameNumberWithJoker(List<Card> jokerCards, 
+                                                                           List<KeyValuePair<Card.CardNumber, List<Card>>> layCardsSameNumber)
         {
             int jokerCount = jokerCards.Count;
 
-            //TODO check joker color
-            var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count > 1 && entry.Value.Count + jokerCount >= 3);
+            var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER &&
+                                                                                entry.Value.Count >= 2); //So that 1 Joker can finish a triplet
 
             var possibleCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
             foreach(var entry in possibleCardsUnfiltered)
@@ -244,44 +254,39 @@ namespace romme
                     {
                         foreach (Card card in entry.Value)
                         {
-                            //If card is not gonna be laid down anyway, it is eligible for being used with one or more jokers
+                            //If card is not gonna be laid down, it is eligible for being used with one or more jokers
                             if (!sameCardNumberPair.Value.Contains(card))
                                 eligibleCards.Add(card);
                         }
                     }
-
-                    foreach (Card c in eligibleCards)
-                        Debug.Log(entry.Key + " " + c.Symbol + " is not in LayCardsSameNumber");
                 }
 
                 var uniqueEligibleCards = eligibleCards.GetUniqueCards();
-                possibleCards.Add(new KeyValuePair<Card.CardNumber, List<Card>>(entry.Key, uniqueEligibleCards));
+                if (uniqueEligibleCards.Count == 2)
+                    possibleCards.Add(new KeyValuePair<Card.CardNumber, List<Card>>(entry.Key, uniqueEligibleCards));
             }
 
             if (!possibleCards.Any()) //return empty dictionary which won't do anything
-                return new Dictionary<int, List<KeyValuePair<Card.CardNumber, List<Card>>>>();
+                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>();
 
-            var possibleWithNJoker = new Dictionary<int, List<KeyValuePair<Card.CardNumber, List<Card>>>>();
-            for (int i = 1; i <= jokerCount; i++)
+            var coloredPossibleCards = new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>();
+
+            //Select possible card combinations by required joker color
+            for (int i = 0; i < 2; i++)
             {
-                var newEntries = possibleCards.Where(entry => entry.Value.Count + i == 3).ToList();
-                if (newEntries.Count == 0)
-                    continue;
-                //foreach (var entry in newEntries)
-                    //Debug.Log(i + ": " + entry.Value.Count + " " + entry.Key + "(" + entry.Value[0].Symbol + ")");
-                possibleWithNJoker.Add(i, newEntries);
+                Card.CardColor curColor = (Card.CardColor)i;
+                bool hasJokerOfColor = jokerCards.Any(jc => jc.Color == curColor);
+                foreach (var entry in possibleCards)
+                {
+                    if (hasJokerOfColor && entry.Value.Count(c => c.Color == curColor) != 2)
+                        coloredPossibleCards.Add(new KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>(curColor, entry));
+                }
             }
 
-            var possibleWithNJokerSorted = new Dictionary<int, List<KeyValuePair<Card.CardNumber, List<Card>>>>();
-            foreach (var entry in possibleWithNJoker)
-            {
-                //Debug.Log("Sorted:");
-                var sortedByCardNumber = entry.Value.OrderByDescending(c => (int)c.Key).ToList();
-                //foreach (var e in sortedByCardNumber)
-                    //Debug.Log(entry.Key + ": " + e.Value.Count + " " + e.Key);
-                possibleWithNJokerSorted.Add(entry.Key, sortedByCardNumber);
-            }
-            return possibleWithNJokerSorted;
+            coloredPossibleCards = coloredPossibleCards.OrderByDescending(entry => (int)entry.Value.Key).ToList();
+
+            //return list, ordered descending by CardNumber
+            return coloredPossibleCards;
         }
 
         private void CardLayDownMoveFinished(Card card)
@@ -313,7 +318,15 @@ namespace romme
             //TODO
             //Card card = ChooseMostUselessCard();
             //Card card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
-            Card card = PlayerCards.GetCardsByNumber().First(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count == 1).Value[0];
+
+            var result = PlayerCards.GetCardsByNumber().FirstOrDefault(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count == 1);
+            Card card = null;
+            try {
+                card = result.Value[0];
+            }
+            catch (NullReferenceException e) {
+                card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
+            }
 
             PlayerCards.Remove(card);
             card.MoveFinished.Subscribe(DiscardCardMoveFinished);
@@ -335,6 +348,22 @@ namespace romme
                     return spot;
             }
             return null;
+        }
+
+        public int GetLaidCardsSum()
+        {
+            int sum = 0;
+            foreach (CardSpot spot in GetPlayerCardSpots())
+            {
+                foreach (Card card in spot.Cards)
+                {
+                    int cardValue = Card.CardValues[card.Number];
+                    if (card.Number == Card.CardNumber.JOKER)
+                        cardValue = card.JokerCardValue;
+                    sum += cardValue;
+                }
+            }
+            return sum;
         }
 
     }

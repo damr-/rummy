@@ -1,4 +1,6 @@
-﻿namespace romme.Utility
+﻿using romme.Cards;
+
+namespace romme.Utility
 {
 
     public class Tb : Singleton<Tb>

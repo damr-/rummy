@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace romme
+namespace romme.Cards
 {
 
     public class DiscardStack : MonoBehaviour
     {
+        public int CardCount { get { return Cards.Count; } }
         private Stack<Card> Cards = new Stack<Card>();
 
         public void AddCard(Card card)

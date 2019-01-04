@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace romme
+namespace romme.Cards
 {
     [ExecuteAlways]
     [RequireComponent(typeof(Card))]

@@ -11,9 +11,12 @@ namespace romme
     {
         public int Seed;
         public float GameSpeed = 1.0f;
-        public int MinimumValueForLay = 40;
+        public int RequLaySum = 40;
         public bool AnimateCardMovement = true;
-        public float CardMoveSpeed = 50f;
+
+        public float CardMoveSpeed { get; private set; }
+        [SerializeField]
+        private float PlayCardSpeed = 50f, DealCardSpeed = 50f;
 
         public int RoundCount { get; private set; }
 
@@ -39,6 +42,7 @@ namespace romme
         {
             Extensions.Seed = Seed;
             Time.timeScale = GameSpeed;
+            CardMoveSpeed = DealCardSpeed;
             RoundCount = 1;
 
             Tb.I.CardStack.CreateCardStack();
@@ -70,7 +74,7 @@ namespace romme
                     if(currentPlayerID == 0 && CurPlayer.PlayerCardCount == cardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
-                        CardMoveSpeed = 20; //TODO REMOVE
+                        CardMoveSpeed = PlayCardSpeed;
                     }
                 }
             }

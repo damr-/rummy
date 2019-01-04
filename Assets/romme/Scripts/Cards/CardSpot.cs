@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace romme
+namespace romme.Cards
 {
     public class CardSpot : MonoBehaviour
     {
