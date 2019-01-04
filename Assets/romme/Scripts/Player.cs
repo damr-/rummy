@@ -141,42 +141,13 @@ namespace romme
             List<KeyValuePair<Card.CardNumber, List<Card>>> LayCardsSameNumber = PlayerCards.GetLayCardsSameNumber();
             //IDictionary<Card.CardNumber, List<Card>> LayCardsSerues = PlayerCards.GetLayCardsSeries(); TODO
 
-            //TODO
-            //Check if player has jokers which can fill up LayCardsSameNumber
             List<Card> jokerCards = PlayerCards.Where(c => c.Number == Card.CardNumber.JOKER).ToList();
-            var LayCardsWithJoker = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-            int jokerCount = jokerCards.Count;
+            var LayCardsSameNumberWithJoker = GetLayCardsSameNumberWithJoker(jokerCards, LayCardsSameNumber);
 
-            if (jokerCount > 0)
-            {
-                var possibleWithJoker = GetPossibleSameNumberWithJoker(jokerCards, LayCardsSameNumber);
-
-                if(possibleWithJoker.Count > 0)
-                {
-                    List<Card> usedJokerCards = new List<Card>();
-                    do
-                    {
-                        var entry = possibleWithJoker[0];
-                        possibleWithJoker.RemoveAt(0);
-
-                        var jokerCard = PlayerCards.FirstOrDefault(c => c.Number == Card.CardNumber.JOKER &&
-                                                                    !usedJokerCards.Contains(c) &&
-                                                                    c.Color == entry.Key);
-
-                        if (jokerCard == null)
-                            continue;
-
-                        usedJokerCards.Add(jokerCard);
-                        entry.Value.Value.Add(jokerCard);
-                        LayCardsWithJoker.Add(entry.Value);
-
-                    } while (possibleWithJoker.Count > 0 && usedJokerCards.Count < jokerCount);
-                }
-            }
 
             var layCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
             layCards.AddRange(LayCardsSameNumber);
-            layCards.AddRange(LayCardsWithJoker);
+            layCards.AddRange(LayCardsSameNumberWithJoker);
 
             //TODO later layCards has to be a list of list of cards since for example
             // a series of cards cannot be categorized by Card.CardNumber
@@ -227,11 +198,12 @@ namespace romme
             }
         }
 
-        private List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>
-                                            GetPossibleSameNumberWithJoker(List<Card> jokerCards, 
+        private List<KeyValuePair<Card.CardNumber, List<Card>>> GetLayCardsSameNumberWithJoker(List<Card> jokerCards, 
                                                                            List<KeyValuePair<Card.CardNumber, List<Card>>> layCardsSameNumber)
         {
             int jokerCount = jokerCards.Count;
+            if (jokerCount == 0)
+                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
 
             var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER &&
                                                                                 entry.Value.Count >= 2); //So that 1 Joker can finish a triplet
@@ -266,8 +238,8 @@ namespace romme
                     possibleCards.Add(new KeyValuePair<Card.CardNumber, List<Card>>(entry.Key, uniqueEligibleCards));
             }
 
-            if (!possibleCards.Any()) //return empty dictionary which won't do anything
-                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>();
+            if (!possibleCards.Any())
+                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
 
             var coloredPossibleCards = new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>();
 
@@ -285,8 +257,30 @@ namespace romme
 
             coloredPossibleCards = coloredPossibleCards.OrderByDescending(entry => (int)entry.Value.Key).ToList();
 
-            //return list, ordered descending by CardNumber
-            return coloredPossibleCards;
+            if(coloredPossibleCards.Count == 0)
+                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
+
+
+            //Decide which cards to play with joker
+            var LayCardsWithJoker = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
+            List<Card> usedJokerCards = new List<Card>();
+            do
+            {
+                var entry = coloredPossibleCards[0];
+                coloredPossibleCards.RemoveAt(0);
+
+                var jokerCard = PlayerCards.FirstOrDefault(c => c.Number == Card.CardNumber.JOKER &&
+                                                            !usedJokerCards.Contains(c) &&
+                                                            c.Color == entry.Key);
+                if (jokerCard == null)
+                    continue;
+
+                usedJokerCards.Add(jokerCard);
+                entry.Value.Value.Add(jokerCard);
+                LayCardsWithJoker.Add(entry.Value);
+            } while (coloredPossibleCards.Count > 0 && usedJokerCards.Count < jokerCount);
+
+            return LayCardsWithJoker;
         }
 
         private void CardLayDownMoveFinished(Card card)
