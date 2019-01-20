@@ -69,34 +69,122 @@ namespace romme.Utility
 
         public static List<KeyValuePair<Card.CardNumber, List<Card>>> GetLayCardsSameNumber(this List<Card> PlayerCards)
         {
-            //var CardsByNumber = PlayerCards.GetCardsByNumber();
-            //var LayCardsSameNumber = new Dictionary<Card.CardNumber, List<Card>>();
-
-            //foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in CardsByNumber)
-            //{
-            //    if (entry.Value.Count < 3)
-            //        continue;
-
-            //    //The actual unique cards with the same number
-            //    List<Card> uniqueCards = new List<Card>();
-            //    foreach (Card card in entry.Value)
-            //    {
-            //        if (!uniqueCards.Any(c => c.Symbol == card.Symbol))
-            //            uniqueCards.Add(card);
-            //    }
-            //    if (uniqueCards.Count >= 3)
-            //        LayCardsSameNumber.Add(entry.Key, uniqueCards);
-            //}
-            ////return LayCardsSameNumber;
             return PlayerCards.GetUniqueCardsByNumber().Where(entry => entry.Value.Count >= 3).ToList();
         }
 
-        public static IDictionary<Card.CardNumber, List<Card>> GetLayCardsSeries(this List<Card> PlayerCards)
+        public static Card CheckHigherNeighbor(Card card, List<Card> PlayerCards)
         {
-            var LayCardsSeries = new Dictionary<Card.CardNumber, List<Card>>();
-            //TODO
-            Debug.LogWarning("GetLayCardsSeries not yet implemented");
+            foreach(Card otherCard in PlayerCards)
+            {
+                if(otherCard.Symbol != card.Symbol)
+                    continue;
+
+                if((otherCard.Number == card.Number + 1) || otherCard.Number == Card.CardNumber.ACE && card.Number == Card.CardNumber.TWO)
+                    return otherCard;
+            }
+            return null;
+        }
+
+        //public static bool Identical(this List<Card> series, List<Card> otherSeries)
+        //{
+        //    if(series.Count != otherSeries.Count)
+        //        return false;
+
+        //    foreach(Card c1 in series)
+        //    {
+        //        foreach(Card c2 in otherSeries)
+        //        {
+        //            if(c1.gameObject != c2.gameObject)
+        //                return false;
+        //        }
+        //    }
+        //    return true;
+        //}
+
+        public static List<List<Card>> GetLayCardsSeries(this List<Card> PlayerCards)
+        {
+            var LayCardsSeries = new List<List<Card>>();
+
+            var possibleSeries = new List<List<Card>>();
+
+            foreach(Card card in PlayerCards)
+            {
+                Card neighbor = CheckHigherNeighbor(card, PlayerCards);
+                List<Card> series = new List<Card> { card };
+
+                while(neighbor != null)
+                {
+                    series.Add(neighbor);
+                    neighbor = CheckHigherNeighbor(neighbor, PlayerCards);
+                }
+
+                if(series.Count >= 3)
+                    possibleSeries.Add(series);
+            }
+
+            var filteredSeries = new List<List<Card>>();
+
             return LayCardsSeries;
+
+
+            //var LayCardsSeries = new List<List<Card>>();
+
+            //List<List<Card>> possibleSeries = new List<List<Card>>();
+
+            //foreach(Card c1 in PlayerCards)
+            //{
+            //    if(c1.Number == Card.CardNumber.JOKER)
+            //        continue;
+
+            //    var newSeries = new List<Card>() { c1 };
+
+            //    foreach(Card c2 in PlayerCards)
+            //    {
+            //        if(c2 == c1)
+            //            continue;
+            //        if(c2.Number == Card.CardNumber.JOKER || c2.Symbol != c1.Symbol)
+            //            continue;
+
+            //        if(Mathf.Abs(c2.Number - c1.Number) == 1
+            //            || (c2.Number == Card.CardNumber.ACE && c1.Number == Card.CardNumber.TWO)
+            //            || (c2.Number == Card.CardNumber.TWO && c1.Number == Card.CardNumber.ACE))
+            //        {
+            //            if(newSeries.All(entry => entry.Number != c2.Number))
+            //                newSeries.Add(c2);
+            //        }
+            //    }
+
+            //    newSeries.OrderBy(c => c.Number);
+            //    string output = "";
+            //    foreach(var card in newSeries)
+            //        output += card.Number + ", ";
+            //    Debug.Log(output);
+
+            //    if(newSeries.Count >= 3)
+            //    {
+            //        if(possibleSeries.Any(series => {
+            //            for(int i = 0; i < series.Count; i++)
+            //            {
+            //                if(series[i] != newSeries[i])
+            //                    return true;
+            //            }
+            //            return false;
+            //        }))
+            //        {
+            //            possibleSeries.Add(newSeries);
+            //        }
+            //    }
+            //}
+
+            //foreach(var series in possibleSeries)
+            //{
+            //    string output = "Possible series: ";
+            //    foreach(Card c in series)
+            //        output += c.Number + ", ";
+            //    Debug.Log(output);
+            //}
+
+            //return possibleSeries;
         }
     }
 

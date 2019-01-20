@@ -128,7 +128,6 @@ namespace romme
         private void Play()
         {
             //TODO 
-            // - check cards on hand for number series to lay down
             // - check if single cards fit with already lying cards at card spots
 
             //If it's the first round, just discard a card and finish turn
@@ -139,11 +138,11 @@ namespace romme
             }
 
             List<KeyValuePair<Card.CardNumber, List<Card>>> LayCardsSameNumber = PlayerCards.GetLayCardsSameNumber();
-            //IDictionary<Card.CardNumber, List<Card>> LayCardsSerues = PlayerCards.GetLayCardsSeries(); TODO
 
             List<Card> jokerCards = PlayerCards.Where(c => c.Number == Card.CardNumber.JOKER).ToList();
             var LayCardsSameNumberWithJoker = GetLayCardsSameNumberWithJoker(jokerCards, LayCardsSameNumber);
 
+            List<List<Card>> LayCardsSeries = PlayerCards.GetLayCardsSeries();
 
             var layCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
             layCards.AddRange(LayCardsSameNumber);
