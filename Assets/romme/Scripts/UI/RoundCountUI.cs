@@ -16,7 +16,7 @@ namespace romme.UI
 
         private void Update()
         {
-            text.text = Tb.I.GameMaster.RoundCount + "";
+            text.text = "Round " + Tb.I.GameMaster.RoundCount;
         }
     }
 }

@@ -28,164 +28,193 @@ namespace romme.Utility
             return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
-        public static IDictionary<Card.CardNumber, List<Card>> GetCardsByNumber(this List<Card> PlayerCards)
+        public static List<KeyValuePair<Card.CardRank, List<Card>>> GetSets(this List<Card> PlayerCards)
         {
-            var cards = new Dictionary<Card.CardNumber, List<Card>>();
+            return PlayerCards.GetUniqueCardsByRank().Where(entry => entry.Value.Count >= 3).ToList();
+        }
+
+        public static IDictionary<Card.CardRank, List<Card>> GetUniqueCardsByRank(this List<Card> PlayerCards)
+        {
+            IDictionary<Card.CardRank, List<Card>> uniqueCardsByRank = new Dictionary<Card.CardRank, List<Card>>();
+
+            var cardsByRank = PlayerCards.GetCardsByRank();
+            foreach (KeyValuePair<Card.CardRank, List<Card>> cards in cardsByRank)
+            {
+                var uniqueCards = cards.Value.GetUniqueCards();
+                uniqueCardsByRank.Add(cards.Key, uniqueCards);
+            }
+
+            return uniqueCardsByRank;
+        }
+
+        public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this List<Card> PlayerCards)
+        {
+            var cards = new Dictionary<Card.CardRank, List<Card>>();
             for (int i = 0; i < PlayerCards.Count; i++)
             {
                 Card card = PlayerCards[i];
-                if (cards.ContainsKey(card.Number))
-                    cards[card.Number].Add(card);
+                if (cards.ContainsKey(card.Rank))
+                    cards[card.Rank].Add(card);
                 else
-                    cards.Add(card.Number, new List<Card> { card });
+                    cards.Add(card.Rank, new List<Card> { card });
             }
             return cards;
         }
 
-        public static IDictionary<Card.CardNumber, List<Card>> GetUniqueCardsByNumber(this List<Card> PlayerCards)
-        {
-            IDictionary<Card.CardNumber, List<Card>> uniqueCardsByNumber = new Dictionary<Card.CardNumber, List<Card>>();
-
-            var CardsByNumber = PlayerCards.GetCardsByNumber();
-            foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in CardsByNumber)
-            {
-                var uniqueCards = entry.Value.GetUniqueCards();
-                uniqueCardsByNumber.Add(entry.Key, uniqueCards);
-            }
-
-            return uniqueCardsByNumber;
-        }
-
-        public static List<Card> GetUniqueCards(this List<Card> Cards)
+        /// <summary>
+        /// Takes a list of cards with the same rank and returns a new list of cards 
+        /// which only contains a maximum of one card per occuring suit.
+        /// </summary>
+        /// <param name="sameRankCards">A list of cards of the same rank.</param>
+        public static List<Card> GetUniqueCards(this List<Card> sameRankCards)
         {
             List<Card> uniqueCards = new List<Card>();
-            foreach (Card card in Cards)
+            
+            if(sameRankCards.Count == 0)
+                return uniqueCards;
+
+            Card first = sameRankCards[0];
+            if(sameRankCards.Any(c => c.Rank != first.Rank))
             {
-                if (!uniqueCards.Any(c => c.Symbol == card.Symbol))
+                Debug.LogWarning("GetUniqueCards() was passed a list of cards with more than one rank!");
+                return uniqueCards;
+            }
+
+            foreach (Card card in sameRankCards)
+            {
+                if (!uniqueCards.Any(c => c.Suit == card.Suit))
                     uniqueCards.Add(card);
             }
             return uniqueCards;
         }
 
-        public static List<KeyValuePair<Card.CardNumber, List<Card>>> GetLayCardsSameNumber(this List<Card> PlayerCards)
-        {
-            return PlayerCards.GetUniqueCardsByNumber().Where(entry => entry.Value.Count >= 3).ToList();
-        }
-
-        public static Card CheckHigherNeighbor(Card card, List<Card> PlayerCards)
+        /// <summary>
+        /// Returns the first card in PlayerCards which has the same suit and is one rank higher or lower compared to the given card
+        /// </summary>
+        /// <returns> The card or null if none was found </returns>
+        public static Card GetCardOneRankDiff(List<Card> PlayerCards, Card card, bool higher)
         {
             foreach(Card otherCard in PlayerCards)
             {
-                if(otherCard.Symbol != card.Symbol)
-                    continue;
-
-                if((otherCard.Number == card.Number + 1) || otherCard.Number == Card.CardNumber.ACE && card.Number == Card.CardNumber.TWO)
+                if(otherCard == card || otherCard.Suit != card.Suit)
+                    continue;           
+                //TODO: allow going from ACE to TWO but only if ACE does not connect to KING too
+                //if(card is first in run && card.Rank == Card.CardRank.ACE && otherCard.Rank == Card.CardRank.TWO)
+                    //return otherCard;
+                if(otherCard.Rank == card.Rank + (higher ? 1 : -1))
                     return otherCard;
             }
             return null;
         }
 
-        //public static bool Identical(this List<Card> series, List<Card> otherSeries)
-        //{
-        //    if(series.Count != otherSeries.Count)
-        //        return false;
-
-        //    foreach(Card c1 in series)
-        //    {
-        //        foreach(Card c2 in otherSeries)
-        //        {
-        //            if(c1.gameObject != c2.gameObject)
-        //                return false;
-        //        }
-        //    }
-        //    return true;
-        //}
-
-        public static List<List<Card>> GetLayCardsSeries(this List<Card> PlayerCards)
+        public static List<List<Card>> GetRuns(this List<Card> PlayerCards)
         {
-            var LayCardsSeries = new List<List<Card>>();
-
-            var possibleSeries = new List<List<Card>>();
+            var runs = new List<List<Card>>();
 
             foreach(Card card in PlayerCards)
             {
-                Card neighbor = CheckHigherNeighbor(card, PlayerCards);
+                Card neighbor = GetCardOneRankDiff(PlayerCards, card, true);
                 List<Card> series = new List<Card> { card };
 
                 while(neighbor != null)
                 {
                     series.Add(neighbor);
-                    neighbor = CheckHigherNeighbor(neighbor, PlayerCards);
+                    neighbor = GetCardOneRankDiff(PlayerCards, neighbor, true);
                 }
 
                 if(series.Count >= 3)
-                    possibleSeries.Add(series);
+                    runs.Add(series);
+            }
+            return runs;
+        }
+
+        ///<summary>Return all the possible sets which can be formed using joker cards ordered descending by the value of the set.
+        ///The passed 'CompletePossibleSets' should consist of all the sets which will be laid down anyway since they are complete.</summary>
+        public static List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>> 
+            GetJokerSets(this List<Card> PlayerCards, List<KeyValuePair<Card.CardRank, List<Card>>> completePossibleSets)
+        {
+            List<Card> jokerCards = PlayerCards.Where(c => c.Rank == Card.CardRank.JOKER).ToList();
+            int jokerCount = jokerCards.Count;
+            if (jokerCount == 0)
+                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
+
+            //Get all possible sets with more than one card so that 1 joker can finish a trio
+            var possibleCardsUnfiltered = PlayerCards.GetCardsByRank().Where(entry => entry.Key != Card.CardRank.JOKER &&
+                                                                                entry.Value.Count >= 2);
+
+            var possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
+            foreach(var entry in possibleCardsUnfiltered)
+            {
+                //Get all cards which will be laid down anyway and which have the same CardNumber as the currently investigated cards
+                var layCardsWithSameCardNumber = completePossibleSets.Where(e => e.Key == entry.Key);
+
+                List<Card> eligibleCards = new List<Card>();
+
+                //No sets were gonna be laid down, so all the possible cards are eligible
+                if (!layCardsWithSameCardNumber.Any())
+                {
+                    eligibleCards = entry.Value;
+                }
+                else
+                {
+                    foreach (var sameCardNumberPair in layCardsWithSameCardNumber)
+                    {
+                        foreach (Card card in entry.Value)
+                        {
+                            //If card is not gonna be laid down, it is eligible for being used with a joker
+                            if (!sameCardNumberPair.Value.Contains(card))
+                                eligibleCards.Add(card);
+                        }
+                    }
+                }
+
+                if(eligibleCards.Count == 0)
+                    continue;
+
+                var uniqueEligibleCards = eligibleCards.GetUniqueCards();
+                if (uniqueEligibleCards.Count == 2)
+                    possibleJokerSets.Add(new KeyValuePair<Card.CardRank, List<Card>>(entry.Key, uniqueEligibleCards));
             }
 
-            var filteredSeries = new List<List<Card>>();
+            if (!possibleJokerSets.Any())
+                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
 
-            return LayCardsSeries;
+            var coloredPossibleJokerSets = new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
+            //Select possible card combinations by required joker color
+            for (int i = 0; i < 2; i++)
+            {
+                Card.CardColor curColor = (Card.CardColor)i;
+                
+                //Skip current color if no joker has this color
+                if(!jokerCards.Any(jc => jc.Color == curColor))
+                    continue;
 
-
-            //var LayCardsSeries = new List<List<Card>>();
-
-            //List<List<Card>> possibleSeries = new List<List<Card>>();
-
-            //foreach(Card c1 in PlayerCards)
-            //{
-            //    if(c1.Number == Card.CardNumber.JOKER)
-            //        continue;
-
-            //    var newSeries = new List<Card>() { c1 };
-
-            //    foreach(Card c2 in PlayerCards)
-            //    {
-            //        if(c2 == c1)
-            //            continue;
-            //        if(c2.Number == Card.CardNumber.JOKER || c2.Symbol != c1.Symbol)
-            //            continue;
-
-            //        if(Mathf.Abs(c2.Number - c1.Number) == 1
-            //            || (c2.Number == Card.CardNumber.ACE && c1.Number == Card.CardNumber.TWO)
-            //            || (c2.Number == Card.CardNumber.TWO && c1.Number == Card.CardNumber.ACE))
-            //        {
-            //            if(newSeries.All(entry => entry.Number != c2.Number))
-            //                newSeries.Add(c2);
-            //        }
-            //    }
-
-            //    newSeries.OrderBy(c => c.Number);
-            //    string output = "";
-            //    foreach(var card in newSeries)
-            //        output += card.Number + ", ";
-            //    Debug.Log(output);
-
-            //    if(newSeries.Count >= 3)
-            //    {
-            //        if(possibleSeries.Any(series => {
-            //            for(int i = 0; i < series.Count; i++)
-            //            {
-            //                if(series[i] != newSeries[i])
-            //                    return true;
-            //            }
-            //            return false;
-            //        }))
-            //        {
-            //            possibleSeries.Add(newSeries);
-            //        }
-            //    }
-            //}
-
-            //foreach(var series in possibleSeries)
-            //{
-            //    string output = "Possible series: ";
-            //    foreach(Card c in series)
-            //        output += c.Number + ", ";
-            //    Debug.Log(output);
-            //}
-
-            //return possibleSeries;
+                foreach (var possibleJokerSet in possibleJokerSets)
+                {
+                    //Adding a joker to a set is only possible if it differs in color compared to the other two cards
+                    if (possibleJokerSet.Value.Count(c => c.Color == curColor) != 2)
+                        coloredPossibleJokerSets.Add(new KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>(curColor, possibleJokerSet));
+                }
+            }
+            coloredPossibleJokerSets = coloredPossibleJokerSets.OrderByDescending(entry => (int)entry.Value.Key).ToList();
+            return coloredPossibleJokerSets;
         }
+
+        // public static bool Identical(this List<Card> set1, List<Card> set2)
+        // {
+        //    if(set1.Count != set2.Count)
+        //        return false;
+
+        //    foreach(Card c1 in set1)
+        //    {
+        //        foreach(Card c2 in set2)
+        //        {
+        //            if(c1 != c2)
+        //                return false;
+        //        }
+        //    }
+        //    return true;
+        // }
     }
 
 }

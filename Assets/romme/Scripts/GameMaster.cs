@@ -11,7 +11,7 @@ namespace romme
     {
         public int Seed;
         public float GameSpeed = 1.0f;
-        public int RequLaySum = 40;
+        public int MinimumLaySum = 40;
         public bool AnimateCardMovement = true;
 
         public float CardMoveSpeed { get; private set; }

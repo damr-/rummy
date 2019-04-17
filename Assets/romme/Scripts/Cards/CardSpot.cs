@@ -6,7 +6,7 @@ namespace romme.Cards
     public class CardSpot : MonoBehaviour
     {
         public List<Card> Cards = new List<Card>();
-        public bool HasCards { get { return Cards.Count > 0; } }
+        public bool HasCards => Cards.Count > 0;
 
         public float startAngle;
         public float cardRadius = 2f;

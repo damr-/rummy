@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using romme.Utility;
 using UnityEngine;
+using romme.Utility;
 
 namespace romme.Cards
 {
@@ -8,7 +8,7 @@ namespace romme.Cards
     public class CardStack : MonoBehaviour
     {
         public GameObject CardPrefab;
-        public int CardCount { get { return Cards.Count; } }
+        public int CardCount => Cards.Count;
 
         private Stack<Card> Cards = new Stack<Card>();
         private bool stackCreated;
@@ -17,27 +17,26 @@ namespace romme.Cards
         {
             if(stackCreated)
             {
-                Debug.LogWarning("Something tried to create a stack although there already is one!");
+                Debug.LogWarning("Tried to create a stack but there already is one!");
                 return;
             }
 
             //Spawn two decks of cards
             for (int i = 0; i < 2; i++)
             {
-                //Spawn normal cards for each symbol
-                for (int symbol = 1; symbol <= Card.CardSymbolsCount; symbol++)
+                for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
-                    for (int number = 1; number <= Card.CardNumbersCount; number++)
+                    for (int rank = 1; rank <= Card.CardRankCount; rank++)
                     {
-                        //If number is joker, only spawn if symbol is 1 or 3, 
+                        //If card is joker, only spawn if suit is 1 or 3, 
                         //so we only have one red and one black joker
-                        if ((Card.CardNumber)number == Card.CardNumber.JOKER && symbol % 2 != 1)
+                        if ((Card.CardRank)rank == Card.CardRank.JOKER && suit % 2 != 1)
                             continue;
 
                         GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
                         Card card = CardGO.GetComponent<Card>();
-                        card.Number = (Card.CardNumber)number;
-                        card.Symbol = (Card.CardSymbol)symbol;
+                        card.Rank = (Card.CardRank)rank;
+                        card.Suit = (Card.CardSuit)suit;
                         Cards.Push(card);
                     }
                 }

@@ -34,7 +34,7 @@ namespace romme
         }
         public PlayerState playerState = PlayerState.IDLE;
 
-        private List<Card> PlayerCards = new List<Card>();
+        private readonly List<Card> PlayerCards = new List<Card>();
         public int PlayerCardCount { get { return PlayerCards.Count; } }
 
         public Transform PlayerCardSpotsParent;
@@ -47,9 +47,14 @@ namespace romme
         private List<CardSpot> playerCardSpots = new List<CardSpot>();
         private CardSpot currentCardSpot;
 
-        private List<List<Card>> layDownCards = new List<List<Card>>();
+        #region CardSets
+        private List<KeyValuePair<Card.CardRank, List<Card>>> possibleSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
+        private List<KeyValuePair<Card.CardRank, List<Card>>> possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
+        private List<List<Card>> possibleRuns = new List<List<Card>>();     
+        private readonly List<List<Card>> layDownCards = new List<List<Card>>();
         private int currentLayDownCardsIdx = 0, currentCardIdx = 0;
-        private bool isCardBeingLaidDown, hasLaidDownBefore;
+        private bool isCardBeingLaidDown, hasLaidDown; //Whether the player already laid down cards in a preceding turn 
+        #endregion
 
         public IObservable<Player> TurnFinished { get { return turnFinishedSubject; } }
         private readonly ISubject<Player> turnFinishedSubject = new Subject<Player>();
@@ -81,13 +86,13 @@ namespace romme
             {
                 if (isCardBeingLaidDown)
                     return;
-
+                
                 if (currentCardSpot == null)
                     currentCardSpot = GetFirstEmptyCardSpot();
 
                 Card card = layDownCards[currentLayDownCardsIdx][currentCardIdx];
                 PlayerCards.Remove(card);
-                Debug.Log("Laying down " + card.GetCardTypeString());
+                Debug.Log("Laying down " + card);
                 card.MoveFinished.Subscribe(CardLayDownMoveFinished);
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
                 isCardBeingLaidDown = true;
@@ -103,10 +108,12 @@ namespace romme
         {
             playerState = PlayerState.DRAWING;
 
-            //TODO check if we can (!isServingCard and point limit) and want to draw from discard stack
-            //    if (fromDiscardStack)
-            //        return Tb.I.DiscardStack.DrawCard();
-            Card card = Tb.I.CardStack.DrawCard();
+            Card card;
+            //TODO: check if we WANT to draw from discard stack
+            if (false && !isServingCard && GetLaidCardsSum() >= Tb.I.GameMaster.MinimumLaySum)
+                card = Tb.I.DiscardStack.DrawCard();
+            else
+                card = Tb.I.CardStack.DrawCard();
 
             cardMoveSubscription = card.MoveFinished.Subscribe(c => DrawCardFinished(c, isServingCard));
             card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
@@ -127,7 +134,7 @@ namespace romme
 
         private void Play()
         {
-            //TODO 
+            //TODO:
             // - check if single cards fit with already lying cards at card spots
 
             //If it's the first round, just discard a card and finish turn
@@ -137,51 +144,94 @@ namespace romme
                 return;
             }
 
-            List<KeyValuePair<Card.CardNumber, List<Card>>> LayCardsSameNumber = PlayerCards.GetLayCardsSameNumber();
+            possibleSets.Clear();
+            possibleRuns.Clear();
+            possibleJokerSets.Clear();
 
-            List<Card> jokerCards = PlayerCards.Where(c => c.Number == Card.CardNumber.JOKER).ToList();
-            var LayCardsSameNumberWithJoker = GetLayCardsSameNumberWithJoker(jokerCards, LayCardsSameNumber);
+            possibleSets = PlayerCards.GetSets();
+            possibleRuns = PlayerCards.GetRuns();
 
-            List<List<Card>> LayCardsSeries = PlayerCards.GetLayCardsSeries();
+            //TODO: Get possible runs with joker cards and choose which RUN or SET to play
 
-            var layCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-            layCards.AddRange(LayCardsSameNumber);
-            layCards.AddRange(LayCardsSameNumberWithJoker);
+            var possibleJokerSetsColoured = PlayerCards.GetJokerSets(possibleSets);
+            // Choose which SETS to play with joker (the ones with the highest point sum will be chosen)
+            if(possibleJokerSetsColoured.Count > 0)
+            {
+                possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
+                List<Card> usedJokerCards = new List<Card>();
+                int jokerCount = PlayerCards.Where(c => c.Rank == Card.CardRank.JOKER).Count();
 
-            //TODO later layCards has to be a list of list of cards since for example
-            // a series of cards cannot be categorized by Card.CardNumber
-            //caculating individual joker values will be necessary for calculating sum
+                do
+                {
+                    var possibleSet = possibleJokerSetsColoured[0];
+                    possibleJokerSetsColoured.RemoveAt(0);
+
+                    var jokerCard = PlayerCards.FirstOrDefault(c => c.Rank == Card.CardRank.JOKER &&
+                                                                !usedJokerCards.Contains(c) &&
+                                                                c.Color == possibleSet.Key);
+                    if (jokerCard == null)
+                        continue;
+
+                    usedJokerCards.Add(jokerCard);
+                    possibleSet.Value.Value.Add(jokerCard);
+                    possibleJokerSets.Add(possibleSet.Value);
+                } while (possibleJokerSetsColoured.Count > 0 && usedJokerCards.Count < jokerCount);
+
+            }
+
+            foreach(List<Card> run in possibleRuns)
+            {
+                string output = "";
+
+                foreach(Card c in run)
+                {
+                    output += c + ", ";
+                }
+                Debug.Log("Run: " + output.TrimEnd().TrimEnd(',') + "\n");
+            }
+
+
+            //TODO: Don't lay down every possible run and set because they intersect!
+            var layCards = new List<List<Card>>();
+            foreach(var rank in possibleSets)
+                layCards.Add(rank.Value);
+            foreach(var rank in possibleJokerSets)
+                layCards.Add(rank.Value);
+
             if (layCards.Count > 0)
             {
                 int sum = 0;
-                if (!hasLaidDownBefore)
+                if (!hasLaidDown)
                 {
-                    foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in layCards)
+                    foreach (List<Card> entry in layCards)
                     {
-                        int cardValue = Card.CardValues[entry.Key];
-                        sum += cardValue * entry.Value.Count;
-
-                        foreach(Card card in entry.Value)
+                        foreach(Card card in entry)
                         {
-                            if (card.Number == Card.CardNumber.JOKER)
-                                card.JokerCardValue = cardValue;
+                            int cardValue = Card.CardValues[card.Rank];
+                            if (card.Rank == Card.CardRank.JOKER)
+                            {
+                                card.JokerCardValue = 0; //TODO find out joker value
+                                cardValue = 0;
+                            }
+                            sum += cardValue;
                         }
                     }
                 }
 
-                if (hasLaidDownBefore || sum >= Tb.I.GameMaster.RequLaySum)
+                if (hasLaidDown || sum >= Tb.I.GameMaster.MinimumLaySum)
                 {
                     layDownCards.Clear();
-                    foreach (KeyValuePair<Card.CardNumber, List<Card>> entry in layCards)
+                    foreach (List<Card> entry in layCards)
                     {
-                        Debug.Log("Laying down " + entry.Value.Count + " " + entry.Key);
-                        layDownCards.Add(entry.Value);
+                        //TODO: this is only useful for sets
+                        Debug.Log("Laying down " + entry.Count + " " + entry[0].Rank);
+                        layDownCards.Add(entry);
                     }
                     currentLayDownCardsIdx = 0;
                     currentCardIdx = 0;
 
-                    if (!hasLaidDownBefore)
-                        hasLaidDownBefore = true;
+                    if (!hasLaidDown)
+                        hasLaidDown = true;
 
                     isCardBeingLaidDown = false;
                     playerState = PlayerState.LAYING;
@@ -195,91 +245,6 @@ namespace romme
             {
                 DiscardUnusableCard();
             }
-        }
-
-        private List<KeyValuePair<Card.CardNumber, List<Card>>> GetLayCardsSameNumberWithJoker(List<Card> jokerCards, 
-                                                                           List<KeyValuePair<Card.CardNumber, List<Card>>> layCardsSameNumber)
-        {
-            int jokerCount = jokerCards.Count;
-            if (jokerCount == 0)
-                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-
-            var possibleCardsUnfiltered = PlayerCards.GetCardsByNumber().Where(entry => entry.Key != Card.CardNumber.JOKER &&
-                                                                                entry.Value.Count >= 2); //So that 1 Joker can finish a triplet
-
-            var possibleCards = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-            foreach(var entry in possibleCardsUnfiltered)
-            {
-                //Get all cards which will be laid down anway which have the same CardNumber as the currently investigated cards
-                var layCardsWithSameCardNumber = layCardsSameNumber.Where(e => e.Key == entry.Key);
-
-                List<Card> eligibleCards = new List<Card>();
-
-                if (!layCardsWithSameCardNumber.Any())
-                {
-                    eligibleCards = entry.Value;
-                }
-                else
-                {
-                    foreach (var sameCardNumberPair in layCardsWithSameCardNumber)
-                    {
-                        foreach (Card card in entry.Value)
-                        {
-                            //If card is not gonna be laid down, it is eligible for being used with one or more jokers
-                            if (!sameCardNumberPair.Value.Contains(card))
-                                eligibleCards.Add(card);
-                        }
-                    }
-                }
-
-                var uniqueEligibleCards = eligibleCards.GetUniqueCards();
-                if (uniqueEligibleCards.Count == 2)
-                    possibleCards.Add(new KeyValuePair<Card.CardNumber, List<Card>>(entry.Key, uniqueEligibleCards));
-            }
-
-            if (!possibleCards.Any())
-                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-
-            var coloredPossibleCards = new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>>();
-
-            //Select possible card combinations by required joker color
-            for (int i = 0; i < 2; i++)
-            {
-                Card.CardColor curColor = (Card.CardColor)i;
-                bool hasJokerOfColor = jokerCards.Any(jc => jc.Color == curColor);
-                foreach (var entry in possibleCards)
-                {
-                    if (hasJokerOfColor && entry.Value.Count(c => c.Color == curColor) != 2)
-                        coloredPossibleCards.Add(new KeyValuePair<Card.CardColor, KeyValuePair<Card.CardNumber, List<Card>>>(curColor, entry));
-                }
-            }
-
-            coloredPossibleCards = coloredPossibleCards.OrderByDescending(entry => (int)entry.Value.Key).ToList();
-
-            if(coloredPossibleCards.Count == 0)
-                return new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-
-
-            //Decide which cards to play with joker
-            var LayCardsWithJoker = new List<KeyValuePair<Card.CardNumber, List<Card>>>();
-            List<Card> usedJokerCards = new List<Card>();
-            do
-            {
-                var entry = coloredPossibleCards[0];
-                coloredPossibleCards.RemoveAt(0);
-
-                var jokerCard = PlayerCards.FirstOrDefault(c => c.Number == Card.CardNumber.JOKER &&
-                                                            !usedJokerCards.Contains(c) &&
-                                                            c.Color == entry.Key);
-                if (jokerCard == null)
-                    continue;
-
-                usedJokerCards.Add(jokerCard);
-                entry.Value.Value.Add(jokerCard);
-                LayCardsWithJoker.Add(entry.Value);
-            } while (coloredPossibleCards.Count > 0 && usedJokerCards.Count < jokerCount);
-
-            return LayCardsWithJoker;
         }
 
         private void CardLayDownMoveFinished(Card card)
@@ -308,18 +273,29 @@ namespace romme
         {
             playerState = PlayerState.DISCARDING;
 
-            //TODO
-            //Card card = ChooseMostUselessCard();
-            //Card card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
+            //Get all player cards except the ones used for possible runs and sets
+            List<Card> filteredPlayerCards = new List<Card>();
+            foreach(var c in PlayerCards)
+                filteredPlayerCards.Add(c);
+            foreach(var run in possibleRuns)
+                filteredPlayerCards = filteredPlayerCards.Except(run).ToList();
+            foreach(var set in possibleSets)
+                filteredPlayerCards = filteredPlayerCards.Except(set.Value).ToList();
+            foreach(var jokerSet in possibleJokerSets)
+                filteredPlayerCards = filteredPlayerCards.Except(jokerSet.Value).ToList();
 
-            var result = PlayerCards.GetCardsByNumber().FirstOrDefault(entry => entry.Key != Card.CardNumber.JOKER && entry.Value.Count == 1);
+            KeyValuePair<Card.CardRank, List<Card>> result =  
+            filteredPlayerCards.GetCardsByRank().FirstOrDefault(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count == 1);
+
             Card card = null;
             try {
                 card = result.Value[0];
             }
             catch (NullReferenceException e) {
-                card = PlayerCards[UnityEngine.Random.Range(0, PlayerCards.Count - 1)];
-            }
+                do{
+                    card = filteredPlayerCards[UnityEngine.Random.Range(0, filteredPlayerCards.Count - 1)];
+                }while(card.Rank == Card.CardRank.JOKER);
+            }            
 
             PlayerCards.Remove(card);
             card.MoveFinished.Subscribe(DiscardCardMoveFinished);
@@ -350,8 +326,8 @@ namespace romme
             {
                 foreach (Card card in spot.Cards)
                 {
-                    int cardValue = Card.CardValues[card.Number];
-                    if (card.Number == Card.CardNumber.JOKER)
+                    int cardValue = Card.CardValues[card.Rank];
+                    if (card.Rank == Card.CardRank.JOKER)
                         cardValue = card.JokerCardValue;
                     sum += cardValue;
                 }

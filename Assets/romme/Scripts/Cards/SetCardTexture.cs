@@ -9,9 +9,9 @@ namespace romme.Cards
         private Card card;
         private MeshRenderer meshRend;
 
-        private Card.CardNumber currentNumber;
-        private Card.CardSymbol currentSymbol;
-        private Card.CardColor currentColor;
+        private Card.CardRank currentRank;
+        private Card.CardSuit currentSuit;
+        //private Card.CardColor currentColor;
 
         private void Start()
         {
@@ -21,16 +21,15 @@ namespace romme.Cards
 
         private void Update()
         {
-            if (currentNumber == card.Number && currentSymbol == card.Symbol)
+            if (currentRank == card.Rank && currentSuit == card.Suit)
                 return;
 
-            currentNumber = card.Number;
-            currentSymbol = card.Symbol;
-            string cardType = card.GetCardTypeString();
-            Texture texture = Resources.Load<Texture>("cards/" + cardType);
+            currentRank = card.Rank;
+            currentSuit = card.Suit;
+            Texture texture = Resources.Load<Texture>("cards/" + card);
 
             if (texture == null)
-                Debug.Log(card.GetCardTypeString() + " has no texture.");
+                Debug.Log("No texture for " + card);
 
             meshRend.sharedMaterial = new Material(meshRend.material) { mainTexture = texture };
         }
