@@ -8,6 +8,11 @@ namespace romme.Cards
         public List<Card> Cards = new List<Card>();
         public bool HasCards => Cards.Count > 0;
 
+        //TODO:
+        // public bool isRun, isSet;
+        // public Card.CardRank GetSetRank;
+        // public Card.CardSuit GetRunSuit;
+
         public float startAngle;
         public float cardRadius = 2f;
         public float cardsAngleSpread = 180f;

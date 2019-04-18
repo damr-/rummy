@@ -83,7 +83,11 @@ namespace romme.Cards
                 return CardColor.BLACK;
             }
         }
-        public int JokerCardValue = 0;
+
+        public int Value()
+        {
+            return CardValues[Rank]; 
+        }
 
         private bool isCardMoving;
         private Vector3 targetPos;

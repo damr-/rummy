@@ -48,9 +48,9 @@ namespace romme
         private CardSpot currentCardSpot;
 
         #region CardSets
-        private List<KeyValuePair<Card.CardRank, List<Card>>> possibleSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
-        private List<KeyValuePair<Card.CardRank, List<Card>>> possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
-        private List<List<Card>> possibleRuns = new List<List<Card>>();     
+        private List<Set> possibleSets = new List<Set>();
+        private List<Run> possibleRuns = new List<Run>();
+        // private List<KeyValuePair<Card.CardRank, List<Card>>> possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
         private readonly List<List<Card>> layDownCards = new List<List<Card>>();
         private int currentLayDownCardsIdx = 0, currentCardIdx = 0;
         private bool isCardBeingLaidDown, hasLaidDown; //Whether the player already laid down cards in a preceding turn 
@@ -146,13 +146,15 @@ namespace romme
 
             possibleSets.Clear();
             possibleRuns.Clear();
-            possibleJokerSets.Clear();
 
             possibleSets = PlayerCards.GetSets();
             possibleRuns = PlayerCards.GetRuns();
 
-            //TODO: Get possible runs with joker cards and choose which RUN or SET to play
+            //TODO: layCards cannot(?) be a list of cards if we want to preserve the knowledge about runs and sets for cardspots
 
+
+            //TODO: Get possible runs with joker cards and choose which RUN or SET to play
+            /*
             var possibleJokerSetsColoured = PlayerCards.GetJokerSets(possibleSets);
             // Choose which SETS to play with joker (the ones with the highest point sum will be chosen)
             if(possibleJokerSetsColoured.Count > 0)
@@ -177,26 +179,10 @@ namespace romme
                     possibleJokerSets.Add(possibleSet.Value);
                 } while (possibleJokerSetsColoured.Count > 0 && usedJokerCards.Count < jokerCount);
 
-            }
-
-            foreach(List<Card> run in possibleRuns)
-            {
-                string output = "";
-
-                foreach(Card c in run)
-                {
-                    output += c + ", ";
-                }
-                Debug.Log("Run: " + output.TrimEnd().TrimEnd(',') + "\n");
-            }
+            }*/
 
 
-            //TODO: Don't lay down every possible run and set because they intersect!
             var layCards = new List<List<Card>>();
-            foreach(var rank in possibleSets)
-                layCards.Add(rank.Value);
-            foreach(var rank in possibleJokerSets)
-                layCards.Add(rank.Value);
 
             if (layCards.Count > 0)
             {
@@ -210,7 +196,7 @@ namespace romme
                             int cardValue = Card.CardValues[card.Rank];
                             if (card.Rank == Card.CardRank.JOKER)
                             {
-                                card.JokerCardValue = 0; //TODO find out joker value
+                                //card.JokerCardValue = 0; //TODO: fix joker card value
                                 cardValue = 0;
                             }
                             sum += cardValue;
@@ -256,8 +242,7 @@ namespace romme
             {
                 currentCardIdx = 0;
                 currentLayDownCardsIdx++;
-                //Find a new spot for the next set of cards
-                currentCardSpot = null;
+                currentCardSpot = null;     //Find a new spot for the next set of cards
 
                 if (currentLayDownCardsIdx == layDownCards.Count)
                 {
@@ -278,11 +263,9 @@ namespace romme
             foreach(var c in PlayerCards)
                 filteredPlayerCards.Add(c);
             foreach(var run in possibleRuns)
-                filteredPlayerCards = filteredPlayerCards.Except(run).ToList();
+                filteredPlayerCards = filteredPlayerCards.Except(run.Cards).ToList();
             foreach(var set in possibleSets)
-                filteredPlayerCards = filteredPlayerCards.Except(set.Value).ToList();
-            foreach(var jokerSet in possibleJokerSets)
-                filteredPlayerCards = filteredPlayerCards.Except(jokerSet.Value).ToList();
+                filteredPlayerCards = filteredPlayerCards.Except(set.Cards).ToList();
 
             KeyValuePair<Card.CardRank, List<Card>> result =  
             filteredPlayerCards.GetCardsByRank().FirstOrDefault(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count == 1);
@@ -327,8 +310,7 @@ namespace romme
                 foreach (Card card in spot.Cards)
                 {
                     int cardValue = Card.CardValues[card.Rank];
-                    if (card.Rank == Card.CardRank.JOKER)
-                        cardValue = card.JokerCardValue;
+                    //TODO: fix joker card value here somehow
                     sum += cardValue;
                 }
             }
@@ -336,5 +318,4 @@ namespace romme
         }
 
     }
-
 }
