@@ -28,12 +28,15 @@ namespace romme.Utility
             return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
+        /// <summary>
+        /// Returns all possible sets which can be laid down. Different sets do NOT contain one or more of the same card
+        /// </summary>
         public static List<Set> GetSets(this List<Card> PlayerCards)
         {
             List<Set> sets = new List<Set>();
             List<KeyValuePair<Card.CardRank, List<Card>>> cardsByRank = new List<KeyValuePair<Card.CardRank, List<Card>>>();
 
-            var cardPool = PlayerCards;
+            var cardPool = new List<Card>(PlayerCards);
 
             //The search for card sets has to be done multiple times since GetUniqueCardsByRank() could overlook a set
             //(e.g.: player has 6 J's, 2 cards each share the same suit, that's 2 full sets, but the function discards one)
@@ -113,6 +116,10 @@ namespace romme.Utility
             return uniqueCards;
         }
 
+        /// <summary>
+        /// Returns all possible runs that could be laid down. 
+        /// Different runs CAN contain one or more of the same card since runs can be of any length > 2s
+        /// <summary>
         public static List<Run> GetRuns(this List<Card> PlayerCards)
         {
             var runs = new List<Run>();

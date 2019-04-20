@@ -56,8 +56,8 @@ namespace romme.Utility
                         }
                         else
                         {
-                            Debug.Log("[Singleton] Using instance already created: " +
-                                _instance.gameObject.name);
+                            //Debug.Log("[Singleton] Using instance already created: " +
+                            //    _instance.gameObject.name);
                         }
                     }
 

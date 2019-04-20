@@ -45,11 +45,13 @@ namespace romme
             CardMoveSpeed = DealCardSpeed;
             RoundCount = 1;
 
-            Tb.I.CardStack.CreateCardStack();
+            //Tb.I.CardStack.CreateCardStack();
+            //Tb.I.CardStack.TEST_CreateJackCardStack();
+            Tb.I.CardStack.CreateCardStackNoJoker();
             Tb.I.CardStack.ShuffleCardStack();
 
             if (Players.Count == 0)
-                Debug.LogError("Missing Players in " + gameObject.name);
+                Debug.LogError("Missing player references in " + gameObject.name);
 
             for (int i = 0; i < Players.Count; i++)
                 Players[i].PlayerNumber = i;
@@ -60,6 +62,9 @@ namespace romme
 
         private void Update()
         {
+            if(Mathf.Abs(Time.timeScale - GameSpeed) > Mathf.Epsilon)
+                Time.timeScale = GameSpeed;
+
             if(gameState == GameState.DEALING) {
                 if (!isCardBeingDealt)
                 {

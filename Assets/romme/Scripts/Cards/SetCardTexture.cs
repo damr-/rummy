@@ -26,10 +26,10 @@ namespace romme.Cards
 
             currentRank = card.Rank;
             currentSuit = card.Suit;
-            Texture texture = Resources.Load<Texture>("cards/" + card);
+            Texture texture = Resources.Load<Texture>("cards/" + card.GetFileString());
 
             if (texture == null)
-                Debug.Log("No texture for " + card);
+                Debug.Log("No texture for " + card + "(missing " + card.GetFileString() + ")");
 
             meshRend.sharedMaterial = new Material(meshRend.material) { mainTexture = texture };
         }

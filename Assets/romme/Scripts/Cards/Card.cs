@@ -70,6 +70,37 @@ namespace romme.Cards
         /// </summary>
         public static readonly int CardSuitCount = 4;
 
+        public static string GetSuitSymbol(CardSuit suit)
+        {
+            switch(suit)
+            {
+                case CardSuit.CLOVERS: return "♣"; 
+                case CardSuit.HEART: return "♥"; 
+                case CardSuit.PIKE: return "♠"; 
+                default: return "♦"; //TILE
+            }
+        }
+
+        public static string GetRankLetter(CardRank rank)
+        {
+            switch(rank)
+            {
+                case CardRank.TWO: return "2"; 
+                case CardRank.THREE: return "3"; 
+                case CardRank.FOUR: return "4"; 
+                case CardRank.FIVE: return "5"; 
+                case CardRank.SIX: return "6"; 
+                case CardRank.SEVEN: return "7"; 
+                case CardRank.EIGHT: return "8"; 
+                case CardRank.NINE: return "9"; 
+                case CardRank.TEN: return "10"; 
+                case CardRank.JACK: return "J"; 
+                case CardRank.QUEEN: return "Q"; 
+                case CardRank.KING: return "K"; 
+                case CardRank.ACE: return "A"; 
+                default: return "JKR"; //JOKER
+            }
+        }
         #endregion
 
         public CardRank Rank = CardRank.TWO;
@@ -94,11 +125,8 @@ namespace romme.Cards
         public IObservable<Card> MoveFinished { get { return moveFinishedSubject; } }
         private readonly ISubject<Card> moveFinishedSubject = new Subject<Card>();
 
-
-        public override string ToString()
-        {
-            return Rank + "_" + Suit;
-        }
+        public string GetFileString() => Rank + "_" + Suit;
+        public override string ToString() => GetRankLetter(Rank) + GetSuitSymbol(Suit);
 
         public void SetVisible(bool visible)
         {
@@ -109,9 +137,8 @@ namespace romme.Cards
         public void MoveCard(Vector3 targetPosition, bool animateMovement)
         {
             isCardMoving = true;
-            if (animateMovement)
-                targetPos = targetPosition;
-            else
+            targetPos = targetPosition;
+            if (!animateMovement)
                 FinishMove();
         }
 
@@ -126,7 +153,7 @@ namespace romme.Cards
         {
             if (isCardMoving)
             {
-                if (Vector3.Distance(transform.position, targetPos) <= 1f)
+                if (Vector3.Distance(transform.position, targetPos) <= Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed)
                     FinishMove();
                 else
                     transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);

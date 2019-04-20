@@ -42,11 +42,102 @@ namespace romme.Cards
                 }
             }
 
-            foreach (Card c in Cards)
-                c.SetVisible(false);
+            foreach (Card card in Cards)
+                card.SetVisible(false);
 
             stackCreated = true;
         }
+
+        public void CreateCardStackNoJoker()
+        {
+            if(stackCreated)
+            {
+                Debug.LogWarning("Tried to create a stack but there already is one!");
+                return;
+            }
+
+            //Spawn two decks of cards
+            for (int i = 0; i < 2; i++)
+            {
+                for (int suit = 1; suit <= Card.CardSuitCount; suit++)
+                {
+                    for (int rank = 1; rank <= Card.CardRankCount; rank++)
+                    {
+                        //No Joker cards
+                        if ((Card.CardRank)rank == Card.CardRank.JOKER)
+                            continue;
+
+                        GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
+                        Card card = CardGO.GetComponent<Card>();
+                        card.Rank = (Card.CardRank)rank;
+                        card.Suit = (Card.CardSuit)suit;
+                        Cards.Push(card);
+                    }
+                }
+            }
+
+            foreach (Card card in Cards)
+                card.SetVisible(false);
+
+            stackCreated = true;
+        }
+
+        public void TEST_CreateJackCardStack()
+        {
+            if(stackCreated)
+            {
+                Debug.LogWarning("Tried to create a stack but there already is one!");
+                return;
+            }
+
+            for (int i = 0; i < 2*Card.CardRankCount; i++)
+            {
+                for (int suit = 1; suit <= Card.CardSuitCount; suit++)
+                {
+                    GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
+                    Card card = CardGO.GetComponent<Card>();
+                    card.Rank = Card.CardRank.JACK;
+                    card.Suit = (Card.CardSuit)suit;
+                    Cards.Push(card);
+                }
+            }
+
+            foreach (Card card in Cards)
+                card.SetVisible(false);
+
+            stackCreated = true;
+        }
+
+        public void TEST_CreateHeartCardStack()
+        {
+            if(stackCreated)
+            {
+                Debug.LogWarning("Tried to create a stack but there already is one!");
+                return;
+            }
+
+            for (int i = 0; i < 2*Card.CardSuitCount; i++)
+            {
+                for (int rank = 1; rank <= Card.CardRankCount; rank++)
+                {
+                    //Don't create jokers
+                    if ((Card.CardRank)rank == Card.CardRank.JOKER)
+                        continue;
+
+                    GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
+                    Card card = CardGO.GetComponent<Card>();
+                    card.Rank = (Card.CardRank)rank;
+                    card.Suit = Card.CardSuit.HEART;
+                    Cards.Push(card);
+                }
+            }
+
+            foreach (Card card in Cards)
+                card.SetVisible(false);
+
+            stackCreated = true;
+        }
+        
 
         public void ShuffleCardStack()
         {

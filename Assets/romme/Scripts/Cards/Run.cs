@@ -9,32 +9,34 @@ namespace romme.Cards
     {
         public Card.CardSuit Suit;
         public List<Card> Cards {get; private set;}
-        public int GetCount() => Cards.Count;
-        public int GetValue(){
-            int value = 0;
+        public int Count => Cards.Count;
+        public int Value{
+            get {
+                int value = 0;
 
-            for(int i = 0; i < GetCount(); i++)
-            {
-                var rank = Cards[i].Rank;
-                if(rank == Card.CardRank.JOKER)
+                for(int i = 0; i < Count; i++)
                 {
-                    if(i == 0)
+                    var rank = Cards[i].Rank;
+                    if(rank == Card.CardRank.JOKER)
                     {
-                        if(Cards[1].Rank == Card.CardRank.TWO)
-                            value += Card.CardValues[Card.CardRank.ACE];
-                        else
-                            value += Card.CardValues[Cards[1].Rank-1];
+                        if(i == 0)
+                        {
+                            if(Cards[1].Rank == Card.CardRank.TWO)
+                                value += Card.CardValues[Card.CardRank.ACE];
+                            else
+                                value += Card.CardValues[Cards[1].Rank-1];
+                        }
+                        else 
+                        {
+                            value += Card.CardValues[Cards[i-1].Rank+1];
+                        }
                     }
-                    else 
-                    {
-                        value += Card.CardValues[Cards[i-1].Rank+1];
-                    }
+                    else
+                        value += Cards[i].Value();
                 }
-                else
-                    value += Cards[i].Value();
-            }
 
-            return value;
+                return value;
+            }
         }
 
         public Run(Card c1, Card c2, Card c3)
@@ -48,7 +50,7 @@ namespace romme.Cards
         {
             Cards = new List<Card>();
             Cards.AddRange(cards);
-            if(Cards.Count() > 0)
+            if(Cards.Count > 0)
                 Suit = Cards[0].Suit;
             CheckValidity();
         }
@@ -68,7 +70,7 @@ namespace romme.Cards
             if(Cards.Any(c => c.Suit != Cards[0].Suit))
                 return false;
 
-            for(int i = 0; i < GetCount() - 1; i++)
+            for(int i = 0; i < Count-1; i++)
             {
                 //Ace can be the start of a run
                 if(i == 0 && Cards[i].Rank == Card.CardRank.ACE)
@@ -85,12 +87,12 @@ namespace romme.Cards
 
         public bool Equal(Run other)
         {
-            if(GetCount() != other.GetCount())
+            if(Count != other.Count)
                 return false;
 
-            for(int i = 0; i < GetCount(); i++)
+            for(int i = 0; i < Count; i++)
             {
-                for(int j = 0; j < other.GetCount(); j++)
+                for(int j = 0; j < other.Count; j++)
                 {
                     if(Cards[i] != other.Cards[j])
                         return false;
@@ -100,16 +102,31 @@ namespace romme.Cards
             return true;   
         }
 
+        public bool Intersects(Run other) => Intersects(other.Cards);
+
+        private bool Intersects(List<Card> cards)
+        {
+            foreach(var c1 in Cards)
+            {
+                foreach(var c2 in cards)
+                {
+                    if(c1 == c2)
+                        return true;
+                }
+            }
+            return false;
+        }
+
         public bool Contains(Run other)
         {
-            if(other.GetCount() > GetCount())
+            if(other.Count > Count)
                 return false;
             if(Equal(other))
                 return true;
             
             //Find the index of the element in this run which matches the first element of the 'other' run
             int firstIndex = -1;
-            for(int i = 0; i < GetCount(); i++)
+            for(int i = 0; i < Count; i++)
             {
                 if(Cards[i] == other.Cards[0])
                     firstIndex = i;
@@ -118,34 +135,37 @@ namespace romme.Cards
                 return false;
 
             //Check if the number of remaining elements is too little to possibly equal the 'other' run
-            if(firstIndex + other.GetCount() > GetCount())
+            if(firstIndex + other.Count > Count)
                 return false;
 
             //Create a new run of the subset and check if each element is identical to the 'other' run
             List<Card> subset = new List<Card>();
-            subset.AddRange(Cards.GetRange(firstIndex, other.GetCount()));
+            subset.AddRange(Cards.GetRange(firstIndex, other.Count));
             Run subsetRun = new Run(subset);            
             return subset.Equals(other);
         }
 
+        /// <summary>
+        /// Check whether the any card in this run is the same as any in the given set
+        /// </summary>
         public bool Intersects(Set set)
         {
-            //Check if any of the cards in this run share the same rank as the 'other' set's cards
+            //First find all the cards which share the rank
             var rank = set.Cards[0].Rank;
-            var matches = Cards.Where(c => c.Rank == rank);
-            if(matches.Count() == 0)
+            var matches = Cards.Where(c => c.Rank == rank).ToList();
+            if(matches.Count == 0)
                 return false;
 
-            foreach(var c1 in matches)
-            {
-                foreach(var c2 in set.Cards)
-                {
-                    if(c1 == c2)
-                        return true;
-                }
-            }
+            //Check if any of the found cards are actually also part of the set
+            return Intersects(matches);
+        }
 
-            return false;
+        public override string ToString()
+        {
+            string output = "";
+            foreach(var card in Cards)
+                output += card + " ";
+            return output.TrimEnd();
         }
     }
 
