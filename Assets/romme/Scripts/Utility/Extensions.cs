@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using romme.Cards;
+using UnityEngine.UI;
 
 namespace romme.Utility
 {
@@ -28,39 +29,7 @@ namespace romme.Utility
             return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
-        /// <summary>
-        /// Returns all possible sets which can be laid down. Different sets do NOT contain one or more of the same card
-        /// </summary>
-        public static List<Set> GetSets(this List<Card> PlayerCards)
-        {
-            List<Set> sets = new List<Set>();
-            List<KeyValuePair<Card.CardRank, List<Card>>> cardsByRank = new List<KeyValuePair<Card.CardRank, List<Card>>>();
-
-            var cardPool = new List<Card>(PlayerCards);
-
-            //The search for card sets has to be done multiple times since GetUniqueCardsByRank() could overlook a set
-            //(e.g.: player has 6 J's, 2 cards each share the same suit, that's 2 full sets, but the function discards one)
-            do
-            {
-                //Remove all cards of previously found sets from the card pool
-                foreach (var set in sets)
-                {
-                    foreach (var card in set.Cards)
-                        cardPool.Remove(card);
-                }
-                //Get all possible sets in the cardpool, sorted by rank
-                cardsByRank = cardPool.GetUniqueCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER && rank.Value.Count >= 3).ToList();
-                foreach (var rank in cardsByRank)
-                {
-                    Set newSet = new Set(rank.Value);
-                    sets.Add(newSet);
-                }
-            } while (cardsByRank.Count > 0);
-
-            return sets;
-        }
-
-        private static IDictionary<Card.CardRank, List<Card>> GetUniqueCardsByRank(this List<Card> PlayerCards)
+        public static IDictionary<Card.CardRank, List<Card>> GetUniqueCardsByRank(this List<Card> PlayerCards)
         {
             IDictionary<Card.CardRank, List<Card>> uniqueCardsByRank = new Dictionary<Card.CardRank, List<Card>>();
 
@@ -114,58 +83,6 @@ namespace romme.Utility
                     uniqueCards.Add(card);
             }
             return uniqueCards;
-        }
-
-        /// <summary>
-        /// Returns all possible runs that could be laid down. 
-        /// Different runs CAN contain one or more of the same card since runs can be of any length > 2s
-        /// <summary>
-        public static List<Run> GetRuns(this List<Card> PlayerCards)
-        {
-            var runs = new List<Run>();
-
-            foreach (Card card in PlayerCards)
-            {
-                //KING cannot start a run
-                if(card.Rank == Card.CardRank.KING)
-                    continue;
-
-                Card neighbor = GetCardOneRankHigher(PlayerCards, card, true);
-                List<Card> run = new List<Card> { card };
-
-                while (neighbor != null)
-                {
-                    run.Add(neighbor);
-                    neighbor = GetCardOneRankHigher(PlayerCards, neighbor, false);
-                }
-
-                if (run.Count >= 3)
-                {
-                    Run newRun = new Run(run);
-                    runs.Add(newRun);
-                }
-            }
-            return runs;
-        }
-
-        /// <summary>
-        /// Returns the first card in PlayerCards which has the same suit and is one rank higher.
-        /// 'firstInRun': whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING
-        /// </summary>
-        /// <returns> The card or null if none was found </returns>
-        public static Card GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
-        {
-            foreach (Card otherCard in PlayerCards)
-            {
-                if (otherCard == card || otherCard.Suit != card.Suit)
-                    continue;
-                //Allow going from ACE to TWO but only if ACE is the first card in the run
-                if(firstInRun && card.Rank == Card.CardRank.ACE && otherCard.Rank == Card.CardRank.TWO)
-                    return otherCard;
-                else if (otherCard.Rank == card.Rank + 1)
-                    return otherCard;
-            }
-            return null;
         }
 
         ///<summary>Return all the possible sets which can be formed using joker cards ordered descending by the value of the set.
@@ -240,4 +157,5 @@ namespace romme.Utility
             return coloredPossibleJokerSets;
         }
     }
+    
 }

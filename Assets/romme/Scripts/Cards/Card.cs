@@ -117,6 +117,11 @@ namespace romme.Cards
 
         public int Value()
         {
+            if(Rank == CardRank.JOKER)
+            {
+                Debug.LogWarning("Card.Value() should NOT be used with JOKERS, as their value varies.");
+                return 0;
+            }
             return CardValues[Rank]; 
         }
 
@@ -151,13 +156,12 @@ namespace romme.Cards
 
         private void Update()
         {
-            if (isCardMoving)
-            {
-                if (Vector3.Distance(transform.position, targetPos) <= Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed)
-                    FinishMove();
-                else
-                    transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);
-            }
+            if (!isCardMoving)
+                return;
+            if (Vector3.Distance(transform.position, targetPos) <= 2 * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed)
+                FinishMove();
+            else
+                transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);
         }
 
     }

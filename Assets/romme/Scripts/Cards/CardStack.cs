@@ -138,7 +138,6 @@ namespace romme.Cards
             stackCreated = true;
         }
         
-
         public void ShuffleCardStack()
         {
             Cards = Cards.Shuffle();
@@ -147,6 +146,21 @@ namespace romme.Cards
         public Card DrawCard()
         {
             return Cards.Pop();
+        }
+
+        /// <summary>
+        /// Shuffles and adds the cards to the card stack. 
+        /// Usually the card stack is restocked with the cards from the discard stack
+        /// </summary>
+        public void Restock(List<Card> cards)
+        {
+            foreach(var card in cards)
+            {
+                card.SetVisible(false);
+                card.transform.position = transform.position;
+                Cards.Push(card);
+            }
+            ShuffleCardStack();
         }
     }
 

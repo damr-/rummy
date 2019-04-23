@@ -130,7 +130,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 100}
+  m_SizeDelta: {x: 350, y: 10}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &3177400480812478880
 CanvasRenderer:
@@ -526,12 +526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5714324eef71d4ff0aa43915b122ceb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PlayerNumber: 0
   ShowCards: 0
-  waitDuration: 2
-  OutputView: {fileID: 869113081548153181}
-  playerState: 0
-  HandCardSpot: {fileID: 6559614368312652775}
   PlayerCardSpotsParent: {fileID: 0}
 --- !u!1 &9008195497925259066
 GameObject:
@@ -546,6 +541,7 @@ GameObject:
   - component: {fileID: 2197865732582761094}
   - component: {fileID: 7917568102368901832}
   - component: {fileID: 869113081548153181}
+  - component: {fileID: 530214479502895558}
   m_Layer: 0
   m_Name: OutputCanvas
   m_TagString: Untagged
@@ -648,4 +644,17 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 9030237035464260177}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 36
+  CharsPerLine: 45
+--- !u!114 &530214479502895558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9008195497925259066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 547bcac25270a4f5e998207a45196723, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Player: {fileID: 2595258543103639682}
