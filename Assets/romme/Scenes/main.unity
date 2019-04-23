@@ -1166,8 +1166,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Seed: 12231
   GameSpeed: 1
-  AnimateCardMovement: 1
-  PlayerWaitDuration: 2
+  AnimateCardMovement: 0
+  PlayerWaitDuration: 0.5
+  PlayerDrawWaitDuration: 0.5
   MinimumLaySum: 40
   CardsPerPlayer: 13
   PlayCardSpeed: 50

@@ -51,7 +51,9 @@ namespace romme.Cards
         {            
             if (!CardUtil.IsValidRun(cards))
             {
-                Debug.LogWarning("The cards in a run are not in order or don't form a run!");
+                string output = "";
+                cards.ForEach(c => output += c + ", ");
+                Debug.LogWarning("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")");
                 return;
             }
 

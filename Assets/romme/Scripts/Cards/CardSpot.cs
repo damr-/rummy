@@ -78,29 +78,36 @@ namespace romme.Cards
         {
             var tmpList = new List<Card>(GetCards());
             
-            int idx = tmpList.Count;
             if(Type == SpotType.RUN && tmpList.Count > 0)
             {
+                int idx = tmpList.Count; //By default, add the new card at the end
                 var highestRank = GetCards()[tmpList.Count - 1].Rank;
-                idx = 0;
-                //1st priority: add ace after king. If the highest rank card in the run is not a king
-                //add the ace at the beginning, in front of the TWO
+                //1st priority: add ace after king. If the highest rank card in the run is not a king,
+                //manually add the ace at the beginning, in front of the TWO
                 if(card.Rank == Card.CardRank.ACE && highestRank != Card.CardRank.KING)
                 {
-                    // idx = 0;
+                    idx = 0;
                 }
-                else //Any other card will be sorted by rank, skipping the ACE at index 0 if necessary
+                //If the first item in the run is an ACE, the new card can only be added at the end
+                else if(tmpList[0].Rank == Card.CardRank.ACE)
+                {
+                    idx = tmpList.Count;
+                }
+                else //Any other case, the card will be sorted by rank
                 {
                     for(int i = 0; i < tmpList.Count; i++)
                     {
-                        if(i == 0 && tmpList[0].Rank == Card.CardRank.ACE)
-                            continue;
-                        else if(tmpList[i].Rank > card.Rank)
+                        if(tmpList[i].Rank > card.Rank)
+                        {
                             idx = i;
+                            break;
+                        }
                     }
                 }
+                tmpList.Insert(idx, card);
             }
-            tmpList.Insert(idx, card);
+            else
+                tmpList.Add(card);
             SetCards(new List<Card>(tmpList));
         }
 

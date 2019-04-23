@@ -335,6 +335,10 @@ namespace romme
                 Debug.Log("Laying down singles: " + singlesOutput.TrimEnd().TrimEnd(','));
             }
 
+            //FIXME: Don'T allow laying down all cards (laydownCards.Count must be != PlayerHandSpot.Count)
+
+            //FIXME: INVESTIGATE Discard stack card disappears (?) NO_JOKER, SEED 12231, Round 14-ish or higher
+
             currentCardPackIdx = 0;
             currentCardIdx = 0;
 
