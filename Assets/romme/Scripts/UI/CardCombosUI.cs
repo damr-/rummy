@@ -32,7 +32,7 @@ namespace romme.UI
             outputView.PrintMessage(new ScrollView.Message("Possibilities:"));
             foreach (LaydownCards possibility in cardCombos)
             {
-                if (possibility.Count == 0)
+                if (possibility.PackCount == 0)
                     continue;
 
                 string msg = "";

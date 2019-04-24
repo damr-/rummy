@@ -41,10 +41,11 @@ namespace romme
         }
         private List<CardSpot> playerCardSpots = new List<CardSpot>();
         private CardSpot currentCardSpot;
+        public int GetLaidCardsSum() => GetPlayerCardSpots().Sum(spot => spot.GetValue());
 
         #region CardSets
-        private List<Set> sets = new List<Set>();
-        private List<Run> runs = new List<Run>();
+        private List<Set> possibleSets = new List<Set>();
+        private List<Run> possibleRuns = new List<Run>();
         // private List<KeyValuePair<Card.CardRank, List<Card>>> possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
         private LaydownCards laydownCards = new LaydownCards();
         private List<KeyValuePair<Card, CardSpot>> singleLayDownCards = new List<KeyValuePair<Card, CardSpot>>();
@@ -87,9 +88,9 @@ namespace romme
         {
             hasLaidDown = false;
             playerState = PlayerState.IDLE;
-            foreach(var spot in GetPlayerCardSpots())
-                spot.ResetSpot();
+            GetPlayerCardSpots().ForEach(spot => spot.ResetSpot());
             HandCardSpot.ResetSpot();
+            possibleCardCombos.OnNext(new List<LaydownCards>());
         }
 
         private void Start()
@@ -107,7 +108,7 @@ namespace romme
 
                 //If it's the first round, if there's nothing to lay down or the points are not enough...
                 if (Tb.I.GameMaster.RoundCount == 1 ||
-                    ((laydownCards.Count == 0 && singleLayDownCards.Count == 0) || !hasLaidDown))
+                    ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || !hasLaidDown))
                     DiscardUnusableCard(); //...discard a card and end the turn
                 else
                     StartLayingCards();
@@ -215,15 +216,16 @@ namespace romme
             var combinations = new List<LaydownCards>() { new LaydownCards() };
             CardUtil.GetPossibleCombinations(combinations, sets, runs);
 
-            if (combinations.Last().Count > 0)
+            if (combinations.Last().PackCount > 0)
                 combinations.Add(new LaydownCards());
             //Check the possible runs when no sets are fixed
             CardUtil.GetPossibleRunCombinations(combinations, runs);
 
-            combinations = combinations.Where(ldc => ldc.Count > 0).ToList();
+            combinations = combinations.Where(ldc => ldc.PackCount > 0).ToList();
             
+            //FIXME: think about adding singles to LaydownCard class!
             if(broadCastPossibleCombos) //FIXME: Also broadcast single laydown cards to print on screen!
-                possibleCardCombos.OnNext(new List<LaydownCards>(combinations)); //FIXME: think about adding singles to LaydownCard class!
+                possibleCardCombos.OnNext(new List<LaydownCards>(combinations));
 
             return CardUtil.GetHighestValueCombination(combinations);
         }
@@ -260,9 +262,9 @@ namespace romme
             }*/
             #endregion
 
-            sets = new List<Set>(CardUtil.GetPossibleSets(HandCardSpot.GetCards()));
-            runs = new List<Run>(CardUtil.GetPossibleRuns(HandCardSpot.GetCards()));
-            laydownCards = GetBestCardCombo(sets, runs, true);
+            possibleSets = new List<Set>(CardUtil.GetPossibleSets(HandCardSpot.GetCards()));
+            possibleRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCardSpot.GetCards()));
+            laydownCards = GetBestCardCombo(possibleSets, possibleRuns, true);
 
             //If the player has not laid down card packs yet, check if their sum would be enough to do so
             if (!hasLaidDown)
@@ -278,8 +280,8 @@ namespace romme
 
             //Check all cards which will not be laid down anyway as part of a set or a run
             List<Card> availableCards = new List<Card>(HandCardSpot.GetCards());
-            foreach (var s in laydownCards.Sets)
-                availableCards = availableCards.Except(s.Cards).ToList();
+            foreach (var set in laydownCards.Sets)
+                availableCards = availableCards.Except(set.Cards).ToList();
             foreach (var run in laydownCards.Runs)
                 availableCards = availableCards.Except(run.Cards).ToList();
 
@@ -327,13 +329,22 @@ namespace romme
             } while (canFitCard);
 
             //If there's nothing to lay down or the points are not enough, stop thinking about laying cards
-            if ((laydownCards.Count == 0 && singleLayDownCards.Count == 0) || !hasLaidDown)
+            if ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || !hasLaidDown)
                 return;
 
             //At least one card must remain when laying down
-            if(laydownCards.Count + singleLayDownCards.Count < HandCardSpot.GetCards().Count)
-                return;
-                
+            if(laydownCards.CardCount + singleLayDownCards.Count == HandCardSpot.GetCards().Count)
+                KeepOneCard();
+        }
+
+        /// <summary>
+        /// Figures out a way to keep at least one card in the player's hand.
+        /// This is needed in the case the player wanted to lay down every single card they had left in their hand.
+        /// First, we try to keep one of the singleLayDownCards, or one from quad-sets or runs with more than 3 cards
+        /// If no card is found, a whole set or run is not laid down
+        /// </summary>
+        private void KeepOneCard()
+        {
             bool removedSingleCard = false;
             Debug.Log("Need to keep one card");
             if(singleLayDownCards.Count > 0)
@@ -345,11 +356,15 @@ namespace romme
             else
             {
                 //Keep one card of a set or run with more than 3 cards
-                var quadSet = laydownCards.Sets.FirstOrDefault(s => s.Count > 3);
+                var quadSet = laydownCards.Sets.FirstOrDefault(s => s.Count == 4);
                 if(quadSet != null)
                 {
                     Debug.Log("Removed the last card of set " + quadSet);
-                    quadSet.RemoveLastCard();
+                    Card lastCard = quadSet.RemoveLastCard();
+
+                    //Remove all sets, which include the card, from the list of possible sets 
+                    possibleSets = possibleSets.Where(set => !set.Cards.Contains(lastCard)).ToList();
+                    
                     removedSingleCard = true;
                 }
                 else
@@ -358,7 +373,9 @@ namespace romme
                     if(quadRun != null)
                     {
                         Debug.Log("Removed the last card of run " + quadRun);
-                        quadRun.RemoveLastCard();
+                        Card lastCard = quadRun.RemoveLastCard();
+                        //Remove all runs, which include the card, from the list of possible runs
+                        possibleRuns = possibleRuns.Where(run => !run.Cards.Contains(lastCard)).ToList();
                         removedSingleCard = true;
                     }
                     else
@@ -376,7 +393,9 @@ namespace romme
             if(lastSet != null)
             {
                 Debug.Log("Removing the whole set " + lastSet);
-                laydownCards.RemoveLastSet();
+                Set set = laydownCards.RemoveLastSet();
+                //Remove any set which shares cards with the removed one
+                possibleSets = possibleSets.Where(s => !s.Intersects(set)).ToList();
             }
             else
             {
@@ -384,7 +403,9 @@ namespace romme
                 if(lastRun != null)
                 {   
                     Debug.Log("No set found to remove. Removing the whole run " + lastRun);
-                    laydownCards.RemoveLastRun();
+                    Run run = laydownCards.RemoveLastRun();
+                    //Remove any run which shares cards with the removed one
+                    possibleRuns = possibleRuns.Where(r => !r.Intersects(run)).ToList();
                 }
                 else 
                 {
@@ -396,10 +417,8 @@ namespace romme
         private void StartLayingCards()
         {
             //Lay down all possible cards
-            foreach (var set in laydownCards.Sets)
-                Debug.Log("Laying down set: " + set);
-            foreach (var run in laydownCards.Runs)
-                Debug.Log("Laying down run: " + run);
+            laydownCards.Sets.ForEach(set => Debug.Log("Laying down set: " + set));
+            laydownCards.Runs.ForEach(run => Debug.Log("Laying down run: " + run));
 
             if (singleLayDownCards.Count > 0)
             {
@@ -480,9 +499,9 @@ namespace romme
 
             //Get all player cards except the ones which will be laid down as sets or runs
             List<Card> possibleDiscards = new List<Card>(HandCardSpot.GetCards());
-            foreach (var run in runs)
+            foreach (var run in possibleRuns)
                 possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
-            foreach (var set in sets)
+            foreach (var set in possibleSets)
                 possibleDiscards = possibleDiscards.Except(set.Cards).ToList();
             
             //Single cards which will be laid down also have to be excluded
@@ -495,13 +514,13 @@ namespace romme
             possibleDiscards = possibleDiscards.Except(singleCards).ToList();            
 
             //Randomly choose a card to discard
-            Card card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count - 1)];
+            Card card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
 
             //In case any discardable card is not a Joker, make sure the discarded one is NOT a Joker
             if (possibleDiscards.Any(c => c.Rank != Card.CardRank.JOKER))
             {
                 while (card.Rank == Card.CardRank.JOKER)
-                    card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count - 1)];
+                    card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
             }
 
             HandCardSpot.RemoveCard(card);
@@ -527,13 +546,5 @@ namespace romme
             Debug.LogWarning(gameObject.name + " couldn't find an empty CardSpot");
             return null;
         }
-
-        public int GetLaidCardsSum()
-        {
-            int sum = 0;
-            GetPlayerCardSpots().ForEach(spot => sum += spot.GetValue());
-            return sum;
-        }
-
     }
 }

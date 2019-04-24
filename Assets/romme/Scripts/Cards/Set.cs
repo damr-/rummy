@@ -27,6 +27,8 @@ namespace romme.Cards
             Cards.AddRange(cards);
             Rank = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Rank : Cards[1].Rank;
         }
+        
+        public bool Intersects(Set other) => Cards.Intersects(other.Cards);
 
         public bool Equal(Set other)
         {
@@ -45,10 +47,13 @@ namespace romme.Cards
             return true;
         }
 
-        public void RemoveLastCard()
+        public Card RemoveLastCard()
         {
-            if(Cards.Count > 0)
-                Cards.RemoveAt(Cards.Count - 1);
+            if (Cards.Count == 0)
+                return null;
+            Card card = Cards[Cards.Count - 1];
+            Cards.Remove(card);
+            return card;
         }
 
         public override string ToString()

@@ -1256,7 +1256,7 @@ MonoBehaviour:
   Players:
   - {fileID: 221342174}
   - {fileID: 2039885474}
-  CardServeType: 1
+  CardServeType: 2
 --- !u!4 &485916708
 Transform:
   m_ObjectHideFlags: 0

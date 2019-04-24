@@ -15,7 +15,7 @@ namespace romme.Utility
             int curVal = 0, highestVal = 0;
             foreach (LaydownCards possibility in combinations)
             {
-                if (possibility.Count == 0)
+                if (possibility.PackCount == 0)
                     continue;
 
                 curVal = possibility.Value;
@@ -32,19 +32,15 @@ namespace romme.Utility
         {
             for (int i = 0; i < runs.Count; i++)
             {
-                var fixedRun = runs[i];
-
                 var oldEntry = new LaydownCards(fixedCardsList.Last()); //Store the list of runs until now
 
+                var fixedRun = runs[i];
                 fixedCardsList.Last().AddRun(fixedRun);    //Add the newly fixed run            
 
                 if (runs.Count > 1 && i < runs.Count - 1) //Only check for other runs if this is not the last one
-                {                    
+                {
                     //All the other runs with higher index and wich do not intersect with the fixedRun are to be checked
                     List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - i - 1).Where(run => !run.Intersects(fixedRun)).ToList();
-                    // string otherRunsOutput = "";
-                    // otherRuns.ForEach(o => otherRunsOutput += o + ", ");
-                    // Debug.Log("F:" + fixedRun + " O:" + otherRunsOutput);
 
                     if (otherRuns.Count > 0)
                     {
@@ -73,31 +69,43 @@ namespace romme.Utility
         /// Calculates all possible combinations of card packs that could be laid down.
         /// Stores the result in the passed List<LaydownCards> combinations
         /// </summary>
-        public static void GetPossibleCombinations(List<LaydownCards> combinations, List<Set> sets, List<Run> runs)
+        //FIXME: Is this not basically the same as GetPossibleRunCombinations? maybe make <T> functions
+        public static void GetPossibleCombinations(List<LaydownCards> fixedCardsList, List<Set> sets, List<Run> runs)
         {
             //Iterate through all possible combinations of sets
             for (int i = 0; i < sets.Count; i++)
             {
-                //Assume we lay down the current set
-                var fixedSet = sets[i];
+                var oldEntry = new LaydownCards(fixedCardsList.Last()); //Store the list of sets until now
 
-                var previousCombination = new LaydownCards(combinations.Last()); //Store the list of sets until now
-                previousCombination.RemoveLastSet(); //remove the last one in case we need to undo the last added set
+                var fixedSet = sets[i]; //Assume we lay down the current set
+                fixedCardsList.Last().AddSet(fixedSet); //The fixed list of set has to include the new one
 
-                combinations.Last().AddSet(fixedSet); //The fixed list of set has to include the new one
-
-                //Get all possible runs with fixed sets
+                //Get all possible runs with the fixed set(s)
                 List<Run> possibleRuns = runs.Where(run => !run.Intersects(fixedSet)).ToList();
-                GetPossibleRunCombinations(combinations, possibleRuns);
+                GetPossibleRunCombinations(fixedCardsList, possibleRuns);
 
-                if (sets.Count > 1 && i < sets.Count - 1)   //All the other sets with higher index are to be checked 
+                if (sets.Count > 1 && i < sets.Count - 1) //All the other sets with higher index are to be checked 
                 {
-                    List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1);
-                    GetPossibleCombinations(combinations, otherSets, possibleRuns);
+                    //Only sets which don't intersect the fixed one are possible combinations
+                    List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Cards.Intersects(fixedSet.Cards)).ToList();
+
+                    if (otherSets.Count > 0)
+                    {
+                        //This fixed set alone is also a possibility
+                        var newEntry = new LaydownCards(fixedCardsList.Last());
+                        fixedCardsList.Add(newEntry);
+
+                        GetPossibleCombinations(fixedCardsList, otherSets, possibleRuns);
+                    }
+                    else
+                    {
+                        fixedCardsList.Add(oldEntry);
+                    }
                 }
-                else //All possible sets are through, continue with runs
+                else //Last set of the list has been reached
                 {
-                    //fixedCardsList.Add(new LaydownCards(oldEntry)); //This permutation is done, add new entry for the next one
+                    oldEntry.RemoveLastSet(); //Go back one more layer...
+                    fixedCardsList.Add(oldEntry); //...this permutation is done. Add new entry for the next one.
                 }
             }
         }
@@ -125,7 +133,7 @@ namespace romme.Utility
         /// <summary>
         /// Returns all possible sets which can be laid down. Different sets do NOT contain one or more of the same card
         /// </summary>
-        public static List<Set> GetPossibleSets(List<Card> PlayerCards) //FIXME: This doesn't work 100% correctly (try ONLY_JACKS)
+        public static List<Set> GetPossibleSets(List<Card> PlayerCards)
         {
             List<Set> possibleSets = new List<Set>();
             List<KeyValuePair<Card.CardRank, List<Card>>> cardsByRank = new List<KeyValuePair<Card.CardRank, List<Card>>>();
@@ -152,7 +160,11 @@ namespace romme.Utility
                 cardsByRank = cardPool.GetUniqueCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER && rank.Value.Count == 4).ToList();
                 foreach (var rank in cardsByRank)
                 {
-                    Set newSet = new Set(rank.Value.GetRange(0, 3));
+                    //Add the quadruple
+                    Set newSet = new Set(rank.Value);
+                    possibleSets.Add(newSet);
+                    //Add all trio permutations
+                    newSet = new Set(rank.Value.GetRange(0, 3));
                     possibleSets.Add(newSet);
                     newSet = new Set(rank.Value.GetRange(1, 3));
                     possibleSets.Add(newSet);
@@ -184,7 +196,7 @@ namespace romme.Utility
                 List<Card> run = new List<Card>();
                 Card nextCard = card;
                 bool firstInRun = true;
-                
+
                 do
                 {
                     run.Add(nextCard);
@@ -193,11 +205,11 @@ namespace romme.Utility
                     {
                         Run newRun = new Run(run);
                         runs.Add(newRun);
-                    }                    
+                    }
                     nextCard = GetCardOneRankHigher(PlayerCards, nextCard, firstInRun);
-                    if(firstInRun)
+                    if (firstInRun)
                         firstInRun = false;
-                }while (nextCard != null);
+                } while (nextCard != null);
             }
             return runs;
         }
@@ -229,18 +241,18 @@ namespace romme.Utility
 
         public static bool IsValidSet(List<Card> cards)
         {
-            if(cards.Count == 0)
+            if (cards.Count == 0)
                 return false;
 
             //A set can only consist of cards with the same rank
-            if(cards.Any(c => c.Rank != cards[0].Rank))
+            if (cards.Any(c => c.Rank != cards[0].Rank))
                 return false;
 
             var usedSuits = new List<Card.CardSuit>();
-            for(int i = 0; i < cards.Count; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
                 var suit = cards[i].Suit;
-                if(usedSuits.Contains(suit))
+                if (usedSuits.Contains(suit))
                     return false;
                 usedSuits.Add(suit);
             }

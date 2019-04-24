@@ -85,6 +85,23 @@ namespace romme.Utility
             return uniqueCards;
         }
 
+        /// <summary>
+        /// Returns whether the list intersects the other, given list of cards.
+        /// (Returns whether the two lists share any card
+        /// </summary>
+        public static bool Intersects(this List<Card> list, List<Card> otherList)
+        {
+            foreach (var c1 in list)
+            {
+                foreach (var c2 in otherList)
+                {
+                    if (c1 == c2)
+                        return true;
+                }
+            }
+            return false;
+        }
+
         ///<summary>Return all the possible sets which can be formed using joker cards ordered descending by the value of the set.
         ///The passed 'CompletePossibleSets' should consist of all the sets which will be laid down anyway since they are complete.</summary>
         public static List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>

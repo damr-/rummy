@@ -64,12 +64,12 @@ namespace romme
 
         private void Start()
         {
-            if(SkipUntilRound > 0)
+            if (SkipUntilRound > 0)
             {
-                AnimateCardMovement = false;                
+                AnimateCardMovement = false;
                 tmpPlayerWaitDuration = PlayerWaitDuration;
                 tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
-                tmpGameSpeed = GameSpeed;;
+                tmpGameSpeed = GameSpeed; ;
                 PlayerWaitDuration = 0f;
                 PlayerDrawWaitDuration = 0f;
                 GameSpeed = 4;
@@ -138,7 +138,7 @@ namespace romme
             }
             else if (gameState == GameState.PAUSED)
             {
-                if(Time.time - drawWaitStartTime > PlayerDrawWaitDuration)
+                if (Time.time - drawWaitStartTime > PlayerDrawWaitDuration)
                 {
                     gameState = GameState.PLAYING;
                 }
@@ -156,7 +156,7 @@ namespace romme
                 if (currentPlayerID == 0)
                 {
                     RoundCount++;
-                    if(SkipUntilRound > 0 && RoundCount == SkipUntilRound && !AnimateCardMovement) //only do this once
+                    if (SkipUntilRound > 0 && RoundCount >= SkipUntilRound && !AnimateCardMovement) //only do this once
                     {
                         AnimateCardMovement = true;
                         PlayerWaitDuration = tmpPlayerWaitDuration;
@@ -200,8 +200,7 @@ namespace romme
         {
             Tb.I.CardStack.ResetStack();
             Tb.I.DiscardStack.ResetStack();
-            foreach (Player p in Players)
-                p.ResetPlayer();
+            Players.ForEach(p => p.ResetPlayer());
             Start();
         }
 

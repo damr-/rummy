@@ -47,6 +47,7 @@ namespace romme.Cards
             }
         }
 
+        //FIXME: This class is very similar to Set.cs, maybe make mutual parent class for common functions?!?!?!!!!
         public Run(List<Card> cards)
         {
             if (!CardUtil.IsValidRun(cards))
@@ -79,54 +80,16 @@ namespace romme.Cards
             return true;
         }
 
-        public bool Intersects(Run other) => Intersects(other.Cards);
+        public bool Intersects(Run other) => Cards.Intersects(other.Cards);
 
-        private bool Intersects(List<Card> cards)
-        {
-            foreach (var c1 in Cards)
-            {
-                foreach (var c2 in cards)
-                {
-                    if (c1 == c2)
-                        return true;
-                }
-            }
-            return false;
+        public Card RemoveLastCard()
+        {            
+            if (Cards.Count == 0)
+                return null;
+            Card card = Cards[Cards.Count - 1];
+            Cards.Remove(card);
+            return card;
         }
-
-        public void RemoveLastCard()
-        {
-            if(Cards.Count > 0)
-                Cards.RemoveAt(Cards.Count - 1);
-        }
-
-        // public bool Contains(Run other)
-        // {
-        //     if (other.Count > Count)
-        //         return false;
-        //     if (Equal(other))
-        //         return true;
-
-        //     //Find the index of the element in this run which matches the first element of the 'other' run
-        //     int firstIndex = -1;
-        //     for (int i = 0; i < Count; i++)
-        //     {
-        //         if (Cards[i] == other.Cards[0])
-        //             firstIndex = i;
-        //     }
-        //     if (firstIndex == -1)
-        //         return false;
-
-        //     //Check if the number of remaining elements is too little to possibly equal the 'other' run
-        //     if (firstIndex + other.Count > Count)
-        //         return false;
-
-        //     //Create a new run of the subset and check if each element is identical to the 'other' run
-        //     List<Card> subset = new List<Card>();
-        //     subset.AddRange(Cards.GetRange(firstIndex, other.Count));
-        //     Run subsetRun = new Run(subset);
-        //     return subset.Equals(other);
-        // }
 
         /// <summary>
         /// Check whether the any card in this run is the same as any in the given set
@@ -140,7 +103,7 @@ namespace romme.Cards
                 return false;
 
             //Check if any of the found cards are actually also part of the set
-            return Intersects(matches);
+            return Cards.Intersects(matches);
         }
 
         public override string ToString()

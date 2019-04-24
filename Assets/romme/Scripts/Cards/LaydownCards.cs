@@ -11,7 +11,8 @@ namespace romme.Cards
         public List<Set> Sets { get; private set; }
         public List<Run> Runs { get; private set; }
 
-        public int Count => Sets.Count() + Runs.Count();
+        public int CardCount => Sets.Sum(s => s.Count) + Runs.Sum(r => r.Count);
+        public int PackCount => Sets.Count() + Runs.Count();
         public int Value
         {
             get
@@ -46,16 +47,32 @@ namespace romme.Cards
             Runs.Add(run);
         }
 
-        public void RemoveLastSet()
+        // public void RemoveLastFromSet(Set set)
+        // {
+        //     Sets[Sets.IndexOf(set)].RemoveLastCard();
+        // }
+
+        // public void RemoveLastFromRun(Run run)
+        // {
+        //     Runs[Runs.IndexOf(run)].RemoveLastCard();
+        // }
+
+        public Set RemoveLastSet()
         {
-            if (Sets.Count > 0)
-                Sets.RemoveAt(Sets.Count - 1);
+            if (Sets.Count == 0)
+                return null;
+            Set removedSet = Sets[Sets.Count - 1];
+            Sets.Remove(removedSet);
+            return removedSet;
         }
 
-        public void RemoveLastRun()
+        public Run RemoveLastRun()
         {
-            if (Runs.Count > 0)
-                Runs.RemoveAt(Runs.Count - 1);
+            if (Runs.Count == 0)
+                return null;
+            Run removedRun = Runs[Runs.Count - 1];
+            Runs.Remove(removedRun);
+            return removedRun;
         }
     }
 
