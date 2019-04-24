@@ -23,7 +23,7 @@ namespace romme
         /// Don't animate card movement and set the wait durations to 0 until the given round starts. Used for testing. '0' means no round is skipped
         /// </summary>
         public int SkipUntilRound = 0;
-        private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, tmpGameSpeed;
+        private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, DefaultGameSpeed;
 
         public int MinimumLaySum = 40;
         public int CardsPerPlayer = 13;
@@ -63,13 +63,13 @@ namespace romme
         public TEST_CardServeType CardServeType = TEST_CardServeType.DEFAULT;
 
         private void Start()
-        {
+        {   
+            DefaultGameSpeed = GameSpeed;
             if (SkipUntilRound > 0)
             {
                 AnimateCardMovement = false;
                 tmpPlayerWaitDuration = PlayerWaitDuration;
                 tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
-                tmpGameSpeed = GameSpeed; ;
                 PlayerWaitDuration = 0f;
                 PlayerDrawWaitDuration = 0f;
                 GameSpeed = 4;
@@ -161,7 +161,7 @@ namespace romme
                         AnimateCardMovement = true;
                         PlayerWaitDuration = tmpPlayerWaitDuration;
                         PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
-                        GameSpeed = tmpGameSpeed;
+                        GameSpeed = DefaultGameSpeed;
                     }
                 }
 
@@ -202,6 +202,11 @@ namespace romme
             Tb.I.DiscardStack.ResetStack();
             Players.ForEach(p => p.ResetPlayer());
             Start();
+        }
+
+        public void TogglePause()
+        {
+            GameSpeed = (GameSpeed > 0 ? 0 : DefaultGameSpeed);
         }
 
     }
