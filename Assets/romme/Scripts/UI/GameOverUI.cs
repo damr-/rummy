@@ -23,6 +23,11 @@ namespace romme.UI
             gameOverCanvas.SetActive(true);
             loserCardValue.text = "Loser card value: " + cardValue;
         }
+
+        public void Hide()
+        {
+            gameOverCanvas.SetActive(false);
+        }
     }
 
 }

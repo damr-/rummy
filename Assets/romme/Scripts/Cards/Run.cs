@@ -48,7 +48,7 @@ namespace romme.Cards
         }
 
         public Run(List<Card> cards)
-        {            
+        {
             if (!CardUtil.IsValidRun(cards))
             {
                 string output = "";
@@ -92,6 +92,12 @@ namespace romme.Cards
                 }
             }
             return false;
+        }
+
+        public void RemoveLastCard()
+        {
+            if(Cards.Count > 0)
+                Cards.RemoveAt(Cards.Count - 1);
         }
 
         // public bool Contains(Run other)

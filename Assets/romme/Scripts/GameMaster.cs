@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using romme.Utility;
 using romme.Cards;
 using System.Linq;
@@ -15,9 +16,14 @@ namespace romme
         public float GameSpeed = 1.0f;
         public bool AnimateCardMovement = true;
         public float PlayerWaitDuration = 2f;
-
         public float PlayerDrawWaitDuration = 2f;
         private float drawWaitStartTime;
+
+        /// <summary>
+        /// Don't animate card movement and set the wait durations to 0 until the given round starts. Used for testing. '0' means no round is skipped
+        /// </summary>
+        public int SkipUntilRound = 0;
+        private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, tmpGameSpeed;
 
         public int MinimumLaySum = 40;
         public int CardsPerPlayer = 13;
@@ -58,6 +64,17 @@ namespace romme
 
         private void Start()
         {
+            if(SkipUntilRound > 0)
+            {
+                AnimateCardMovement = false;                
+                tmpPlayerWaitDuration = PlayerWaitDuration;
+                tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
+                tmpGameSpeed = GameSpeed;;
+                PlayerWaitDuration = 0f;
+                PlayerDrawWaitDuration = 0f;
+                GameSpeed = 4;
+            }
+
             Extensions.Seed = Seed;
             Time.timeScale = GameSpeed;
             CardMoveSpeed = DealCardSpeed;
@@ -137,7 +154,16 @@ namespace romme
             if (player.PlayerCardCount > 0)
             {
                 if (currentPlayerID == 0)
+                {
                     RoundCount++;
+                    if(SkipUntilRound > 0 && RoundCount == SkipUntilRound && !AnimateCardMovement) //only do this once
+                    {
+                        AnimateCardMovement = true;
+                        PlayerWaitDuration = tmpPlayerWaitDuration;
+                        PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
+                        GameSpeed = tmpGameSpeed;
+                    }
+                }
 
                 if (Tb.I.CardStack.CardCount == 0)
                 {
@@ -168,6 +194,15 @@ namespace romme
                     otherPlayer = p;
             }
             return otherPlayer;
+        }
+
+        public void RestartGame()
+        {
+            Tb.I.CardStack.ResetStack();
+            Tb.I.DiscardStack.ResetStack();
+            foreach (Player p in Players)
+                p.ResetPlayer();
+            Start();
         }
 
     }

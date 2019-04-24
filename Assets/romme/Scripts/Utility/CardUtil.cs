@@ -125,7 +125,7 @@ namespace romme.Utility
         /// <summary>
         /// Returns all possible sets which can be laid down. Different sets do NOT contain one or more of the same card
         /// </summary>
-        public static List<Set> GetPossibleSets(List<Card> PlayerCards)
+        public static List<Set> GetPossibleSets(List<Card> PlayerCards) //FIXME: This doesn't work 100% correctly (try ONLY_JACKS)
         {
             List<Set> possibleSets = new List<Set>();
             List<KeyValuePair<Card.CardRank, List<Card>>> cardsByRank = new List<KeyValuePair<Card.CardRank, List<Card>>>();

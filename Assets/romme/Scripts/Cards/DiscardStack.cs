@@ -17,9 +17,20 @@ namespace romme.Cards
         public List<Card> RemoveCards()
         {
             List<Card> cards = new List<Card>();
-            while(Cards.Count > 0)
+            while (Cards.Count > 0)
                 cards.Add(Cards.Pop());
             return cards;
+        }
+
+        public void ResetStack()
+        {
+            var cards = RemoveCards();
+            while(cards.Count > 0)
+            {
+                Card c = cards[0];
+                cards.RemoveAt(0);
+                Destroy(c.gameObject);
+            }
         }
     }
 

@@ -147,6 +147,20 @@ namespace romme.Cards
                             (additionalCard.Rank == Card.CardRank.ACE && lowestRank == Card.CardRank.TWO);
             }
         }
+
+        public void ResetSpot()
+        {
+            while(GetCards().Count > 0)
+            {
+                Card c = GetCards()[0];
+                GetCards().RemoveAt(0);
+                Destroy(c.gameObject);
+            }
+            Type = SpotType.NONE;
+            Run = null;
+            Set = null;
+            TypeNoneCards = new List<Card>();
+        }
     }
 
 }

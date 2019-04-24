@@ -45,6 +45,12 @@ namespace romme.Cards
             return true;
         }
 
+        public void RemoveLastCard()
+        {
+            if(Cards.Count > 0)
+                Cards.RemoveAt(Cards.Count - 1);
+        }
+
         public override string ToString()
         {
             string output = "";

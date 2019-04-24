@@ -162,6 +162,16 @@ namespace romme.Cards
             }
             ShuffleCardStack();
         }
+
+        public void ResetStack()
+        {
+            stackCreated = false;
+            while(Cards.Count > 0)
+            {
+                var card = Cards.Pop();
+                Destroy(card.gameObject);
+            }
+        }
     }
 
 }

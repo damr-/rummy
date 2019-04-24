@@ -43,6 +43,7 @@ namespace romme.UI
                 spawnedTaskPanels.RemoveAt(0);
                 Destroy(panel);
             }
+            UpdateViewSize();
         }
 
         private void CreateMessageObj(string message, Color color)
