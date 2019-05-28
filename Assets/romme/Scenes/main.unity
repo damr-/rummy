@@ -1154,7 +1154,7 @@ PrefabInstance:
     - target: {fileID: 8881899960494093267, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 200.00066
+      value: 200.00029
       objectReference: {fileID: 0}
     - target: {fileID: 2768082343147355982, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
@@ -1374,7 +1374,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 485916707}
-        m_MethodName: RestartGame
+        m_MethodName: NextGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1649,12 +1649,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5edbbb4c1dbd84a1cbe6bd7dd8cb955d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Seed: 12232
+  Seed: 12231
   GameSpeed: 1
   AnimateCardMovement: 1
-  PlayerWaitDuration: 1
-  PlayerDrawWaitDuration: 1
+  PlayerWaitDuration: 0.5
+  PlayerDrawWaitDuration: 0.5
   SkipUntilRound: 0
+  EarliestAllowedLaydownRound: 2
   MinimumLaySum: 40
   CardsPerPlayer: 13
   PlayCardSpeed: 100
@@ -1662,7 +1663,7 @@ MonoBehaviour:
   Players:
   - {fileID: 221342174}
   - {fileID: 2039885474}
-  CardServeType: 3
+  CardStackType: 3
   PauseKey: 112
 --- !u!4 &485916708
 Transform:
@@ -3830,7 +3831,7 @@ PrefabInstance:
     - target: {fileID: 8881899960494093267, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 200.00064
+      value: 200.00032
       objectReference: {fileID: 0}
     - target: {fileID: 2768082343147355982, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}

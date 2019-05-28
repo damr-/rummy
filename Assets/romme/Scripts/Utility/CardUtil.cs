@@ -27,7 +27,7 @@ namespace romme.Utility
             }
             return bestValueCombination;
         }
-        
+
         public static void GetPossibleRunCombinations(List<CardCombo> fixedCardsList, List<Run> runs)
         {
             for (int i = 0; i < runs.Count; i++)
@@ -39,7 +39,7 @@ namespace romme.Utility
 
                 if (runs.Count > 1 && i < runs.Count - 1) //Only check for other runs if this is not the last one
                 {
-                    //All the other runs with higher index and wich do not intersect with the fixedRun are to be checked
+                    //All the other runs with higher index and which do not intersect with the fixedRun are to be checked
                     List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - i - 1).Where(run => !run.Intersects(fixedRun)).ToList();
 
                     if (otherRuns.Count > 0)
@@ -69,7 +69,8 @@ namespace romme.Utility
         /// Calculates all possible combinations of card packs that could be laid down.
         /// Stores the result in the passed List<LaydownCards> 'combinations'
         /// </summary>
-        //FIXME: Basically the same as GetPossibleRunCombinations, which should be resolved somehow, sometime...
+        //TODO: Basically the same as GetPossibleRunCombinations, which should be resolved somehow, sometime...maybe
+        //TODO: maybe this can be simplified by passing the currently fixed Cards (compare to GetPossibleRuns/GetRuns)
         public static void GetPossibleCombinations(List<CardCombo> fixedCardsList, List<Set> sets, List<Run> runs)
         {
             //Iterate through all possible combinations of sets
@@ -108,26 +109,6 @@ namespace romme.Utility
                     fixedCardsList.Add(oldEntry); //...this permutation is done. Add new entry for the next one.
                 }
             }
-        }
-
-        /// <summary>
-        /// Returns the first card in PlayerCards which has the same suit and is one rank higher.
-        /// 'firstInRun': whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING
-        /// </summary>
-        /// <returns> The card or null if none was found </returns>
-        public static Card GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
-        {
-            foreach (Card otherCard in PlayerCards)
-            {
-                if (otherCard == card || otherCard.Suit != card.Suit)
-                    continue;
-                //Allow going from ACE to TWO but only if ACE is the first card in the run
-                if (firstInRun && card.Rank == Card.CardRank.ACE && otherCard.Rank == Card.CardRank.TWO)
-                    return otherCard;
-                else if (otherCard.Rank == card.Rank + 1)
-                    return otherCard;
-            }
-            return null;
         }
 
         /// <summary>
@@ -181,37 +162,64 @@ namespace romme.Utility
 
         /// <summary>
         /// Returns all possible runs that could be laid down. 
-        /// Different runs CAN contain one or more of the same card since runs can be of any length > 2s
+        /// Different runs CAN contain one or more of the same card since runs can be of any length > 2
         /// <summary>
         public static List<Run> GetPossibleRuns(this List<Card> PlayerCards)
         {
-            var runs = new List<Run>();
+            var possibleRuns = new List<Run>();
 
             foreach (Card card in PlayerCards)
             {
                 //KING cannot start a run
                 if (card.Rank == Card.CardRank.KING)
                     continue;
-
-                List<Card> run = new List<Card>();
-                Card nextCard = card;
-                bool firstInRun = true;
-
-                do
-                {
-                    run.Add(nextCard);
-
-                    if (run.Count >= 3)
-                    {
-                        Run newRun = new Run(run);
-                        runs.Add(newRun);
-                    }
-                    nextCard = GetCardOneRankHigher(PlayerCards, nextCard, firstInRun);
-                    if (firstInRun)
-                        firstInRun = false;
-                } while (nextCard != null);
+                GetRuns(PlayerCards, possibleRuns, new List<Card>() { card }, true);
             }
-            return runs;
+
+            return possibleRuns;
+        }
+
+        private static void GetRuns(List<Card> PlayerCards, List<Run> runs, List<Card> currentRun, bool firstInRun)
+        {
+            Card card = currentRun.Last();
+            List<Card> higherCards = GetCardOneRankHigher(PlayerCards, card, firstInRun);
+
+            if(firstInRun)
+                firstInRun = false;
+
+            if(higherCards.Count == 0)
+                return;
+
+            foreach (Card c in higherCards)
+            {
+                List<Card> run = new List<Card>(currentRun);
+                run.Add(c);
+                
+                if(run.Count > 2)
+                    runs.Add(new Run(run));
+                GetRuns(PlayerCards, runs, run, firstInRun);
+            }
+        }        
+
+        /// <summary>
+        /// Returns all cards in PlayerCards which have the same suit and are one rank higher than 'card'.
+        /// 'firstInRun': whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING
+        /// </summary>
+        /// <returns> The card or null if none was found </returns>
+        public static List<Card> GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
+        {
+            List<Card> foundCards = new List<Card>();
+            foreach (Card otherCard in PlayerCards)
+            {
+                if (otherCard == card || otherCard.Suit != card.Suit || foundCards.Contains(otherCard))
+                    continue;
+                //Allow going from ACE to TWO but only if ACE is the first card in the run
+                if (firstInRun && card.Rank == Card.CardRank.ACE && otherCard.Rank == Card.CardRank.TWO)
+                    foundCards.Add(otherCard);
+                else if (otherCard.Rank == card.Rank + 1)
+                    foundCards.Add(otherCard);
+            }
+            return foundCards;
         }
 
         public static bool IsValidRun(List<Card> cards)

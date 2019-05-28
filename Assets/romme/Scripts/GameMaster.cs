@@ -25,6 +25,7 @@ namespace romme
         public int SkipUntilRound = 0;
         private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, DefaultGameSpeed;
 
+        public int EarliestAllowedLaydownRound = 2;
         public int MinimumLaySum = 40;
         public int CardsPerPlayer = 13;
 
@@ -53,14 +54,7 @@ namespace romme
         public IObservable<int> GameOver { get { return gameOver; } }
         private readonly ISubject<int> gameOver = new Subject<int>();
 
-        public enum TEST_CardServeType
-        {
-            DEFAULT = 0,
-            NO_JOKER = 1,
-            ONLY_JACKS = 2,
-            ONLY_HEARTS = 3
-        }
-        public TEST_CardServeType CardServeType = TEST_CardServeType.DEFAULT;
+        public CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
         
         public KeyCode PauseKey = KeyCode.P;
 
@@ -82,22 +76,9 @@ namespace romme
             CardMoveSpeed = DealCardSpeed;
             RoundCount = 1;
 
-            switch (CardServeType)
-            {
-                case TEST_CardServeType.DEFAULT:
-                    Tb.I.CardStack.CreateCardStack();
-                    break;
-                case TEST_CardServeType.NO_JOKER:
-                    Tb.I.CardStack.CreateCardStackNoJoker();
-                    break;
-                case TEST_CardServeType.ONLY_JACKS:
-                    Tb.I.CardStack.TEST_CreateJackCardStack();
-                    break;
-                default: // TEST_CardServeType.ONLY_HEARTS:
-                    Tb.I.CardStack.TEST_CreateHeartCardStack();
-                    break;
-            }
-            Tb.I.CardStack.ShuffleCardStack();
+            Tb.I.CardStack.CreateCardStack(CardStackType);
+            if(CardStackType != CardStack.CardStackType.CUSTOM)
+                Tb.I.CardStack.ShuffleCardStack();
 
             if (Players.Count == 0)
                 Debug.LogError("Missing player references in " + gameObject.name);

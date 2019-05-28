@@ -13,14 +13,17 @@ namespace romme.Cards
         private Stack<Card> Cards = new Stack<Card>();
         private bool stackCreated;
 
-        public void CreateCardStack()
+        public enum CardStackType
         {
-            if(stackCreated)
-            {
-                Debug.LogWarning("Tried to create a stack but there already is one!");
-                return;
-            }
+            DEFAULT = 0,
+            NO_JOKER = 1,
+            ONLY_JACKS = 2,
+            ONLY_HEARTS = 3,
+            CUSTOM = 4
+        }
 
+        private void CreateCardStack()
+        {
             //Spawn two decks of cards
             for (int i = 0; i < 2; i++)
             {
@@ -32,30 +35,14 @@ namespace romme.Cards
                         //so we only have one red and one black joker
                         if ((Card.CardRank)rank == Card.CardRank.JOKER && suit % 2 != 1)
                             continue;
-
-                        GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
-                        Card card = CardGO.GetComponent<Card>();
-                        card.Rank = (Card.CardRank)rank;
-                        card.Suit = (Card.CardSuit)suit;
-                        Cards.Push(card);
+                        CreateCard((Card.CardRank)rank, (Card.CardSuit)suit);
                     }
                 }
             }
-
-            foreach (Card card in Cards)
-                card.SetVisible(false);
-
-            stackCreated = true;
         }
 
-        public void CreateCardStackNoJoker()
+        private void CreateCardStackNoJoker()
         {
-            if(stackCreated)
-            {
-                Debug.LogWarning("Tried to create a stack but there already is one!");
-                return;
-            }
-
             //Spawn two decks of cards
             for (int i = 0; i < 2; i++)
             {
@@ -66,12 +53,7 @@ namespace romme.Cards
                         //No Joker cards
                         if ((Card.CardRank)rank == Card.CardRank.JOKER)
                             continue;
-
-                        GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
-                        Card card = CardGO.GetComponent<Card>();
-                        card.Rank = (Card.CardRank)rank;
-                        card.Suit = (Card.CardSuit)suit;
-                        Cards.Push(card);
+                        CreateCard((Card.CardRank)rank, (Card.CardSuit)suit);
                     }
                 }
             }
@@ -82,40 +64,19 @@ namespace romme.Cards
             stackCreated = true;
         }
 
-        public void TEST_CreateJackCardStack()
+        private void TEST_CreateJackCardStack()
         {
-            if(stackCreated)
-            {
-                Debug.LogWarning("Tried to create a stack but there already is one!");
-                return;
-            }
-
             for (int i = 0; i < 2*Card.CardRankCount; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
-                    GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
-                    Card card = CardGO.GetComponent<Card>();
-                    card.Rank = Card.CardRank.JACK;
-                    card.Suit = (Card.CardSuit)suit;
-                    Cards.Push(card);
+                    CreateCard(Card.CardRank.JACK, (Card.CardSuit)suit);
                 }
             }
-
-            foreach (Card card in Cards)
-                card.SetVisible(false);
-
-            stackCreated = true;
         }
 
-        public void TEST_CreateHeartCardStack()
+        private void TEST_CreateHeartCardStack()
         {
-            if(stackCreated)
-            {
-                Debug.LogWarning("Tried to create a stack but there already is one!");
-                return;
-            }
-
             for (int i = 0; i < 2*Card.CardSuitCount; i++)
             {
                 for (int rank = 1; rank <= Card.CardRankCount; rank++)
@@ -123,19 +84,76 @@ namespace romme.Cards
                     //Don't create jokers
                     if ((Card.CardRank)rank == Card.CardRank.JOKER)
                         continue;
-
-                    GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
-                    Card card = CardGO.GetComponent<Card>();
-                    card.Rank = (Card.CardRank)rank;
-                    card.Suit = Card.CardSuit.HEART;
-                    Cards.Push(card);
+                    CreateCard((Card.CardRank)rank, Card.CardSuit.HEART);
                 }
+            }
+        }
+        
+        private void TEST_CreateCustomStack()
+        {
+            for(int i = 0; i < 100; i++)
+                CreateCard(Card.CardRank.JOKER, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            // CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            // CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
+        }
+
+        public void CreateCardStack(CardStackType cardServeType)
+        {
+            if(stackCreated)
+            {
+                Debug.LogWarning("Tried to create a stack but there already is one!");
+                return;
+            }
+
+            switch (cardServeType)
+            {
+                case CardStackType.DEFAULT:
+                    Tb.I.CardStack.CreateCardStack();
+                    break;
+                case CardStackType.NO_JOKER:
+                    Tb.I.CardStack.CreateCardStackNoJoker();
+                    break;
+                case CardStackType.ONLY_JACKS:
+                    Tb.I.CardStack.TEST_CreateJackCardStack();
+                    break;
+                case CardStackType.ONLY_HEARTS:
+                    Tb.I.CardStack.TEST_CreateHeartCardStack();
+                    break;
+                default: // TEST_CardServeType.CUSTOM
+                    Tb.I.CardStack.TEST_CreateCustomStack();
+                    break;
             }
 
             foreach (Card card in Cards)
                 card.SetVisible(false);
-
             stackCreated = true;
+        }
+
+        private void CreateCard(Card.CardRank rank, Card.CardSuit suit)
+        {
+            GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
+            Card card = CardGO.GetComponent<Card>();
+            card.Rank = rank;
+            card.Suit = suit;
+            Cards.Push(card);
         }
         
         public void ShuffleCardStack()

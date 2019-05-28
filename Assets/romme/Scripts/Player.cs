@@ -106,13 +106,28 @@ namespace romme
             {
                 playerState = PlayerState.PLAYING;
 
-                //If it's the first round, if there's nothing to lay down or the points are not enough...
-                if (Tb.I.GameMaster.RoundCount == 1 ||
-                    ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || 
-                    !hasLaidDown))
-                    DiscardUnusableCard(); //...discard a card and end the turn
+                if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !hasLaidDown)
+                {
+                    DiscardUnusableCard();
+                }
                 else
-                    StartLayingCards();
+                {
+                    laydownCards.Sets.ForEach(set => Debug.Log("Laying down set: " + set));
+                    laydownCards.Runs.ForEach(run => Debug.Log("Laying down run: " + run));
+
+                    playerState = PlayerState.LAYING;
+                    isCardBeingLaidDown = false;
+                    currentCardPackIdx = 0;
+                    currentCardIdx = 0;
+                    layStage = LayStage.SETS;
+
+                    if (laydownCards.Sets.Count == 0)
+                    {
+                        layStage = LayStage.RUNS;
+                        if (laydownCards.Runs.Count == 0)
+                            LayingCardsDone();
+                    }
+                }
             }
 
             if (playerState == PlayerState.LAYING)
@@ -122,14 +137,14 @@ namespace romme
 
                 isCardBeingLaidDown = true;
 
-                if (currentCardSpot == null && layStage != LayStage.SINGLES)
+                if (layStage == LayStage.SINGLES)
+                {
+                    currentCardSpot = singleLayDownCards[currentCardIdx].Value;
+                }
+                else if(currentCardSpot == null)
                 {
                     currentCardSpot = GetEmptyCardSpot();
                     currentCardSpot.Type = (layStage == LayStage.RUNS) ? CardSpot.SpotType.RUN : CardSpot.SpotType.SET;
-                }
-                else if (layStage == LayStage.SINGLES) //For singles, the corresponding card spot is stored in 'singleLayDownCards'
-                {
-                    currentCardSpot = singleLayDownCards[currentCardIdx].Value;
                 }
 
                 Card card;
@@ -147,7 +162,6 @@ namespace romme
                 }
 
                 HandCardSpot.RemoveCard(card);
-                // Debug.Log("Laying down " + card);
                 cardMoveSubscription = card.MoveFinished.Subscribe(CardLayDownMoveFinished);
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
             }
@@ -168,7 +182,7 @@ namespace romme
             {
                 // Check if we want to draw from discard stack
                 //          Note that every player always makes sure not to discard a
-                //          card which can be added to an existing, laid-down card pack.
+                //          card which can be added to an already laid-down card pack.
                 //          Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.GetCards());
@@ -205,7 +219,7 @@ namespace romme
             else
             {
                 //As soon as the card was drawn, figure out the cards (BEFORE waiting)
-                FigureOutCards();
+                FindLaydownCombos();
 
                 playerState = PlayerState.WAITING;
                 waitStartTime = Time.time;
@@ -230,7 +244,7 @@ namespace romme
             return CardUtil.GetHighestValueCombination(combinations);
         }
 
-        private void FigureOutCards()
+        private void FindLaydownCombos()
         {
             #region Joker
             //TODO: Get possible runs with joker cards and choose which RUN or SET to play
@@ -270,11 +284,14 @@ namespace romme
             if (!hasLaidDown)
                 hasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
+            //At least one card must remain when laying down
+            if (hasLaidDown && laydownCards.CardCount == HandCardSpot.GetCards().Count)
+                KeepOneCard();
+        }
+
+        private bool FindSingleLaydownCards()
+        {
             singleLayDownCards = new List<KeyValuePair<Card, CardSpot>>();
-            //Always check for single laydown cards, even if we are not allowed to lay down yet
-            //This allows us to keep single cards which can later be added to one of the
-            // opponent's laid down card packs as soon as we are allowed to lay own
-            //While there can be cards laid down to existing spots, check an additional time
             bool canFitCard = false;
             var reservedSpots = new List<KeyValuePair<CardSpot, List<Card>>>();
 
@@ -285,8 +302,6 @@ namespace romme
             foreach (var run in laydownCards.Runs)
                 availableCards = availableCards.Except(run.Cards).ToList();
 
-            //FIXME: What if - e.g. - a single 10 will be added to a 7-8-9 run but the player also has a Jack
-            //will he lay down the Jack too in this turn?
             //Find single cards which fit with already lying cards
             do
             {
@@ -307,7 +322,7 @@ namespace romme
                         if (!cardSpot.CanFit(card))
                             continue;
 
-                        //Find all entries which will fill the current cardspot
+                        //Find all single cards which will be added to the current cardspot
                         var plannedMoves = singleLayDownCards.Where(kvp => kvp.Value == cardSpot).ToList();
                         bool alreadyPlanned = false;
                         foreach (var entry in plannedMoves)
@@ -329,14 +344,7 @@ namespace romme
                     }
                 }
             } while (canFitCard);
-
-            //If there's nothing to lay down or the points are not enough, stop thinking about laying cards
-            if ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || !hasLaidDown)
-                return;
-
-            //At least one card must remain when laying down
-            if(laydownCards.CardCount + singleLayDownCards.Count == HandCardSpot.GetCards().Count)
-                KeepOneCard();
+            return singleLayDownCards.Count > 0;
         }
 
         /// <summary>
@@ -416,34 +424,6 @@ namespace romme
             }
         }
 
-        private void StartLayingCards()
-        {
-            //Lay down all possible cards
-            laydownCards.Sets.ForEach(set => Debug.Log("Laying down set: " + set));
-            laydownCards.Runs.ForEach(run => Debug.Log("Laying down run: " + run));
-
-            if (singleLayDownCards.Count > 0)
-            {
-                string singlesOutput = "";
-                singleLayDownCards.ForEach(c => singlesOutput += "[" + c.Key + ":" + c.Value.gameObject.name + "], ");
-                Debug.Log("Laying down singles: " + singlesOutput.TrimEnd().TrimEnd(','));
-            }
-
-            currentCardPackIdx = 0;
-            currentCardIdx = 0;
-
-            layStage = LayStage.SETS;
-            if (laydownCards.Sets.Count == 0)
-            {
-                layStage = LayStage.RUNS;
-                if (laydownCards.Runs.Count == 0)
-                    layStage = LayStage.SINGLES;
-            }
-
-            isCardBeingLaidDown = false;
-            playerState = PlayerState.LAYING;
-        }
-
         private void CardLayDownMoveFinished(Card card)
         {
             cardMoveSubscription.Dispose();
@@ -467,32 +447,61 @@ namespace romme
                     break;
             }
 
-            if (currentCardIdx == cardCount - 1)
+            if(currentCardIdx < cardCount - 1)
             {
-                currentCardIdx = 0;
-                currentCardPackIdx++;
-                currentCardSpot = null;     //Find a new spot for the next set or run of cards
+                currentCardIdx++;
+                return;
+            }
 
-                if (currentCardPackIdx == cardPackCount)
-                {
-                    // End turn if all singles have been laid down
-                    // or if the runs are finished and there are no singles to lay down
-                    // or if the sets are finished and there are no runs or singles to lay down
-                    if (layStage == LayStage.SINGLES ||
-                        (layStage == LayStage.RUNS && singleLayDownCards.Count == 0) ||
-                        (layStage == LayStage.SETS && laydownCards.Runs.Count == 0 && singleLayDownCards.Count == 0))
-                    {
-                        DiscardUnusableCard();
-                    }
-                    else// Start laying the next cards otherwise
-                    {
-                        currentCardPackIdx = 0;
-                        layStage = (layStage == LayStage.SETS) ? LayStage.RUNS : LayStage.SINGLES;
-                    }
-                }
+            //Last card of the current pack has been laid
+            currentCardIdx = 0;
+            currentCardPackIdx++;
+            currentCardSpot = null;     //Find a new spot for the next set or run of cards
+
+            if (currentCardPackIdx < cardPackCount)
+                return;
+
+            //Everything has been laid down
+            if (layStage == LayStage.SINGLES ||
+                layStage == LayStage.RUNS ||
+                (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
+            {
+                LayingCardsDone();
+            }
+            else //Start laying runs otherwise
+            {
+                currentCardPackIdx = 0;
+                layStage = LayStage.RUNS;
+            }
+        }
+
+        private void LayingCardsDone()
+        {
+            //With only one card left, just end the game
+            if(HandCardSpot.GetCards().Count == 1)
+            {
+                DiscardUnusableCard();
+                return;
+            }
+
+            //Check if there are any singles to lay down
+            if (FindSingleLaydownCards())
+            {
+                if (singleLayDownCards.Count == HandCardSpot.GetCards().Count)
+                    KeepOneCard();
+            }
+
+            if(singleLayDownCards.Count > 0)
+            {                
+                string msg = "";
+                singleLayDownCards.ForEach(c => msg += "[" + c.Key + ":" + c.Value.gameObject.name + "], ");
+                Debug.Log("Laying down singles: " + msg.TrimEnd().TrimEnd(','));
+                
+                currentCardIdx = 0;
+                layStage = LayStage.SINGLES;
             }
             else
-                currentCardIdx++;
+                DiscardUnusableCard();
         }
 
         private void DiscardUnusableCard()
@@ -517,6 +526,7 @@ namespace romme
                 //This is only important for the following scenario:
                 //      Imagine that a player might not have laid cards yet but still want to keep a card 
                 //      which they want to add to their opponent's card stack once they have laid cards down
+                FindSingleLaydownCards();
                 var singleCards = new List<Card>();
                 foreach(var entry in singleLayDownCards)
                     singleCards.Add(entry.Key);
