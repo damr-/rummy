@@ -27,7 +27,7 @@ namespace romme.Utility
             }
             return bestValueCombination;
         }
-
+        
         public static void GetPossibleRunCombinations(List<LaydownCards> fixedCardsList, List<Run> runs)
         {
             for (int i = 0; i < runs.Count; i++)
@@ -67,9 +67,9 @@ namespace romme.Utility
 
         /// <summary>
         /// Calculates all possible combinations of card packs that could be laid down.
-        /// Stores the result in the passed List<LaydownCards> combinations
+        /// Stores the result in the passed List<LaydownCards> 'combinations'
         /// </summary>
-        //FIXME: Is this not basically the same as GetPossibleRunCombinations? maybe make <T> functions
+        //FIXME: Basically the same as GetPossibleRunCombinations, which should be resolved somehow, sometime...
         public static void GetPossibleCombinations(List<LaydownCards> fixedCardsList, List<Set> sets, List<Run> runs)
         {
             //Iterate through all possible combinations of sets
@@ -87,7 +87,7 @@ namespace romme.Utility
                 if (sets.Count > 1 && i < sets.Count - 1) //All the other sets with higher index are to be checked 
                 {
                     //Only sets which don't intersect the fixed one are possible combinations
-                    List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Cards.Intersects(fixedSet.Cards)).ToList();
+                    List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Intersects(fixedSet)).ToList();
 
                     if (otherSets.Count > 0)
                     {

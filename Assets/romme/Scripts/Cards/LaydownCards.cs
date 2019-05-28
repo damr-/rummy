@@ -47,16 +47,6 @@ namespace romme.Cards
             Runs.Add(run);
         }
 
-        // public void RemoveLastFromSet(Set set)
-        // {
-        //     Sets[Sets.IndexOf(set)].RemoveLastCard();
-        // }
-
-        // public void RemoveLastFromRun(Run run)
-        // {
-        //     Runs[Runs.IndexOf(run)].RemoveLastCard();
-        // }
-
         public Set RemoveLastSet()
         {
             if (Sets.Count == 0)

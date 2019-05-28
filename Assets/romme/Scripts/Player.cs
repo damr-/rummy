@@ -288,13 +288,13 @@ namespace romme
             //Find single cards which fit with already lying cards
             do
             {
-                var tmpCardSpots = new List<CardSpot>(GetPlayerCardSpots());
+                var cardSpots = new List<CardSpot>(GetPlayerCardSpots());
                 var otherPlayerCardSpots = Tb.I.GameMaster.GetOtherPlayer(this).GetPlayerCardSpots();
-                tmpCardSpots.AddRange(otherPlayerCardSpots);
+                cardSpots.AddRange(otherPlayerCardSpots);
 
                 canFitCard = false;
 
-                foreach (CardSpot cardSpot in tmpCardSpots)
+                foreach (CardSpot cardSpot in cardSpots)
                 {
                     foreach (Card card in availableCards)
                     {

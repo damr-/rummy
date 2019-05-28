@@ -6,11 +6,9 @@ using romme.Utility;
 
 namespace romme.Cards
 {
-    public class Run
+    public class Run : Pack
     {
         public Card.CardSuit Suit { get; private set; }
-        public List<Card> Cards { get; private set; }
-        public int Count => Cards.Count;
         public int Value
         {
             get
@@ -47,7 +45,6 @@ namespace romme.Cards
             }
         }
 
-        //FIXME: This class is very similar to Set.cs, maybe make mutual parent class for common functions?!?!?!!!!
         public Run(List<Card> cards)
         {
             if (!CardUtil.IsValidRun(cards))
@@ -62,35 +59,7 @@ namespace romme.Cards
             Cards.AddRange(cards);
             Suit = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Suit : Cards[1].Suit;            
         }
-
-        public bool Equal(Run other)
-        {
-            if (Count != other.Count)
-                return false;
-
-            for (int i = 0; i < Count; i++)
-            {
-                for (int j = 0; j < other.Count; j++)
-                {
-                    if (Cards[i] != other.Cards[j])
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool Intersects(Run other) => Cards.Intersects(other.Cards);
-
-        public Card RemoveLastCard()
-        {            
-            if (Cards.Count == 0)
-                return null;
-            Card card = Cards[Cards.Count - 1];
-            Cards.Remove(card);
-            return card;
-        }
-
+        
         /// <summary>
         /// Check whether the any card in this run is the same as any in the given set
         /// </summary>
@@ -106,13 +75,6 @@ namespace romme.Cards
             return Cards.Intersects(matches);
         }
 
-        public override string ToString()
-        {
-            string output = "";
-            foreach (var card in Cards)
-                output += card + " ";
-            return output.TrimEnd();
-        }
     }
 
 }

@@ -6,11 +6,10 @@ using romme.Utility;
 
 namespace romme.Cards
 {
-    public class Set
+    public class Set : Pack
     {
         public Card.CardRank Rank { get; private set; }
-        public List<Card> Cards { get; private set; }
-        public int Count => Cards.Count;
+
         //If the first card is a joker take the value of the second card times the number of cards
         public int Value => Cards.Count * (Cards[0].Rank != Card.CardRank.JOKER ? Cards[0].Value() : Cards[1].Value());
 
@@ -26,42 +25,6 @@ namespace romme.Cards
             Cards = new List<Card>() { };
             Cards.AddRange(cards);
             Rank = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Rank : Cards[1].Rank;
-        }
-        
-        public bool Intersects(Set other) => Cards.Intersects(other.Cards);
-
-        public bool Equal(Set other)
-        {
-            if (Count != other.Count)
-                return false;
-
-            for (int i = 0; i < Count; i++)
-            {
-                for (int j = 0; j < other.Count; j++)
-                {
-                    if (Cards[i] != other.Cards[j])
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
-        public Card RemoveLastCard()
-        {
-            if (Cards.Count == 0)
-                return null;
-            Card card = Cards[Cards.Count - 1];
-            Cards.Remove(card);
-            return card;
-        }
-
-        public override string ToString()
-        {
-            string output = "";
-            foreach (Card card in Cards)
-                output += card + " ";
-            return output.TrimEnd();
         }
     }
 }

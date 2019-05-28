@@ -61,9 +61,11 @@ namespace romme
             ONLY_HEARTS = 3
         }
         public TEST_CardServeType CardServeType = TEST_CardServeType.DEFAULT;
+        
+        public KeyCode PauseKey = KeyCode.P;
 
         private void Start()
-        {   
+        {
             DefaultGameSpeed = GameSpeed;
             if (SkipUntilRound > 0)
             {
@@ -106,6 +108,9 @@ namespace romme
 
         private void Update()
         {
+            if(Input.GetKeyDown(PauseKey))
+                TogglePause();
+
             if (Mathf.Abs(Time.timeScale - GameSpeed) > Mathf.Epsilon)
                 Time.timeScale = GameSpeed;
 
