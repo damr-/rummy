@@ -142,8 +142,9 @@ namespace romme.Cards
                         return false;
                     var highestRank = GetCards()[GetCards().Count - 1].Rank;
                     var lowestRank = GetCards()[0].Rank;
-                    return (additionalCard.Rank == highestRank + 1) || 
-                            (additionalCard.Rank == lowestRank - 1) || 
+
+                    return (additionalCard.Rank == highestRank + 1 && highestRank != Card.CardRank.ACE) || 
+                            (additionalCard.Rank == lowestRank - 1 && lowestRank != Card.CardRank.ACE) || 
                             (additionalCard.Rank == Card.CardRank.ACE && lowestRank == Card.CardRank.TWO);
             }
         }

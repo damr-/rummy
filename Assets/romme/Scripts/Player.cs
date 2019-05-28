@@ -285,6 +285,8 @@ namespace romme
             foreach (var run in laydownCards.Runs)
                 availableCards = availableCards.Except(run.Cards).ToList();
 
+            //FIXME: What if - e.g. - a single 10 will be added to a 7-8-9 run but the player also has a Jack
+            //will he lay down the Jack too in this turn?
             //Find single cards which fit with already lying cards
             do
             {

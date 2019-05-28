@@ -209,6 +209,12 @@ namespace romme
             Start();
         }
 
+        public void NextGame()
+        {
+            Seed += 1;
+            RestartGame();
+        }
+
         public void TogglePause()
         {
             GameSpeed = (GameSpeed > 0 ? 0 : DefaultGameSpeed);
