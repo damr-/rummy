@@ -23,14 +23,14 @@ namespace romme.UI
             Player.PossibleCardCombosChanged.Subscribe(UpdateCombos);
         }
 
-        private void UpdateCombos(List<LaydownCards> cardCombos)
+        private void UpdateCombos(List<CardCombo> cardCombos)
         {
             outputView.ClearMessages();
             if(cardCombos.Count == 0)
                 return;
 
             outputView.PrintMessage(new ScrollView.Message("Possibilities:"));
-            foreach (LaydownCards possibility in cardCombos)
+            foreach (CardCombo possibility in cardCombos)
             {
                 if (possibility.PackCount == 0)
                     continue;
@@ -45,8 +45,8 @@ namespace romme.UI
                 {
                     foreach (Run run in possibility.Runs)
                         msg += run + ", ";
-                    msg = msg.TrimEnd().TrimEnd(',');
                 }
+                msg = msg.TrimEnd().TrimEnd(',');
                 msg += " (" + possibility.Value + ")";
                 outputView.PrintMessage(new ScrollView.Message(msg));
             }

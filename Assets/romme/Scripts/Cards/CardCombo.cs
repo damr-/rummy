@@ -6,7 +6,7 @@ using UnityEngine;
 namespace romme.Cards
 {
 
-    public class LaydownCards
+    public class CardCombo
     {
         public List<Set> Sets { get; private set; }
         public List<Run> Runs { get; private set; }
@@ -24,9 +24,9 @@ namespace romme.Cards
             }
         }
 
-        public LaydownCards() : this(new List<Set>(), new List<Run>()) { }
-        public LaydownCards(LaydownCards other) : this(other.Sets, other.Runs) { }
-        public LaydownCards(List<Set> sets, List<Run> runs)
+        public CardCombo() : this(new List<Set>(), new List<Run>()) { }
+        public CardCombo(CardCombo other) : this(other.Sets, other.Runs) { }
+        public CardCombo(List<Set> sets, List<Run> runs)
         {
             Sets = new List<Set>();
             Runs = new List<Run>();

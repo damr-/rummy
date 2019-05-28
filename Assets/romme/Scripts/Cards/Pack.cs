@@ -27,7 +27,7 @@ namespace romme.Cards
                 output += card + " ";
             return output.TrimEnd();
         }
-
+        
         public bool Intersects(Pack other) => Cards.Intersects(other.Cards);
 
         public bool Equal(Pack other)

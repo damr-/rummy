@@ -26,5 +26,6 @@ namespace romme.Cards
             Cards.AddRange(cards);
             Rank = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Rank : Cards[1].Rank;
         }
+        
     }
 }

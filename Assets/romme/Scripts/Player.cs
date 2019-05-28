@@ -47,7 +47,7 @@ namespace romme
         private List<Set> possibleSets = new List<Set>();
         private List<Run> possibleRuns = new List<Run>();
         // private List<KeyValuePair<Card.CardRank, List<Card>>> possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
-        private LaydownCards laydownCards = new LaydownCards();
+        private CardCombo laydownCards = new CardCombo();
         private List<KeyValuePair<Card, CardSpot>> singleLayDownCards = new List<KeyValuePair<Card, CardSpot>>();
         private int currentCardPackIdx = 0, currentCardIdx = 0;
 
@@ -74,8 +74,8 @@ namespace romme
         public IObservable<Player> TurnFinished { get { return turnFinishedSubject; } }
         private readonly ISubject<Player> turnFinishedSubject = new Subject<Player>();
 
-        public IObservable<List<LaydownCards>> PossibleCardCombosChanged { get { return possibleCardCombos; } }
-        private readonly ISubject<List<LaydownCards>> possibleCardCombos = new Subject<List<LaydownCards>>();
+        public IObservable<List<CardCombo>> PossibleCardCombosChanged { get { return possibleCardCombos; } }
+        private readonly ISubject<List<CardCombo>> possibleCardCombos = new Subject<List<CardCombo>>();
 
         private void AddCard(Card card)
         {
@@ -90,7 +90,7 @@ namespace romme
             playerState = PlayerState.IDLE;
             GetPlayerCardSpots().ForEach(spot => spot.ResetSpot());
             HandCardSpot.ResetSpot();
-            possibleCardCombos.OnNext(new List<LaydownCards>());
+            possibleCardCombos.OnNext(new List<CardCombo>());
         }
 
         private void Start()
@@ -108,7 +108,8 @@ namespace romme
 
                 //If it's the first round, if there's nothing to lay down or the points are not enough...
                 if (Tb.I.GameMaster.RoundCount == 1 ||
-                    ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || !hasLaidDown))
+                    ((laydownCards.PackCount == 0 && singleLayDownCards.Count == 0) || 
+                    !hasLaidDown))
                     DiscardUnusableCard(); //...discard a card and end the turn
                 else
                     StartLayingCards();
@@ -211,21 +212,20 @@ namespace romme
             }
         }
 
-        private LaydownCards GetBestCardCombo(List<Set> sets, List<Run> runs, bool broadCastPossibleCombos = false)
+        private CardCombo GetBestCardCombo(List<Set> sets, List<Run> runs, bool broadCastPossibleCombos = false)
         {
-            var combinations = new List<LaydownCards>() { new LaydownCards() };
+            var combinations = new List<CardCombo>() { new CardCombo() };
             CardUtil.GetPossibleCombinations(combinations, sets, runs);
 
             if (combinations.Last().PackCount > 0)
-                combinations.Add(new LaydownCards());
+                combinations.Add(new CardCombo());
             //Check the possible runs when no sets are fixed
             CardUtil.GetPossibleRunCombinations(combinations, runs);
 
             combinations = combinations.Where(ldc => ldc.PackCount > 0).ToList();
             
-            //FIXME: think about adding singles to LaydownCard class!
-            if(broadCastPossibleCombos) //FIXME: Also broadcast single laydown cards to print on screen!
-                possibleCardCombos.OnNext(new List<LaydownCards>(combinations));
+            if(broadCastPossibleCombos)
+                possibleCardCombos.OnNext(new List<CardCombo>(combinations));
 
             return CardUtil.GetHighestValueCombination(combinations);
         }
@@ -497,24 +497,32 @@ namespace romme
         {
             playerState = PlayerState.DISCARDING;
 
+            Card card;
+
             //Get all player cards except the ones which will be laid down as sets or runs
             List<Card> possibleDiscards = new List<Card>(HandCardSpot.GetCards());
-            foreach (var run in possibleRuns)
-                possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
-            foreach (var set in possibleSets)
-                possibleDiscards = possibleDiscards.Except(set.Cards).ToList();
-            
-            //Single cards which will be laid down also have to be excluded
-            //This is only important for the following scenario:
-            //      Imagine that a player might not have laid cards yet but still want to keep a card 
-            //      which they want to add to their opponent's card stack once they have laid cards down
-            var singleCards = new List<Card>();
-            foreach(var entry in singleLayDownCards)
-                singleCards.Add(entry.Key);
-            possibleDiscards = possibleDiscards.Except(singleCards).ToList();            
+
+            //If the player laid down already, no runs, sets or singles are left on the hand
+            //And the following check will be skipped
+            if(!hasLaidDown)
+            {
+                foreach (var run in possibleRuns)
+                    possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
+                foreach (var set in possibleSets)
+                    possibleDiscards = possibleDiscards.Except(set.Cards).ToList();
+                
+                //Single cards which will be laid down also have to be excluded
+                //This is only important for the following scenario:
+                //      Imagine that a player might not have laid cards yet but still want to keep a card 
+                //      which they want to add to their opponent's card stack once they have laid cards down
+                var singleCards = new List<Card>();
+                foreach(var entry in singleLayDownCards)
+                    singleCards.Add(entry.Key);
+                possibleDiscards = possibleDiscards.Except(singleCards).ToList();
+            }
 
             //Randomly choose a card to discard
-            Card card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
+            card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
 
             //In case any discardable card is not a Joker, make sure the discarded one is NOT a Joker
             if (possibleDiscards.Any(c => c.Rank != Card.CardRank.JOKER))

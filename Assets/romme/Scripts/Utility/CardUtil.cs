@@ -9,11 +9,11 @@ namespace romme.Utility
 
     public static class CardUtil
     {
-        public static LaydownCards GetHighestValueCombination(List<LaydownCards> combinations)
+        public static CardCombo GetHighestValueCombination(List<CardCombo> combinations)
         {
-            LaydownCards bestValueCombination = new LaydownCards();
+            CardCombo bestValueCombination = new CardCombo();
             int curVal = 0, highestVal = 0;
-            foreach (LaydownCards possibility in combinations)
+            foreach (CardCombo possibility in combinations)
             {
                 if (possibility.PackCount == 0)
                     continue;
@@ -22,17 +22,17 @@ namespace romme.Utility
                 if (curVal > highestVal)
                 {
                     highestVal = curVal;
-                    bestValueCombination = new LaydownCards(possibility);
+                    bestValueCombination = new CardCombo(possibility);
                 }
             }
             return bestValueCombination;
         }
         
-        public static void GetPossibleRunCombinations(List<LaydownCards> fixedCardsList, List<Run> runs)
+        public static void GetPossibleRunCombinations(List<CardCombo> fixedCardsList, List<Run> runs)
         {
             for (int i = 0; i < runs.Count; i++)
             {
-                var oldEntry = new LaydownCards(fixedCardsList.Last()); //Store the list of runs until now
+                var oldEntry = new CardCombo(fixedCardsList.Last()); //Store the list of runs until now
 
                 var fixedRun = runs[i];
                 fixedCardsList.Last().AddRun(fixedRun);    //Add the newly fixed run            
@@ -45,7 +45,7 @@ namespace romme.Utility
                     if (otherRuns.Count > 0)
                     {
                         //This fixed run alone is also a possibility
-                        var newEntry = new LaydownCards(fixedCardsList.Last());
+                        var newEntry = new CardCombo(fixedCardsList.Last());
                         fixedCardsList.Add(newEntry);
 
                         GetPossibleRunCombinations(fixedCardsList, otherRuns);
@@ -70,12 +70,12 @@ namespace romme.Utility
         /// Stores the result in the passed List<LaydownCards> 'combinations'
         /// </summary>
         //FIXME: Basically the same as GetPossibleRunCombinations, which should be resolved somehow, sometime...
-        public static void GetPossibleCombinations(List<LaydownCards> fixedCardsList, List<Set> sets, List<Run> runs)
+        public static void GetPossibleCombinations(List<CardCombo> fixedCardsList, List<Set> sets, List<Run> runs)
         {
             //Iterate through all possible combinations of sets
             for (int i = 0; i < sets.Count; i++)
             {
-                var oldEntry = new LaydownCards(fixedCardsList.Last()); //Store the list of sets until now
+                var oldEntry = new CardCombo(fixedCardsList.Last()); //Store the list of sets until now
 
                 var fixedSet = sets[i]; //Assume we lay down the current set
                 fixedCardsList.Last().AddSet(fixedSet); //The fixed list of set has to include the new one
@@ -92,7 +92,7 @@ namespace romme.Utility
                     if (otherSets.Count > 0)
                     {
                         //This fixed set alone is also a possibility
-                        var newEntry = new LaydownCards(fixedCardsList.Last());
+                        var newEntry = new CardCombo(fixedCardsList.Last());
                         fixedCardsList.Add(newEntry);
 
                         GetPossibleCombinations(fixedCardsList, otherSets, possibleRuns);
