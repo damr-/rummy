@@ -64,6 +64,46 @@ namespace romme.Cards
             Runs.Remove(removedRun);
             return removedRun;
         }
+
+        public override string ToString()
+        {
+            string output = "";
+            Sets.ForEach(s => output += s + ", ");
+            Runs.ForEach(r => output += r + ", ");
+            return output.TrimEnd().TrimEnd(',');
+        }
+
+        ///<summary>
+        /// Returns whether the 'other' CardCombo looks the same as this one, 
+        /// meaning that it has the same runs and sets.
+        /// ONLY CHECKING the suit and rank, not whether the cards are actually identical Objects.
+        ///</summary>
+        public bool LooksEqual(CardCombo other)
+        {
+            if(other.PackCount != PackCount)
+                return false;
+            if(other.CardCount != CardCount)
+                return false;
+            if(other.Sets.Count != Sets.Count || other.Runs.Count != Runs.Count)
+                return false;
+            
+            var orderedSets1 = Sets.OrderBy(set => set.Value);
+            var orderedSets2 = other.Sets.OrderBy(set => set.Value);
+            for (int i = 0; i < orderedSets1.Count(); i++)
+            {
+                if(!orderedSets1.ElementAt(i).LooksEqual(orderedSets2.ElementAt(i)))
+                    return false;                
+            }
+
+            var orderedRuns1 = Runs.OrderBy(run => run.Value);
+            var orderedRuns2 = other.Runs.OrderBy(run => run.Value);
+            for (int i = 0; i < orderedRuns1.Count(); i++)
+            {
+                if(!orderedRuns1.ElementAt(i).LooksEqual(orderedRuns2.ElementAt(i)))
+                    return false;                
+            }
+            return true;
+        }
     }
 
 }

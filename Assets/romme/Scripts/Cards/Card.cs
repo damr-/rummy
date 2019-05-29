@@ -115,14 +115,17 @@ namespace romme.Cards
             }
         }
 
-        public int Value()
+        public int Value
         {
-            if(Rank == CardRank.JOKER)
+            get
             {
-                Debug.LogWarning("Card.Value() should NOT be used with JOKERS, as their value varies.");
-                return 0;
+                if (Rank == CardRank.JOKER)
+                {
+                    Debug.LogWarning("Card.Value() should NOT be used with JOKERS, as their value varies.");
+                    return 0;
+                }
+                return CardValues[Rank];
             }
-            return CardValues[Rank]; 
         }
 
         private bool isCardMoving;

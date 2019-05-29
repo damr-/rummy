@@ -61,11 +61,11 @@ namespace romme
         private void Start()
         {
             DefaultGameSpeed = GameSpeed;
+            tmpPlayerWaitDuration = PlayerWaitDuration;
+            tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
             if (SkipUntilRound > 0)
             {
                 AnimateCardMovement = false;
-                tmpPlayerWaitDuration = PlayerWaitDuration;
-                tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
                 PlayerWaitDuration = 0f;
                 PlayerDrawWaitDuration = 0f;
                 GameSpeed = 4;
@@ -184,6 +184,10 @@ namespace romme
 
         public void RestartGame()
         {
+            GameSpeed = DefaultGameSpeed;
+            PlayerWaitDuration = tmpPlayerWaitDuration;
+            PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
+
             Tb.I.CardStack.ResetStack();
             Tb.I.DiscardStack.ResetStack();
             Players.ForEach(p => p.ResetPlayer());

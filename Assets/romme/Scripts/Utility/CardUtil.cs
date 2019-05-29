@@ -9,59 +9,67 @@ namespace romme.Utility
 
     public static class CardUtil
     {
-        public static CardCombo GetHighestValueCombination(List<CardCombo> combinations)
-        {
-            CardCombo bestValueCombination = new CardCombo();
-            int curVal = 0, highestVal = 0;
-            foreach (CardCombo possibility in combinations)
-            {
-                if (possibility.PackCount == 0)
-                    continue;
+        // public static CardCombo GetHighestValueCombination(List<CardCombo> combinations)
+        // {
+        //     CardCombo bestValueCombination = new CardCombo();
+        //     int curVal = 0, highestVal = 0;
+        //     foreach (CardCombo possibility in combinations)
+        //     {
+        //         if (possibility.PackCount == 0)
+        //             continue;
 
-                curVal = possibility.Value;
-                if (curVal > highestVal)
-                {
-                    highestVal = curVal;
-                    bestValueCombination = new CardCombo(possibility);
-                }
+        //         curVal = possibility.Value;
+        //         if (curVal > highestVal)
+        //         {
+        //             highestVal = curVal;
+        //             bestValueCombination = new CardCombo(possibility);
+        //         }
+        //     }
+        //     return bestValueCombination;
+        // }
+
+        /// <summary>
+        /// Get all possible card combinations which could be created from the given sets and runs
+        /// 'handCardCount' is the number of cards on the player's hand
+        /// </summary>
+        public static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
+        {
+            var combinations = new List<CardCombo>() { new CardCombo() };
+            CardUtil.GetPossibleSetAndRunCombos(combinations, sets, runs);
+
+            if (combinations.Last().PackCount > 0)
+                combinations.Add(new CardCombo());
+            //Check the possible runs when no sets are fixed
+            CardUtil.GetPossibleRunCombos(combinations, runs, new CardCombo());
+
+            combinations = combinations.Where(ldc => ldc.PackCount > 0).ToList();
+
+            //Don't allow combinations which cannot be reduced further but would require the player to lay down all cards
+            //for example don't allow laying down 3 sets of 3, when having 9 cards in hand in total
+            //Havin 8 cards in hand, 2 sets of 4 is a valid combination since single cards can be kept on hand
+            var validCombos = new List<CardCombo>();
+            foreach (var c in combinations)
+            {
+                if (c.CardCount < handCardCount ||
+                    (c.Sets.Any(set => set.Count > 3) || c.Runs.Any(run => run.Count > 3)))
+                    validCombos.Add(c);
             }
-            return bestValueCombination;
+            return validCombos;
         }
 
-        public static void GetPossibleRunCombinations(List<CardCombo> fixedCardsList, List<Run> runs)
+        private static void GetPossibleRunCombos(List<CardCombo> possibleRunCombos, List<Run> runs, CardCombo currentRunCombo)
         {
             for (int i = 0; i < runs.Count; i++)
             {
-                var oldEntry = new CardCombo(fixedCardsList.Last()); //Store the list of runs until now
+                CardCombo cc = new CardCombo(currentRunCombo);
+                cc.AddRun(runs[i]);
+                
+                //This fixed run alone is also a possibility
+                possibleRunCombos.Add(cc);
 
-                var fixedRun = runs[i];
-                fixedCardsList.Last().AddRun(fixedRun);    //Add the newly fixed run            
-
-                if (runs.Count > 1 && i < runs.Count - 1) //Only check for other runs if this is not the last one
-                {
-                    //All the other runs with higher index and which do not intersect with the fixedRun are to be checked
-                    List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - i - 1).Where(run => !run.Intersects(fixedRun)).ToList();
-
-                    if (otherRuns.Count > 0)
-                    {
-                        //This fixed run alone is also a possibility
-                        var newEntry = new CardCombo(fixedCardsList.Last());
-                        fixedCardsList.Add(newEntry);
-
-                        GetPossibleRunCombinations(fixedCardsList, otherRuns);
-                    }
-                    else //There are no possible runs that can be laid down with the fixed one
-                    {
-                        //revert to the previous fixed one and try the other runs in the list of runs
-                        fixedCardsList.Add(oldEntry);
-                    }
-                }
-                else
-                {
-                    oldEntry.RemoveLastRun();   //The last element of the current list of runs has been reached
-                                                //therefore we need to go back one layer more to prepare he next perms
-                    fixedCardsList.Add(oldEntry); //Add the entry for the next possible perm
-                }
+                List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - (i + 1)).Where(run => !run.Intersects(runs[i])).ToList();
+                if (otherRuns.Count > 0)
+                    GetPossibleRunCombos(possibleRunCombos, otherRuns, cc);
             }
         }
 
@@ -69,9 +77,7 @@ namespace romme.Utility
         /// Calculates all possible combinations of card packs that could be laid down.
         /// Stores the result in the passed List<LaydownCards> 'combinations'
         /// </summary>
-        //TODO: Basically the same as GetPossibleRunCombinations, which should be resolved somehow, sometime...maybe
-        //TODO: maybe this can be simplified by passing the currently fixed Cards (compare to GetPossibleRuns/GetRuns)
-        public static void GetPossibleCombinations(List<CardCombo> fixedCardsList, List<Set> sets, List<Run> runs)
+        private static void GetPossibleSetAndRunCombos(List<CardCombo> fixedCardsList, /*CardCombo currentCombo ,*/ List<Set> sets, List<Run> runs)
         {
             //Iterate through all possible combinations of sets
             for (int i = 0; i < sets.Count; i++)
@@ -83,7 +89,7 @@ namespace romme.Utility
 
                 //Get all possible runs with the fixed set(s)
                 List<Run> possibleRuns = runs.Where(run => !run.Intersects(fixedSet)).ToList();
-                GetPossibleRunCombinations(fixedCardsList, possibleRuns);
+                GetPossibleRunCombos(fixedCardsList, possibleRuns, new CardCombo());
 
                 if (sets.Count > 1 && i < sets.Count - 1) //All the other sets with higher index are to be checked 
                 {
@@ -96,7 +102,7 @@ namespace romme.Utility
                         var newEntry = new CardCombo(fixedCardsList.Last());
                         fixedCardsList.Add(newEntry);
 
-                        GetPossibleCombinations(fixedCardsList, otherSets, possibleRuns);
+                        GetPossibleSetAndRunCombos(fixedCardsList, otherSets, possibleRuns);
                     }
                     else
                     {
@@ -184,22 +190,22 @@ namespace romme.Utility
             Card card = currentRun.Last();
             List<Card> higherCards = GetCardOneRankHigher(PlayerCards, card, firstInRun);
 
-            if(firstInRun)
+            if (firstInRun)
                 firstInRun = false;
 
-            if(higherCards.Count == 0)
+            if (higherCards.Count == 0)
                 return;
 
             foreach (Card c in higherCards)
             {
                 List<Card> run = new List<Card>(currentRun);
                 run.Add(c);
-                
-                if(run.Count > 2)
+
+                if (run.Count > 2)
                     runs.Add(new Run(run));
                 GetRuns(PlayerCards, runs, run, firstInRun);
             }
-        }        
+        }
 
         /// <summary>
         /// Returns all cards in PlayerCards which have the same suit and are one rank higher than 'card'.

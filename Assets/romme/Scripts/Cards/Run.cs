@@ -34,11 +34,11 @@ namespace romme.Cards
                     }
                     else if(rank == Card.CardRank.ACE && i == 0)
                     {
-                        value += 1;
+                        value += 1; //ACE counts 1 in ACE-2-3
                     }
                     else
                     {
-                        value += Cards[i].Value();
+                        value += Cards[i].Value;
                     }
                 }
                 return value;
@@ -73,6 +73,28 @@ namespace romme.Cards
 
             //Check if any of the found cards are actually also part of the set
             return Cards.Intersects(matches);
+        }
+
+        ///<summary>
+        ///Returns whether the cards of the other run LOOK the same as the cards in this
+        ///meaning that they are not change for object-equality but only for same rank 
+        ///</summary>
+        public bool LooksEqual(Run other)
+        {
+            if(Count != other.Count)
+                return false;
+            if(Suit != other.Suit)
+                return false;
+
+            for(int i = 0; i < Cards.Count(); i++)
+            {
+                Card.CardRank r1 = Cards.ElementAt(i).Rank;
+                Card.CardRank r2 = other.Cards.ElementAt(i).Rank;
+
+                if(r1 != r2)
+                    return false;
+            }
+            return true;
         }
 
     }

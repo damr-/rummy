@@ -60,7 +60,7 @@ namespace romme.Cards
                         if(card.Rank == Card.CardRank.JOKER)
                             value += 20;
                         else
-                            value += card.Value();
+                            value += card.Value;
                     }
                     return value;
             }
