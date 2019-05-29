@@ -21,19 +21,19 @@ namespace romme.UI
             outputView.ClearMessages();
             if (cardCombos.Count == 0)
                 return;
-            
+
             //Do not display duplicate possibilities
             List<CardCombo> uniqueCombos = new List<CardCombo>();
-            foreach(CardCombo combo in cardCombos)
+            foreach (CardCombo combo in cardCombos)
             {
-                 if(uniqueCombos.All(c => !c.LooksEqual(combo)))
+                if (uniqueCombos.All(c => !c.LooksEqual(combo)))
                     uniqueCombos.Add(combo);
             }
             uniqueCombos = uniqueCombos.OrderByDescending(c => c.Value).ToList();
 
             string poss = " possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
             string var = " variant" + (cardCombos.Count == 1 ? "" : "s");
-            string header = uniqueCombos.Count + poss + " (" + cardCombos.Count + var + "):";
+            string header = uniqueCombos.Count + poss + " [" + cardCombos.Count + var + "]:";
             outputView.PrintMessage(new ScrollView.Message(header));
 
             for (int i = 0; i < uniqueCombos.Count; i++)

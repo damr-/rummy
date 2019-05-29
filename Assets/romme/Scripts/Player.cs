@@ -193,14 +193,18 @@ namespace romme
                 hypotheticalHandCards.Add(discardedCard);
                 var sets = CardUtil.GetPossibleSets(hypotheticalHandCards);
                 var runs = CardUtil.GetPossibleRuns(hypotheticalHandCards);
-                int hypotheticalValue = GetBestCardCombo(sets, runs, false).Value;
+                var hypotheticalBestCombo = GetBestCardCombo(sets, runs, false);
+                int hypotheticalValue = hypotheticalBestCombo.Value;
 
                 sets = new List<Set>(CardUtil.GetPossibleSets(HandCardSpot.GetCards()));
                 runs = new List<Run>(CardUtil.GetPossibleRuns(HandCardSpot.GetCards()));
                 int currentValue = GetBestCardCombo(sets, runs, false).Value;
 
                 if (hypotheticalValue > currentValue)
+                {
+                    Debug.Log(gameObject.name + " takes " + discardedCard + " from discard pile to finish " + hypotheticalBestCombo);
                     takeFromDiscardStack = true;
+                }
             }
 
             if (takeFromDiscardStack)
@@ -281,6 +285,7 @@ namespace romme
                 possibleCardCombos.OnNext(possibleCombos);
 
             possibleCombos = possibleCombos.OrderByDescending(c => c.Value).ToList();
+            
             return possibleCombos.Count == 0 ? new CardCombo() : possibleCombos[0];
         }
 

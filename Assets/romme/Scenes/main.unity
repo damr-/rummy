@@ -1694,7 +1694,7 @@ MonoBehaviour:
   MinimumLaySum: 40
   CardsPerPlayer: 13
   PlayCardSpeed: 50
-  DealCardSpeed: 150
+  DealCardSpeed: 100
   Players:
   - {fileID: 221342174}
   - {fileID: 2039885474}

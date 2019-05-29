@@ -34,27 +34,22 @@ namespace romme.Utility
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
         {
-            var combinations = new List<CardCombo>() { new CardCombo() };
-            CardUtil.GetPossibleSetAndRunCombos(combinations, sets, runs);
-
-            if (combinations.Last().PackCount > 0)
-                combinations.Add(new CardCombo());
-            //Check the possible runs when no sets are fixed
-            CardUtil.GetPossibleRunCombos(combinations, runs, new CardCombo());
-
-            combinations = combinations.Where(ldc => ldc.PackCount > 0).ToList();
+            var combos = new List<CardCombo>();
+            CardUtil.GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
+            CardUtil.GetPossibleRunCombos(combos, runs, new CardCombo());
+            combos = combos.Where(ldc => ldc.PackCount > 0).ToList();
 
             //Don't allow combinations which cannot be reduced further but would require the player to lay down all cards
             //for example don't allow laying down 3 sets of 3, when having 9 cards in hand in total
-            //Havin 8 cards in hand, 2 sets of 4 is a valid combination since single cards can be kept on hand
-            var validCombos = new List<CardCombo>();
-            foreach (var c in combinations)
+            //Having 8 cards in hand, 2 sets of 4 is a valid combination since single cards can be kept on hand
+            var possibleCombos = new List<CardCombo>();
+            foreach (var combo in combos)
             {
-                if (c.CardCount < handCardCount ||
-                    (c.Sets.Any(set => set.Count > 3) || c.Runs.Any(run => run.Count > 3)))
-                    validCombos.Add(c);
+                if (combo.CardCount < handCardCount ||
+                    (combo.Sets.Any(set => set.Count > 3) || combo.Runs.Any(run => run.Count > 3)))
+                    possibleCombos.Add(combo);
             }
-            return validCombos;
+            return possibleCombos;
         }
 
         private static void GetPossibleRunCombos(List<CardCombo> possibleRunCombos, List<Run> runs, CardCombo currentRunCombo)
@@ -77,43 +72,24 @@ namespace romme.Utility
         /// Calculates all possible combinations of card packs that could be laid down.
         /// Stores the result in the passed List<LaydownCards> 'combinations'
         /// </summary>
-        private static void GetPossibleSetAndRunCombos(List<CardCombo> fixedCardsList, /*CardCombo currentCombo ,*/ List<Set> sets, List<Run> runs)
+        private static void GetPossibleSetAndRunCombos(List<CardCombo> possibleCombos, List<Set> sets, List<Run> runs, CardCombo currentCombo)
         {
-            //Iterate through all possible combinations of sets
             for (int i = 0; i < sets.Count; i++)
             {
-                var oldEntry = new CardCombo(fixedCardsList.Last()); //Store the list of sets until now
+                CardCombo cc = new CardCombo(currentCombo);
+                cc.AddSet(sets[i]);
 
-                var fixedSet = sets[i]; //Assume we lay down the current set
-                fixedCardsList.Last().AddSet(fixedSet); //The fixed list of set has to include the new one
+                //This fixed set alone is also a possibility
+                possibleCombos.Add(cc);
 
-                //Get all possible runs with the fixed set(s)
-                List<Run> possibleRuns = runs.Where(run => !run.Intersects(fixedSet)).ToList();
-                GetPossibleRunCombos(fixedCardsList, possibleRuns, new CardCombo());
+                //Get all runs which are possible with the current set fixed
+                List<Run> possibleRuns = runs.Where(run => !run.Intersects(sets[i])).ToList();
+                GetPossibleRunCombos(possibleCombos, possibleRuns, cc);
 
-                if (sets.Count > 1 && i < sets.Count - 1) //All the other sets with higher index are to be checked 
-                {
-                    //Only sets which don't intersect the fixed one are possible combinations
-                    List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Intersects(fixedSet)).ToList();
-
-                    if (otherSets.Count > 0)
-                    {
-                        //This fixed set alone is also a possibility
-                        var newEntry = new CardCombo(fixedCardsList.Last());
-                        fixedCardsList.Add(newEntry);
-
-                        GetPossibleSetAndRunCombos(fixedCardsList, otherSets, possibleRuns);
-                    }
-                    else
-                    {
-                        fixedCardsList.Add(oldEntry);
-                    }
-                }
-                else //Last set of the list has been reached
-                {
-                    oldEntry.RemoveLastSet(); //Go back one more layer...
-                    fixedCardsList.Add(oldEntry); //...this permutation is done. Add new entry for the next one.
-                }
+                //Only sets which don't intersect the current one are possible combinations
+                List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Intersects(sets[i])).ToList();
+                if (otherSets.Count > 0)
+                    GetPossibleSetAndRunCombos(possibleCombos, otherSets, possibleRuns, cc);
             }
         }
 
@@ -127,7 +103,7 @@ namespace romme.Utility
 
             var cardPool = new List<Card>(PlayerCards);
             //The search for card sets has to be done multiple times since GetUniqueCardsByRank() could overlook a set
-            //(e.g.: player has 6 J's, 2 cards each share the same suit, that's 2 full sets, but the function discards one)
+            //(e.g.: player has 6 J's, 2 cards each share the same suit, that's 2 full sets, but the function would discard one)
             do
             {
                 //Remove all cards of previously found sets from the card pool
@@ -165,45 +141,34 @@ namespace romme.Utility
 
             return possibleSets;
         }
-
+        
         /// <summary>
         /// Returns all possible runs that could be laid down. 
         /// Different runs CAN contain one or more of the same card since runs can be of any length > 2
         /// <summary>
-        public static List<Run> GetPossibleRuns(this List<Card> PlayerCards)
+        public static List<Run> GetPossibleRuns(List<Card> PlayerCards)
         {
             var possibleRuns = new List<Run>();
-
-            foreach (Card card in PlayerCards)
-            {
-                //KING cannot start a run
-                if (card.Rank == Card.CardRank.KING)
-                    continue;
-                GetRuns(PlayerCards, possibleRuns, new List<Card>() { card }, true);
-            }
-
+            GetPossibleRuns(possibleRuns, PlayerCards, PlayerCards, new List<Card>());
             return possibleRuns;
         }
 
-        private static void GetRuns(List<Card> PlayerCards, List<Run> runs, List<Card> currentRun, bool firstInRun)
+        private static void GetPossibleRuns(List<Run> possibleRuns, List<Card> PlayerCards, List<Card> availableCards, List<Card> currentRun)
         {
-            Card card = currentRun.Last();
-            List<Card> higherCards = GetCardOneRankHigher(PlayerCards, card, firstInRun);
-
-            if (firstInRun)
-                firstInRun = false;
-
-            if (higherCards.Count == 0)
-                return;
-
-            foreach (Card c in higherCards)
+            foreach (Card card in availableCards)
             {
-                List<Card> run = new List<Card>(currentRun);
-                run.Add(c);
+                //KING cannot start a run
+                if (currentRun.Count == 0 && card.Rank == Card.CardRank.KING)
+                    continue;
 
-                if (run.Count > 2)
-                    runs.Add(new Run(run));
-                GetRuns(PlayerCards, runs, run, firstInRun);
+                var newRun = new List<Card>(currentRun);
+                newRun.Add(card);
+
+                if (newRun.Count > 2)
+                    possibleRuns.Add(new Run(newRun));
+
+                List<Card> higherCards = GetCardOneRankHigher(PlayerCards, newRun.Last(), newRun.Count == 1);
+                GetPossibleRuns(possibleRuns, PlayerCards, higherCards, newRun);
             }
         }
 
