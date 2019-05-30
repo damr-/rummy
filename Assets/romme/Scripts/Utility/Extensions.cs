@@ -86,8 +86,8 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns whether the list intersects the other, given list of cards.
-        /// (Returns whether the two lists share any card
+        /// Returns whether the list intersects the other list of cards.
+        /// (Returns whether the two lists share one or more card(s))
         /// </summary>
         public static bool Intersects(this List<Card> list, List<Card> otherList)
         {
@@ -100,78 +100,6 @@ namespace romme.Utility
                 }
             }
             return false;
-        }
-
-        ///<summary>Return all the possible sets which can be formed using joker cards ordered descending by the value of the set.
-        ///The passed 'CompletePossibleSets' should consist of all the sets which will be laid down anyway since they are complete.</summary>
-        public static List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>
-            GetJokerSets(this List<Card> PlayerCards, List<KeyValuePair<Card.CardRank, List<Card>>> completePossibleSets)
-        {
-            List<Card> jokerCards = PlayerCards.Where(c => c.Rank == Card.CardRank.JOKER).ToList();
-            int jokerCount = jokerCards.Count;
-            if (jokerCount == 0)
-                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
-
-            //Get all possible sets with more than one card so that 1 joker can finish a trio
-            var possibleCardsUnfiltered = PlayerCards.GetCardsByRank().Where(entry => entry.Key != Card.CardRank.JOKER &&
-                                                                                entry.Value.Count >= 2);
-
-            var possibleJokerSets = new List<KeyValuePair<Card.CardRank, List<Card>>>();
-            foreach (var entry in possibleCardsUnfiltered)
-            {
-                //Get all cards which will be laid down anyway and which have the same CardNumber as the currently investigated cards
-                var layCardsWithSameCardNumber = completePossibleSets.Where(e => e.Key == entry.Key);
-
-                List<Card> eligibleCards = new List<Card>();
-
-                //No sets were gonna be laid down, so all the possible cards are eligible
-                if (!layCardsWithSameCardNumber.Any())
-                {
-                    eligibleCards = entry.Value;
-                }
-                else
-                {
-                    foreach (var sameCardNumberPair in layCardsWithSameCardNumber)
-                    {
-                        foreach (Card card in entry.Value)
-                        {
-                            //If card is not gonna be laid down, it is eligible for being used with a joker
-                            if (!sameCardNumberPair.Value.Contains(card))
-                                eligibleCards.Add(card);
-                        }
-                    }
-                }
-
-                if (eligibleCards.Count == 0)
-                    continue;
-
-                var uniqueEligibleCards = eligibleCards.GetUniqueCards();
-                if (uniqueEligibleCards.Count == 2)
-                    possibleJokerSets.Add(new KeyValuePair<Card.CardRank, List<Card>>(entry.Key, uniqueEligibleCards));
-            }
-
-            if (!possibleJokerSets.Any())
-                return new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
-
-            var coloredPossibleJokerSets = new List<KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>>();
-            //Select possible card combinations by required joker color
-            for (int i = 0; i < 2; i++)
-            {
-                Card.CardColor curColor = (Card.CardColor)i;
-
-                //Skip current color if no joker has this color
-                if (!jokerCards.Any(jc => jc.Color == curColor))
-                    continue;
-
-                foreach (var possibleJokerSet in possibleJokerSets)
-                {
-                    //Adding a joker to a set is only possible if it differs in color compared to the other two cards
-                    if (possibleJokerSet.Value.Count(c => c.Color == curColor) != 2)
-                        coloredPossibleJokerSets.Add(new KeyValuePair<Card.CardColor, KeyValuePair<Card.CardRank, List<Card>>>(curColor, possibleJokerSet));
-                }
-            }
-            coloredPossibleJokerSets = coloredPossibleJokerSets.OrderByDescending(entry => (int)entry.Value.Key).ToList();
-            return coloredPossibleJokerSets;
         }
     }
     

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Collections.Generic;
 using romme.Utility;
 using UniRx;
@@ -98,7 +99,7 @@ namespace romme.Cards
                 case CardRank.QUEEN: return "Q"; 
                 case CardRank.KING: return "K"; 
                 case CardRank.ACE: return "A"; 
-                default: return "JKR"; //JOKER
+                default: return "?"; //JOKER
             }
         }
         #endregion
@@ -122,7 +123,7 @@ namespace romme.Cards
                 if (Rank == CardRank.JOKER)
                 {
                     Debug.LogWarning("Card.Value() should NOT be used with JOKERS, as their value varies.");
-                    return 0;
+                    return 20;
                 }
                 return CardValues[Rank];
             }
