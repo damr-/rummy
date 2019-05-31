@@ -47,6 +47,15 @@ namespace romme.Cards
             Runs.Add(run);
         }
 
+        /// <summary>
+        /// Sorts the combo's sets and runs DESCENDING according to their value
+        /// </summary>
+        public void Sort()
+        {
+            Sets = Sets.OrderByDescending(set => set.Value).ToList();
+            Runs = Runs.OrderByDescending(run => run.Value).ToList();
+        }
+
         public Set RemoveLastSet()
         {
             if (Sets.Count == 0)

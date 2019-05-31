@@ -10,27 +10,9 @@ namespace romme.Utility
 
     public static class CardUtil
     {
-        // public static CardCombo GetHighestValueCombination(List<CardCombo> combinations)
-        // {
-        //     CardCombo bestValueCombination = new CardCombo();
-        //     int curVal = 0, highestVal = 0;
-        //     foreach (CardCombo possibility in combinations)
-        //     {
-        //         if (possibility.PackCount == 0)
-        //             continue;
-
-        //         curVal = possibility.Value;
-        //         if (curVal > highestVal)
-        //         {
-        //             highestVal = curVal;
-        //             bestValueCombination = new CardCombo(possibility);
-        //         }
-        //     }
-        //     return bestValueCombination;
-        // }
-
         /// <summary>
-        /// Get all possible card combinations which could be created from the given sets and runs
+        /// Get all possible card combinations which could be created from the given sets and runs.
+        /// Each combo's sets and runs are sorted descending by value.
         /// 'handCardCount' is the number of cards on the player's hand
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
@@ -48,7 +30,10 @@ namespace romme.Utility
             {
                 if (combo.CardCount < handCardCount ||
                     (combo.Sets.Any(set => set.Count > 3) || combo.Runs.Any(run => run.Count > 3)))
+                {
+                    combo.Sort();
                     possibleCombos.Add(combo);
+                }
             }
             return possibleCombos;
         }
@@ -191,6 +176,7 @@ namespace romme.Utility
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Set> possibleSets, List<Run> possibleRuns)
         {
+            //FIXME: Game 12244: Player 2 tries to use the same joker for 2 sets
             var duoSetsByRank = GetAllDuosByRank(PlayerCards);
 
             //Stop here if no duos were found
