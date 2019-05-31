@@ -11,7 +11,7 @@ namespace romme.Cards
         public Card.CardRank Rank { get; private set; }
 
         //If the first card is a joker take the value of the second card times the number of cards
-        public int Value => Cards.Count * (Cards[0].Rank != Card.CardRank.JOKER ? Cards[0].Value: Cards[1].Value);
+        public int Value => Cards.Count * Cards.GetFirstCard().Value;
 
         public Set(Card c1, Card c2, Card c3) : this(new List<Card>() { c1, c2, c3 }) { }
         public Set(List<Card> cards)
@@ -24,8 +24,11 @@ namespace romme.Cards
 
             Cards = new List<Card>() { };
             Cards.AddRange(cards);
-            Rank = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Rank : Cards[1].Rank;
+            Rank = Cards.GetFirstCard().Rank;
         }
+        
+        public bool HasTwoBlacks() => Cards.Count(c => c.IsBlack()) == 2;
+        public bool HasTwoReds() => Cards.Count(c => c.IsRed()) == 2;
 
         ///<summary>
         ///Returns whether the cards of the other set LOOK the same as the cards in this
@@ -51,6 +54,6 @@ namespace romme.Cards
             }
             return true;
         }
-        
     }
+
 }

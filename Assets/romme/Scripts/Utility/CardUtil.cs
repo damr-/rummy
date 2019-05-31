@@ -59,7 +59,7 @@ namespace romme.Utility
             {
                 CardCombo cc = new CardCombo(currentRunCombo);
                 cc.AddRun(runs[i]);
-                
+
                 //This fixed run alone is also a possibility
                 possibleRunCombos.Add(cc);
 
@@ -95,67 +95,57 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets which consist of 3 cards.
-        /// All possible permutations of complete quadruples will also be returned
+        /// Returns all possible sets which consist of 3 or 4 cards.
         /// </summary>
         public static List<Set> GetPossibleSets(List<Card> PlayerCards)
         {
             List<Set> possibleSets = new List<Set>();
-            List<KeyValuePair<Card.CardRank, List<Card>>> cardsByRank = new List<KeyValuePair<Card.CardRank, List<Card>>>();
 
-            var cardPool = new List<Card>(PlayerCards);
-            //The search for card sets has to be done multiple times since GetUniqueCardsByRank() could overlook a set
-            //(e.g.: player has 6 J's, 2 cards each share the same suit, that's 2 full sets, but the function would discard one)
-            do
-            {
-                //Remove all cards of previously found sets from the card pool
-                foreach (var set in possibleSets)
-                {
-                    foreach (var card in set.Cards)
-                        cardPool.Remove(card);
-                }
-                //Get all possible trios in the cardpool, sorted by rank
-                cardsByRank = cardPool.GetUniqueCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER && rank.Value.Count == 3).ToList();
-                foreach (var rank in cardsByRank)
-                {
-                    Set newSet = new Set(rank.Value);
-                    possibleSets.Add(newSet);
-                }
+            var cardsByRank = PlayerCards.GetCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER).ToList();
 
-                //Get all possible trio perms from all quadruples in the cardpool, sorted by rank
-                cardsByRank = cardPool.GetUniqueCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER && rank.Value.Count == 4).ToList();
-                foreach (var rank in cardsByRank)
-                {
-                    //Add the quadruple
-                    Set newSet = new Set(rank.Value);
-                    possibleSets.Add(newSet);
-                    //Add all trio permutations
-                    newSet = new Set(rank.Value.GetRange(0, 3));
-                    possibleSets.Add(newSet);
-                    newSet = new Set(rank.Value.GetRange(1, 3));
-                    possibleSets.Add(newSet);
-                    newSet = new Set(rank.Value[0], rank.Value[2], rank.Value[3]);
-                    possibleSets.Add(newSet);
-                    newSet = new Set(rank.Value[0], rank.Value[1], rank.Value[3]);
-                    possibleSets.Add(newSet);
-                }
-            } while (cardsByRank.Count > 0);
+            foreach (var rank in cardsByRank)
+                GetPossibleSets(possibleSets, rank.Value, new List<Card>());
 
             return possibleSets;
         }
-        
+
+        private static void GetPossibleSets(List<Set> possibleSets, List<Card> availableCards, List<Card> currentSet)
+        {
+            for (int i = 0; i < availableCards.Count; i++)
+            {
+                Card card = availableCards[i];
+                var newSet = new List<Card>(currentSet);
+                newSet.Add(card);
+
+                if (newSet.Count > 4)
+                    continue;
+
+                if (IsValidSet(newSet))
+                {
+                    if (newSet.Count == 3 || newSet.Count == 4)
+                        possibleSets.Add(new Set(newSet));
+                }
+
+                List<Card> otherCards = availableCards.
+                        GetRange(i + 1, availableCards.Count - (i + 1)).
+                        Where(c => c.Suit != card.Suit).
+                        ToList();
+                GetPossibleSets(possibleSets, otherCards, newSet);
+            }
+        }
+
         /// <summary>
         /// Returns all possible runs that could be laid down. 
         /// Different runs CAN contain one or more of the same card since runs can be of any length > 2
         /// <summary>
-        public static List<Run> GetPossibleRuns(List<Card> PlayerCards, int minLength = 3)
+        public static List<Run> GetPossibleRuns(List<Card> PlayerCards)
         {
             var possibleRuns = new List<Run>();
-            GetPossibleRuns(possibleRuns, PlayerCards, PlayerCards, new List<Card>(), minLength);
+            GetPossibleRuns(possibleRuns, PlayerCards, PlayerCards, new List<Card>());
             return possibleRuns;
         }
 
-        private static void GetPossibleRuns(List<Run> possibleRuns, List<Card> PlayerCards, List<Card> availableCards, List<Card> currentRun, int minLength)
+        private static void GetPossibleRuns(List<Run> possibleRuns, List<Card> PlayerCards, List<Card> availableCards, List<Card> currentRun)
         {
             foreach (Card card in availableCards)
             {
@@ -166,11 +156,11 @@ namespace romme.Utility
                 var newRun = new List<Card>(currentRun);
                 newRun.Add(card);
 
-                if (newRun.Count >= minLength)
+                if (newRun.Count >= 3)
                     possibleRuns.Add(new Run(newRun));
 
                 List<Card> higherCards = GetCardOneRankHigher(PlayerCards, newRun.Last(), newRun.Count == 1);
-                GetPossibleRuns(possibleRuns, PlayerCards, higherCards, newRun, minLength);
+                GetPossibleRuns(possibleRuns, PlayerCards, higherCards, newRun);
             }
         }
 
@@ -196,43 +186,104 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets which can be created using joker cards, excluding cards used in 
-        /// 'possibleSets' and 'possibleRuns'
+        /// Returns all possible sets which can be created using joker cards
+        /// excluding cards used in  'possibleSets' and 'possibleRuns'
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Set> possibleSets, List<Run> possibleRuns)
         {
-            var possibleJokerSets = new List<Set>();
+            var duoSetsByRank = GetAllDuosByRank(PlayerCards);
 
-            var duoSets = PlayerCards.GetCardsByRank()
-                    .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count == 2);
-            List<List<Card>> possibleDuos = new List<List<Card>>();
-            foreach (var duo in duoSets)
+            //Stop here if no duos were found
+            if (duoSetsByRank.Count == 0)
+                return new List<Set>();
+
+            List<Card[]> duos = new List<Card[]>();
+            foreach (var entry in duoSetsByRank)
+                duos.AddRange(entry.Value);
+
+            var possibleJokerSets = new List<Set>();
+            List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
+
+            // First, create trios out of duos where both cards have the same color
+            // for each trio, save all posslbe combinations with available jokers
+            for (int i = 0; i < 2; i++)
             {
-                if (possibleSets.All(set => !set.Cards.Intersects(duo.Value)))
-                    possibleDuos.Add(duo.Value);
+                Card.CardColor color = (Card.CardColor)i;
+                var sameColorDuos = duos.Where(duo => duo.All(c => c.Color == color));
+
+                foreach (var duo in sameColorDuos)
+                {
+                    //Find all available jokers with the opposite color
+                    var possibleJokers = jokerCards.Where(j => j.Color != color);
+                    foreach (var joker in possibleJokers)
+                    {
+                        var newSet = new Set(duo[0], duo[1], joker);
+                        possibleJokerSets.Add(newSet);
+                    }
+                }
             }
 
-            List<Card> jokerCards = PlayerCards.Where(c => c.Rank == Card.CardRank.JOKER).ToList();
-            int jokerCount = jokerCards.Count;
-            List<Card> usedJokers = new List<Card>();
-
-            foreach (var duo in possibleDuos)
+            // Now finish all red-black duos with all possible joker cards
+            var mixedDuos = duos.Where(duo => duo[0].Color != duo[1].Color);
+            foreach (var duo in mixedDuos)
             {
-                var possibleJokers = jokerCards.Except(usedJokers);
-                if (duo.All(c => c.Color == Card.CardColor.BLACK))
-                    possibleJokers = possibleJokers.Where(c => c.Color == Card.CardColor.RED);
-                else if (duo.All(c => c.Color == Card.CardColor.RED))
-                    possibleJokers = possibleJokers.Where(c => c.Color == Card.CardColor.BLACK);
-
-                if (possibleJokers.Count() > 0)
+                foreach (var jokerCard in jokerCards)
                 {
-                    var newSet = new Set(duo[0], duo[1], possibleJokers.First());
+                    var newSet = new Set(duo[0], duo[1], jokerCard);
                     possibleJokerSets.Add(newSet);
-                    usedJokers.Add(possibleJokers.First());
                 }
             }
 
             return possibleJokerSets;
+        }
+
+        /// <summary>
+        /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards', sorted by rank
+        /// </summary>
+        private static List<KeyValuePair<Card.CardRank, List<Card[]>>> GetAllDuosByRank(List<Card> PlayerCards)
+        {
+            var allDuos = new List<KeyValuePair<Card.CardRank, List<Card[]>>>();
+
+            var cardsByRank =
+                    PlayerCards.GetUniqueCardsByRank()
+                        .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2).ToList();
+
+
+            foreach (var entry in cardsByRank)
+            {
+                List<Card[]> currentDuos = new List<Card[]>();
+                foreach (Card c1 in entry.Value)
+                {
+                    for (int j = entry.Value.IndexOf(c1); j < entry.Value.Count; j++)
+                    {
+                        Card c2 = entry.Value[j];
+                        if (c1.Suit != c2.Suit)
+                            currentDuos.Add(new Card[] { c1, c2 });
+                    }
+                }
+                allDuos.Add(new KeyValuePair<Card.CardRank, List<Card[]>>(entry.Key, currentDuos));
+            }
+            return allDuos;
+        }
+
+        private static void asd(List<List<Card>> list, List<Card> other, List<Card> current)
+        {
+            for (int i = 0; i < other.Count; i++)
+            {
+                Card card = other[i];
+                var newCurrent = new List<Card>(current);
+                newCurrent.Add(card);
+
+                if (newCurrent.Count == 1)
+                {
+                    var newOther = other.GetRange(i + 1, other.Count - (i + 1)).Where(c => c.Suit != card.Suit).ToList();
+                    asd(list, newOther, newCurrent);
+                }
+                else if (newCurrent.Count == 2)
+                {
+                    list.Add(newCurrent);
+                }
+            }
         }
 
         public static bool IsValidRun(List<Card> cards)
@@ -240,10 +291,21 @@ namespace romme.Utility
             if (cards.Count == 0)
                 return false;
 
-            //A run can only consist of cards with the same suit
-            Card.CardSuit runSuit = (cards[0].Rank != Card.CardRank.JOKER) ? cards[0].Suit : cards[1].Suit;
-            if (cards.Any(c => c.Suit != runSuit))
-                return false;
+            //A run can only consist of cards with the same suit (or joker with the matching color)
+            Card representiveCard = cards.GetFirstCard();
+            foreach (var card in cards)
+            {
+                if (!card.IsJoker())
+                {
+                    if (card.Suit != representiveCard.Suit)
+                        return false;
+                }
+                else
+                {
+                    if (card.Color != representiveCard.Color)
+                        return false;
+                }
+            }
 
             for (int i = 0; i < cards.Count - 1; i++)
             {
@@ -251,10 +313,11 @@ namespace romme.Utility
                 if (i == 0 && cards[i].Rank == Card.CardRank.ACE)
                 {
                     //Run is only valid if next card is a TWO or a JOKER
-                    if (cards[i + 1].Rank != Card.CardRank.TWO && cards[i + 1].Rank != Card.CardRank.JOKER)
+                    if (cards[i + 1].Rank != Card.CardRank.TWO && !cards[i + 1].IsJoker())
                         return false;
-                }//otherwise, rank has to increase by one
-                else if (cards[i + 1].Rank != cards[i].Rank + 1 && cards[i + 1].Rank != Card.CardRank.JOKER)
+                }
+                //otherwise, rank has to increase by one
+                else if (cards[i + 1].Rank != cards[i].Rank + 1 && !cards[i].IsJoker() && !cards[i + 1].IsJoker())
                     return false;
             }
             return true;
@@ -262,19 +325,20 @@ namespace romme.Utility
 
         public static bool IsValidSet(List<Card> cards)
         {
-            if (cards.Count == 0)
+            if (cards.Count < 3 || cards.Count > 5)
                 return false;
 
-            Card.CardRank setRank = (cards[0].Rank != Card.CardRank.JOKER ? cards[0].Rank : cards[1].Rank);
+            if (cards.Count == 5)
+                return false;
 
-            //A set can only consist of cards with the same rank
-            if (cards.Any(c => c.Rank != setRank && c.Rank != Card.CardRank.JOKER))
+            //A set can only consist of cards with the same rank and/or a joker
+            if (cards.Any(c => !c.IsJoker() && c.Rank != cards.GetFirstCard().Rank))
                 return false;
 
             var usedSuits = new List<Card.CardSuit>();
             for (int i = 0; i < cards.Count; i++)
             {
-                if(cards[i].Rank == Card.CardRank.JOKER)
+                if (cards[i].IsJoker())
                     continue; //Skip checking joker for now
 
                 var suit = cards[i].Suit;
@@ -284,14 +348,14 @@ namespace romme.Utility
             }
 
             //Check joker now if necessary
-            Card joker = cards.Where(c => c.Rank == Card.CardRank.JOKER).FirstOrDefault();
-            if(joker != null)
+            Card joker = cards.Where(c => c.IsJoker()).FirstOrDefault();
+            if (joker != null)
             {
-                if(joker.Color == Card.CardColor.BLACK 
+                if (joker.IsBlack()
                     && usedSuits.Contains(Card.CardSuit.CLOVERS)
                     && usedSuits.Contains(Card.CardSuit.PIKE))
                     return false;
-                if(joker.Color == Card.CardColor.RED 
+                if (joker.IsRed()
                     && usedSuits.Contains(Card.CardSuit.HEART)
                     && usedSuits.Contains(Card.CardSuit.TILE))
                     return false;

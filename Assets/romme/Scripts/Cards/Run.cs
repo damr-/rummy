@@ -57,7 +57,26 @@ namespace romme.Cards
 
             Cards = new List<Card>();
             Cards.AddRange(cards);
-            Suit = (Cards[0].Rank != Card.CardRank.JOKER) ? Cards[0].Suit : Cards[1].Suit;            
+            Suit = Cards.GetFirstCard().Suit;
+        }
+
+        public Card.CardRank GetHighestRank()
+        {
+            var lastCardRank = Cards[Cards.Count - 1].Rank;
+            return lastCardRank != Card.CardRank.JOKER ? lastCardRank : Cards[Cards.Count - 2].Rank + 1;
+        }
+
+        public Card.CardRank GetLowestRank()
+        {
+            var firstCardRank = Cards[0].Rank;
+            return firstCardRank != Card.CardRank.JOKER ? firstCardRank : Cards[1].Rank - 1;
+        }
+
+        public Card.CardColor GetRunColor()
+        {
+            if(Suit == Card.CardSuit.CLOVERS || Suit == Card.CardSuit.PIKE)
+                return Card.CardColor.BLACK;
+            return Card.CardColor.RED;
         }
         
         /// <summary>

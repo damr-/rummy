@@ -6,6 +6,7 @@ using UnityEngine;
 using romme.Cards;
 using romme.Utility;
 using romme.UI;
+using Single = romme.Cards.Single;
 
 namespace romme
 {
@@ -30,7 +31,7 @@ namespace romme
         public PlayerState playerState { get; private set; } = PlayerState.IDLE;
 
         private CardSpot HandCardSpot;
-        public int PlayerCardCount { get { return HandCardSpot.GetCards().Count; } }
+        public int PlayerCardCount { get { return HandCardSpot.Cards.Count; } }
         public int PlayerHandValue { get { return HandCardSpot.GetValue(); } }
 
         public Transform PlayerCardSpotsParent;
@@ -49,10 +50,11 @@ namespace romme
         private List<Run> possibleRuns = new List<Run>();
         private List<Set> possibleJokerSets = new List<Set>();
         private CardCombo laydownCards = new CardCombo();
-        private List<KeyValuePair<Card, CardSpot>> singleLayDownCards = new List<KeyValuePair<Card, CardSpot>>();
+        private List<Single> singleLayDownCards = new List<Single>();
         private int currentCardPackIdx = 0, currentCardIdx = 0;
+        private Card returningJoker;
 
-        private bool isCardBeingLaidDown;
+        private bool isCardBeingLaidDown, isJokerBeingReturned;
 
         private enum LayStage
         {
@@ -78,8 +80,8 @@ namespace romme
         public IObservable<List<CardCombo>> PossibleCardCombosChanged { get { return possibleCardCombos; } }
         private readonly ISubject<List<CardCombo>> possibleCardCombos = new Subject<List<CardCombo>>();
 
-        public IObservable<List<KeyValuePair<Card, CardSpot>>> PossibleSinglesChanged { get { return possibleSingles; } }
-        private readonly ISubject<List<KeyValuePair<Card, CardSpot>>> possibleSingles = new Subject<List<KeyValuePair<Card, CardSpot>>>();
+        public IObservable<List<Single>> PossibleSinglesChanged { get { return possibleSingles; } }
+        private readonly ISubject<List<Single>> possibleSingles = new Subject<List<Single>>();
 
         private void AddCard(Card card)
         {
@@ -95,7 +97,7 @@ namespace romme
             GetPlayerCardSpots().ForEach(spot => spot.ResetSpot());
             HandCardSpot.ResetSpot();
             possibleCardCombos.OnNext(new List<CardCombo>());
-            possibleSingles.OnNext(new List<KeyValuePair<Card, CardSpot>>());
+            possibleSingles.OnNext(new List<Single>());
         }
 
         private void Start()
@@ -123,6 +125,7 @@ namespace romme
                     isCardBeingLaidDown = false;
                     currentCardPackIdx = 0;
                     currentCardIdx = 0;
+                    currentCardSpot = null;
                     layStage = LayStage.SETS;
 
                     if (laydownCards.Sets.Count == 0)
@@ -143,7 +146,7 @@ namespace romme
 
                 if (layStage == LayStage.SINGLES)
                 {
-                    currentCardSpot = singleLayDownCards[currentCardIdx].Value;
+                    currentCardSpot = singleLayDownCards[currentCardIdx].CardSpot;
                 }
                 else if (currentCardSpot == null)
                 {
@@ -161,13 +164,25 @@ namespace romme
                         card = laydownCards.Runs[currentCardPackIdx].Cards[currentCardIdx];
                         break;
                     default: //LayStage.SINGLES
-                        card = singleLayDownCards[currentCardIdx].Key;
+                        card = singleLayDownCards[currentCardIdx].Card;
                         break;
                 }
 
                 HandCardSpot.RemoveCard(card);
-                cardMoveSubscription = card.MoveFinished.Subscribe(CardLayDownMoveFinished);
+                cardMoveSubscription = card.MoveFinished.Subscribe(LayDownCardMoveFinished);
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
+            }
+
+            if (playerState == PlayerState.RETURNING)
+            {
+                if (isJokerBeingReturned)
+                    return;
+
+                isJokerBeingReturned = true;
+
+                currentCardSpot.RemoveCard(returningJoker);
+                cardMoveSubscription = returningJoker.MoveFinished.Subscribe(ReturnJokerMoveFinished);
+                returningJoker.MoveCard(HandCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
             }
         }
 
@@ -189,15 +204,15 @@ namespace romme
                 //          card which can be added to an already laid-down card pack.
                 //          Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
-                var hypotheticalHandCards = new List<Card>(HandCardSpot.GetCards());
+                var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards);
                 hypotheticalHandCards.Add(discardedCard);
                 var sets = CardUtil.GetPossibleSets(hypotheticalHandCards);
                 var runs = CardUtil.GetPossibleRuns(hypotheticalHandCards);
                 var hypotheticalBestCombo = GetBestCardCombo(sets, runs, false);
                 int hypotheticalValue = hypotheticalBestCombo.Value;
 
-                sets = CardUtil.GetPossibleSets(HandCardSpot.GetCards());
-                runs = CardUtil.GetPossibleRuns(HandCardSpot.GetCards());
+                sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
+                runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
                 int currentValue = GetBestCardCombo(sets, runs, false).Value;
 
                 if (hypotheticalValue > currentValue)
@@ -227,15 +242,15 @@ namespace romme
             }
 
             //As soon as the card was drawn, figure out the possible cards combos (BEFORE waiting)
-            possibleSets = CardUtil.GetPossibleSets(HandCardSpot.GetCards());
-            possibleRuns = CardUtil.GetPossibleRuns(HandCardSpot.GetCards());
+            possibleSets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
+            possibleRuns = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
 
             //Find sets which can be completed by joker sets
-            possibleJokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.GetCards(), possibleSets, possibleRuns);
+            possibleJokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, possibleSets, possibleRuns);
             possibleSets.AddRange(possibleJokerSets);
 
             // Find runs which can be completed by joker cards 
-            // var possibleJokerRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCardSpot.GetCards(), 2));
+            // var possibleJokerRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCardSpot.Cards, 2));
             // possibleJokerRuns = possibleJokerRuns.Where(r => r.Count == 2).ToList();
 
             laydownCards = GetBestCardCombo(possibleSets, possibleRuns, true);
@@ -248,7 +263,7 @@ namespace romme
                     hasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
                 //At least one card must remain when laying down
-                if (hasLaidDown && laydownCards.CardCount == HandCardSpot.GetCards().Count)
+                if (hasLaidDown && laydownCards.CardCount == HandCardSpot.Cards.Count)
                     KeepOneCard();
             }
 
@@ -258,7 +273,7 @@ namespace romme
 
         private CardCombo GetBestCardCombo(List<Set> sets, List<Run> runs, bool broadCastPossibleCombos)
         {
-            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCardSpot.GetCards().Count);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCardSpot.Cards.Count);
 
             if (broadCastPossibleCombos)
                 possibleCardCombos.OnNext(possibleCombos);
@@ -270,19 +285,23 @@ namespace romme
 
         private void UpdateSingleLaydownCards()
         {
-            singleLayDownCards = new List<KeyValuePair<Card, CardSpot>>();
+            singleLayDownCards = new List<Single>();
             bool canFitCard = false;
             var reservedSpots = new List<KeyValuePair<CardSpot, List<Card>>>();
 
             //Check all cards which will not be laid down anyway as part of a set or a run
-            List<Card> availableCards = new List<Card>(HandCardSpot.GetCards());
+            List<Card> availableCards = new List<Card>(HandCardSpot.Cards);
             foreach (var set in laydownCards.Sets)
                 availableCards = availableCards.Except(set.Cards).ToList();
             foreach (var run in laydownCards.Runs)
                 availableCards = availableCards.Except(run.Cards).ToList();
 
-            //TODO: check if joker fits any existing sets
-            //TODO: (later) check if joker fits any existing runs
+            var jokerCards = availableCards.Where(c => c.IsJoker());
+            bool allowedJokers = false;
+
+            //At first, do not allow jokers to be laid down as singles
+            availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
+
             //Find single cards which fit with already lying cards
             do
             {
@@ -297,20 +316,21 @@ namespace romme
                     foreach (Card card in availableCards)
                     {
                         //If the card is already used elsewhere, skip
-                        if (singleLayDownCards.Any(kvp => kvp.Key == card))
+                        if (singleLayDownCards.Any(kvp => kvp.Card == card))
                             continue;
 
-                        if (!cardSpot.CanFit(card))
+                        Card Joker;
+                        if (!cardSpot.CanFit(card, out Joker))
                             continue;
 
-                        //Find all single cards which will be added to the current cardspot
-                        var plannedMoves = singleLayDownCards.Where(kvp => kvp.Value == cardSpot).ToList();
+                        //Find all single cards which are already gonna be added to the cardspot in question
+                        var plannedMoves = singleLayDownCards.Where(kvp => kvp.CardSpot == cardSpot).ToList();
                         bool alreadyPlanned = false;
                         foreach (var entry in plannedMoves)
                         {
                             //If a card with the same rank and suit is already planned to be added to cardspot
                             //the current card cannot be added anymore
-                            if (entry.Key.Suit == card.Suit && entry.Key.Rank == card.Rank)
+                            if (entry.Card.Suit == card.Suit && entry.Card.Rank == card.Rank)
                             {
                                 alreadyPlanned = true;
                                 break;
@@ -319,12 +339,31 @@ namespace romme
                         if (alreadyPlanned)
                             continue;
 
-                        var newEntry = new KeyValuePair<Card, CardSpot>(card, cardSpot);
+                        var newEntry = new Single(card, cardSpot, Joker);
                         singleLayDownCards.Add(newEntry);
                         canFitCard = true;
                     }
                 }
+
+                //DO allow laying down jokers if no match can be found 
+                //but all but one card remaining are jokers
+                if (!canFitCard && !allowedJokers && jokerCards.Count() > 0)
+                {
+                    List<Card> singles = new List<Card>();
+                    foreach(var single in singleLayDownCards)
+                        singles.Add(single.Card);
+
+                    //Only one card remains (besides jokers)? - Allow laying jokers to try and win the game
+                    if (availableCards.Except(singles).Count() == 1)
+                    {
+                        Debug.LogWarning(gameObject.name + " can maybe win game by laying single jokers.");
+                        availableCards.AddRange(jokerCards);
+                        canFitCard = true;
+                        allowedJokers = true;
+                    }
+                }
             } while (canFitCard);
+
             possibleSingles.OnNext(singleLayDownCards);
         }
 
@@ -402,7 +441,7 @@ namespace romme
             }
         }
 
-        private void CardLayDownMoveFinished(Card card)
+        private void LayDownCardMoveFinished(Card card)
         {
             cardMoveSubscription.Dispose();
             isCardBeingLaidDown = false;
@@ -422,9 +461,35 @@ namespace romme
                 default: //LayStage.SINGLES
                     cardCount = singleLayDownCards.Count;
                     cardPackCount = 1;
-                    //TODO: If the laid single replaced a Joker, add the joker to the player's hand
-                    //As a consequence, possible runs/sets/singles have to be calculated again with that new joker
-                    break;
+
+                    //FIXME: also implement logic for RUNS
+                    if (currentCardSpot.Type != CardSpot.SpotType.SET)
+                        break;
+
+                    if (card.IsJoker())
+                        break;
+
+                    //If the laid single replaced a joker, add the joker to the player's hand
+                    // int blackCount = currentCardSpot.Cards.Count(c => c.IsBlack());
+                    // int redCount = currentCardSpot.Cards.Count(c => c.IsRed());
+                    // if (card.IsBlack() && blackCount > 2)
+                    // {
+                    //     var blackJokerCards = currentCardSpot.Cards.Where(c => c.IsBlack() && c.IsJoker());
+                    //     returningJoker = blackJokerCards.FirstOrDefault();
+                    // }
+                    // else if (card.IsRed() && redCount > 2)
+                    // {
+                    //     var redJokerCards = currentCardSpot.Cards.Where(c => c.IsRed() && c.IsJoker());
+                    //     returningJoker = redJokerCards.FirstOrDefault();
+                    // }
+                    returningJoker = singleLayDownCards[currentCardIdx].Joker;
+                    if (returningJoker != null)
+                    {
+                        playerState = PlayerState.RETURNING;
+                        return;
+                    }
+                    else
+                        break;
             }
 
             if (currentCardIdx < cardCount - 1)
@@ -433,15 +498,15 @@ namespace romme
                 return;
             }
 
-            //Last card of the current pack has been laid
+            //All cards of the current pack have been laid down            
             currentCardIdx = 0;
             currentCardPackIdx++;
-            currentCardSpot = null;     //Find a new spot for the next set or run of cards
+            currentCardSpot = null;  //Find a new spot for the next pack            
 
             if (currentCardPackIdx < cardPackCount)
                 return;
 
-            //Everything has been laid down
+            //All packs have been laid down
             if (layStage == LayStage.SINGLES ||
                 layStage == LayStage.RUNS ||
                 (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
@@ -455,22 +520,34 @@ namespace romme
             }
         }
 
-        private void PickupJokerMoveFinished(Card card)
+        private void ReturnJokerMoveFinished(Card joker)
         {
-            //TODO:
-            possibleSets = CardUtil.GetPossibleSets(HandCardSpot.GetCards());
-            possibleRuns = CardUtil.GetPossibleRuns(HandCardSpot.GetCards());
-            possibleJokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.GetCards(), possibleSets, possibleRuns);
+            cardMoveSubscription.Dispose();
+            isJokerBeingReturned = false;
+            HandCardSpot.AddCard(joker);
+            returningJoker = null;
+
+            //All possible runs/sets/singles have to be calculated again with that newly returned joker
+            possibleSets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
+            possibleRuns = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
+            possibleJokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, possibleSets, possibleRuns);
             possibleSets.AddRange(possibleJokerSets);
-            // Find runs which can be completed by joker cards 
+            //TODO: Find runs which can be completed by joker cards 
             laydownCards = GetBestCardCombo(possibleSets, possibleRuns, true);
             UpdateSingleLaydownCards();
+
+            if (laydownCards.CardCount == HandCardSpot.Cards.Count)
+                KeepOneCard();
+
+            //Proceed with waiting
+            playerState = PlayerState.WAITING;
+            waitStartTime = Time.time;
         }
 
         private void LayingCardsDone()
         {
             //With only one card left, just end the game
-            if (HandCardSpot.GetCards().Count == 1)
+            if (HandCardSpot.Cards.Count == 1)
             {
                 DiscardUnusableCard();
                 return;
@@ -479,7 +556,7 @@ namespace romme
             //Check if there are any (more) singles to lay down
             UpdateSingleLaydownCards();
 
-            if (singleLayDownCards.Count == HandCardSpot.GetCards().Count)
+            if (singleLayDownCards.Count == HandCardSpot.Cards.Count)
                 KeepOneCard();
 
             if (singleLayDownCards.Count > 0)
@@ -498,7 +575,7 @@ namespace romme
         {
             playerState = PlayerState.DISCARDING;
 
-            List<Card> possibleDiscards = new List<Card>(HandCardSpot.GetCards());
+            List<Card> possibleDiscards = new List<Card>(HandCardSpot.Cards);
 
             //Keep possible runs/sets/singles on hand for laying down later
             if (!hasLaidDown)
@@ -507,19 +584,19 @@ namespace romme
             if (possibleDiscards.Count == 0)
             {
                 Debug.LogWarning("No possible cards to discard. (This should not happen!) Choosing random one");
-                possibleDiscards.Add(HandCardSpot.GetCards().ElementAt(UnityEngine.Random.Range(0, HandCardSpot.GetCards().Count)));
+                possibleDiscards.Add(HandCardSpot.Cards.ElementAt(UnityEngine.Random.Range(0, HandCardSpot.Cards.Count)));
             }
 
             //Discard the card with the highest value
             Card card = possibleDiscards.OrderByDescending(c => c.Value).FirstOrDefault();
 
             //In case any discardable card is not a Joker, make sure the discarded one is NOT a Joker
-            if (card.Rank == Card.CardRank.JOKER && possibleDiscards.Any(c => c.Rank != Card.CardRank.JOKER))
+            if (card.IsJoker() && possibleDiscards.Any(c => !c.IsJoker()))
             {
                 do
                 {
                     card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
-                } while (card.Rank == Card.CardRank.JOKER);
+                } while (card.IsJoker());
             }
 
             HandCardSpot.RemoveCard(card);
@@ -546,9 +623,9 @@ namespace romme
             {
                 int maxValue = GetBestCardCombo(possibleSets, possibleRuns, false).Value;
                 List<Card> possibleCards = new List<Card>();
-                foreach (Card possibleCard in HandCardSpot.GetCards())
+                foreach (Card possibleCard in HandCardSpot.Cards)
                 {
-                    var hypotheticalHandCards = new List<Card>(HandCardSpot.GetCards());
+                    var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards);
                     hypotheticalHandCards.Remove(possibleCard);
                     var sets = CardUtil.GetPossibleSets(hypotheticalHandCards);
                     var runs = CardUtil.GetPossibleRuns(hypotheticalHandCards);
@@ -599,7 +676,7 @@ namespace romme
                 UpdateSingleLaydownCards();
                 var singleCards = new List<Card>();
                 foreach (var entry in singleLayDownCards)
-                    singleCards.Add(entry.Key);
+                    singleCards.Add(entry.Card);
 
                 //In case all remaining cards are possible single cards, keep the one with the lowest value
                 // if(possibleDiscards.Except(singleCards).Count() == 0)
@@ -612,11 +689,12 @@ namespace romme
 
                 //If saving all single cards is not possible, discard the one with the highest value
                 if (possibleDiscards.Count == 0)
+                {
                     possibleDiscards.Add(singleCards.OrderByDescending(c => c.Value).FirstOrDefault());
+                }
             }
 
-            //If there's more options of discardable cards, check for unfinished runs/sets with only 2 cards
-            //and exclude them from discarding
+            //If there's more options of discardable cards, check for duos (sets/runs) and exclude them from discarding
             if (possibleDiscards.Count > 1)
             {
                 //TODO:                
@@ -628,11 +706,11 @@ namespace romme
         private void DiscardCardMoveFinished(Card card)
         {
             //Refresh the list of possible card combos and singles for the UI
-            var sets = CardUtil.GetPossibleSets(HandCardSpot.GetCards());
-            var runs = CardUtil.GetPossibleRuns(HandCardSpot.GetCards());
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.GetCards(), sets, runs);
+            var sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
+            var runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, sets, runs);
             sets.AddRange(jokerSets);
-            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCardSpot.GetCards().Count);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCardSpot.Cards.Count);
             possibleCardCombos.OnNext(possibleCombos);
             UpdateSingleLaydownCards();
 

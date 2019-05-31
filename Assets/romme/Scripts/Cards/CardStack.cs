@@ -92,24 +92,41 @@ namespace romme.Cards
         private void TEST_CreateCustomStack()
         {
             for(int i = 0; i < 100; i++)
-                CreateCard(Card.CardRank.JOKER, Card.CardSuit.HEART);
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEART);
+
+            // CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
+            // CreateCard(Card.CardRank.JOKER, Card.CardSuit.TILE);
+
+            // CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+            // CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
+
+            // CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            // CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
+
+            // CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
+            // CreateCard(Card.CardRank.JOKER, Card.CardSuit.CLOVERS);
+
+            // CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
+            // CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
+
+            // CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
+            // CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
+
 
             CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
-            CreateCard(Card.CardRank.FIVE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.JOKER, Card.CardSuit.TILE);
 
             CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.CLOVERS);
 
             CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
-            // CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
-            // CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.TILE);
 
             CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.JOKER, Card.CardSuit.CLOVERS);
 
             CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
 
             CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
             CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);

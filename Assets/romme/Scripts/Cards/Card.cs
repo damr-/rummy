@@ -71,9 +71,14 @@ namespace romme.Cards
         /// </summary>
         public static readonly int CardSuitCount = 4;
 
-        public static string GetSuitSymbol(CardSuit suit)
+        public static string GetSuitSymbol(Card card)
         {
-            switch(suit)
+            if(card.IsJoker())
+            {
+                return card.IsBlack() ? "b" : "r";
+            }
+            
+            switch(card.Suit)
             {
                 case CardSuit.CLOVERS: return "♣"; 
                 case CardSuit.HEART: return "♥"; 
@@ -122,12 +127,17 @@ namespace romme.Cards
             {
                 if (Rank == CardRank.JOKER)
                 {
-                    Debug.LogWarning("Card.Value() should NOT be used with JOKERS, as their value varies.");
-                    return 20;
+                    //Most of the time, joker values are calculated in-situ since it depends on the context
+                    //Here, Joker on hand is worth 0 so it will always be discarded last
+                    return 0;
                 }
                 return CardValues[Rank];
             }
         }
+
+        public bool IsBlack() => Color == Card.CardColor.BLACK;
+        public bool IsRed() => Color == Card.CardColor.RED;
+        public bool IsJoker() => Rank == Card.CardRank.JOKER;
 
         private bool isCardMoving;
         private Vector3 targetPos;
@@ -135,7 +145,7 @@ namespace romme.Cards
         private readonly ISubject<Card> moveFinishedSubject = new Subject<Card>();
 
         public string GetFileString() => Rank + "_" + Suit;
-        public override string ToString() => GetRankLetter(Rank) + GetSuitSymbol(Suit);
+        public override string ToString() => GetRankLetter(Rank) + GetSuitSymbol(this);
 
         public void SetVisible(bool visible)
         {
