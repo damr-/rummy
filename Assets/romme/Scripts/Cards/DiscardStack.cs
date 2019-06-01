@@ -14,18 +14,26 @@ namespace romme.Cards
         public Card PeekCard() => Cards.Peek();
         public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.001f * Cards.Count;
 
+        public List<Card> RecycleDiscardedCards()
+        {
+            Card lastDiscarded = Cards.Pop();
+            var cards = RemoveCards();
+            AddCard(lastDiscarded);
+            return cards;
+        }
+
         public List<Card> RemoveCards()
         {
-            List<Card> cards = new List<Card>();
+            List<Card> removedCards = new List<Card>();
             while (Cards.Count > 0)
-                cards.Add(Cards.Pop());
-            return cards;
+                removedCards.Add(Cards.Pop());
+            return removedCards;
         }
 
         public void ResetStack()
         {
             var cards = RemoveCards();
-            while(cards.Count > 0)
+            while (cards.Count > 0)
             {
                 Card c = cards[0];
                 cards.RemoveAt(0);

@@ -153,7 +153,7 @@ namespace romme
 
                 if (Tb.I.CardStack.CardCount == 0)
                 {
-                    List<Card> discardedCards = Tb.I.DiscardStack.RemoveCards();
+                    List<Card> discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
                     Tb.I.CardStack.Restock(discardedCards);
                 }
 
