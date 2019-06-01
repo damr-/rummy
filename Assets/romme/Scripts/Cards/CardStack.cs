@@ -114,7 +114,7 @@ namespace romme.Cards
 
 
             CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
-            CreateCard(Card.CardRank.JOKER, Card.CardSuit.TILE);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
 
             CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
             CreateCard(Card.CardRank.TWO, Card.CardSuit.CLOVERS);
@@ -123,7 +123,7 @@ namespace romme.Cards
             CreateCard(Card.CardRank.TWO, Card.CardSuit.TILE);
 
             CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.JOKER, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.CLOVERS);
 
             CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
             CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);

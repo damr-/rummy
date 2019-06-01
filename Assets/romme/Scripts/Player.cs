@@ -251,41 +251,11 @@ namespace romme
         /// </summary>
         private CardCombo GetBestCardCombo(List<Card> HandCards, bool savePossibleLists = false, bool broadCastPossibleCombos = false)
         {
-            List<CardCombo> possibleCombos = GetAllPossibleCombos(HandCards, /* savePossibleLists,*/ broadCastPossibleCombos);
-            possibleCombos = possibleCombos.OrderByDescending(c => c.Value).ToList();
-            return possibleCombos.Count == 0 ? new CardCombo() : possibleCombos[0];
-        }
-
-        /// <summary>
-        /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
-        /// combinations extracted from the given 'HandCards'
-        /// </summary>
-        private List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, /* bool savePossibleLists = false, */bool broadCastPossibleCombos = false)
-        {
-            var sets = CardUtil.GetPossibleSets(HandCards);
-            var runs = CardUtil.GetPossibleRuns(HandCards);
-
-            //Find sets which can be completed by joker sets
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, sets, runs);
-            sets.AddRange(jokerSets);
-
-            // TODO: Find runs which can be completed by joker cards 
-            // var possibleJokerRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCards, 2));
-            // possibleJokerRuns = possibleJokerRuns.Where(r => r.Count == 2).ToList();
-
-            // if (savePossibleLists)
-            // {
-            //     // possibleSets = new List<Set>(sets);
-            //     // possibleRuns = new List<Run>(runs);
-            //     // possibleJokerSets = new List<Set>(jokerSets);
-            //     //TODO: possibleJokerRuns
-            // }
-
-            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count);
-
+            List<CardCombo> possibleCombos = CardUtil.GetAllPossibleCombos(HandCards);
             if (broadCastPossibleCombos)
                 possibleCardCombos.OnNext(possibleCombos);
-            return possibleCombos;
+            possibleCombos = possibleCombos.OrderByDescending(c => c.Value).ToList();
+            return possibleCombos.Count == 0 ? new CardCombo() : possibleCombos[0];
         }
 
         private void UpdateSingleLaydownCards()
@@ -373,75 +343,105 @@ namespace romme
 
         /// <summary>
         /// Figures out a way to keep at least one card in the player's hand.
-        /// This is needed in the case the player wanted to lay down every single card they had left in their hand.
-        /// First, we try to keep one of the singleLayDownCards, or one from quad-sets or runs with more than 3 cards
-        /// If no card is found, a whole set or run is not laid down
+        /// This is needed in the case that the player wants to lay down every single card they have left in their hand.
         /// </summary>
         private void KeepOneCard()
         {
-            bool removedSingleCard = false;
-            Debug.Log("Need to keep one card");
             if (singleLayDownCards.Count > 0)
             {
-                Debug.Log("Removed single laydown card " + singleLayDownCards[singleLayDownCards.Count - 1]);
-                singleLayDownCards.RemoveAt(singleLayDownCards.Count - 1);
-                removedSingleCard = true;
+                var minValSingle = singleLayDownCards.OrderBy(c => c.Card.Value).First();
+                singleLayDownCards.Remove(minValSingle);
+                Debug.Log("Keeping single " + minValSingle);
+                return;
             }
-            else
-            {
-                //Keep one card of a set or run with more than 3 cards
-                var quadSet = laydownCards.Sets.FirstOrDefault(s => s.Count == 4);
-                if (quadSet != null)
-                {
-                    Debug.Log("Removed the last card of set " + quadSet);
-                    Card lastCard = quadSet.RemoveLastCard();
 
-                    //Remove all sets which include the card from the list of possible sets 
-                    // possibleSets = possibleSets.Where(set => !set.Cards.Contains(lastCard)).ToList();
-                    removedSingleCard = true;
+            //No card can be kept without destroying the currently best card combo
+            //Find out which kept cards allow for the highest combo of the remaining cards
+            int maxValue = 0;
+            var eligibleCards = new List<Card>(); ;
+            foreach (Card card in HandCardSpot.Cards)
+            {
+                var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards);
+                hypotheticalHandCards.Remove(card);
+                int hypotheticalValue = GetBestCardCombo(hypotheticalHandCards).Value;
+                if (hypotheticalValue > maxValue)
+                {
+                    maxValue = hypotheticalValue;
+                    eligibleCards = new List<Card>() { card };
+                }
+                else if (hypotheticalValue == maxValue)
+                    eligibleCards.Add(card);
+            }
+
+            if (eligibleCards.Any())
+            {
+                //Keep the card with the lowest value out of the possible ones
+                var bestCard = eligibleCards.OrderBy(c => c.Value).First();
+                laydownCards = new CardCombo(
+                    laydownCards.Sets.Where(set => !set.Cards.Contains(bestCard)).ToList(),
+                    laydownCards.Runs.Where(run => run.Cards.Contains(bestCard)).ToList());
+                Debug.Log("Keeping " + bestCard + " since it allows the rest to form the highest possible combo.");
+                return;
+            }
+            else //No card was found. Keep one card from a set/run with more than 3 cards
+            {
+                var quadSets = laydownCards.Sets.Where(s => s.Count == 4);
+                var quadRuns = laydownCards.Runs.Where(r => r.Count > 3);
+                Card keptCard = null;
+                if (quadSets.Any())
+                    keptCard = quadSets.OrderBy(set => set.Value).First().Cards.First();
+                else if (quadRuns.Any())
+                {
+                    var cards = quadRuns.OrderBy(run => run.Value).First().Cards;
+                    var card = cards.First().Rank != Card.CardRank.ACE ? cards.First() : cards.ElementAt(1);
+                    if (card.Value < keptCard.Value)
+                        keptCard = card;
+                }
+
+                if (keptCard != null)
+                {
+                    laydownCards = new CardCombo(
+                        laydownCards.Sets.Where(set => !set.Cards.Contains(keptCard)).ToList(),
+                        laydownCards.Runs.Where(run => run.Cards.Contains(keptCard)).ToList());
+                    Debug.Log("Keeping " + keptCard + " which was part of a set/run with more than 3 cards");
+                    return;
+                }
+            }
+
+            //No single card was found. Allow all cards of the set/run with the lowest value
+            var minValRun = laydownCards.Runs.OrderBy(run => run.Value).FirstOrDefault();
+            var minValSet = laydownCards.Sets.OrderBy(set => set.Value).FirstOrDefault();
+            eligibleCards = new List<Card>();
+            if (minValRun != null && minValSet != null)
+            {
+                if (minValRun.Value < minValSet.Value)
+                {
+                    eligibleCards.AddRange(minValRun.Cards);
+                    Debug.Log("Keeping cards of " + minValRun);
                 }
                 else
                 {
-                    var quadRun = laydownCards.Runs.FirstOrDefault(r => r.Count > 3);
-                    if (quadRun != null)
-                    {
-                        Debug.Log("Removed the last card of run " + quadRun);
-                        Card lastCard = quadRun.RemoveLastCard();
-                        //Remove all runs which include the card from the list of possible runs
-                        // possibleRuns = possibleRuns.Where(run => !run.Cards.Contains(lastCard)).ToList();
-                        removedSingleCard = true;
-                    }
-                    else
-                    {
-                        Debug.LogWarning(gameObject.name + " could not find a way to keep only one card on hand.");
-                    }
+                    eligibleCards.AddRange(minValSet.Cards);
+                    Debug.Log("Keeping cards of " + minValSet);
                 }
             }
-
-            if (removedSingleCard) //If one card was found to be kept on hand, we're done
-                return;
-
-            //No card was removed yet, we have to keep a whole pack on hand
-            if (laydownCards.Sets.Count > 0)
+            else if (minValRun != null)
             {
-                Set lastSet = laydownCards.Sets.Last();
-                Debug.Log(gameObject.name + " allows discarting the whole set: " + lastSet);
-                Set set = laydownCards.RemoveLastSet();
-                //Remove any set which shares cards with the removed one
-                // possibleSets = possibleSets.Where(s => !s.Intersects(set)).ToList();
+                eligibleCards.AddRange(minValRun.Cards);
+                Debug.Log("Keeping cards of " + minValRun);
             }
-            else if (laydownCards.Runs.Count > 0)
+            else if (minValSet != null)
             {
-                var lastRun = laydownCards.Runs.Last();
-                Debug.Log(gameObject.name + " found no set to discard. Allows discarding the whole run: " + lastRun);
-                Run run = laydownCards.RemoveLastRun();
-                //Remove any run which shares cards with the removed one
-                // possibleRuns = possibleRuns.Where(r => !r.Intersects(run)).ToList();
+                eligibleCards.AddRange(minValSet.Cards);
+                Debug.Log("Keeping cards of " + minValSet);
             }
             else
-            {
-                Debug.LogWarning("No single cards and no sets or runs found to discard. This should never happen!");
-            }
+                Debug.LogWarning("No single cards, sets or runs found. This should never happen!");
+
+            if (eligibleCards.Any())
+                laydownCards = new CardCombo(
+                    laydownCards.Sets.Where(set => !set.Cards.Intersect(eligibleCards).Any()).ToList(),
+                    laydownCards.Runs.Where(run => !run.Cards.Intersect(eligibleCards).Any()).ToList());
         }
 
         private void LayDownCardMoveFinished(Card card)
@@ -465,7 +465,7 @@ namespace romme
                     cardCount = singleLayDownCards.Count;
                     cardPackCount = 1;
 
-                    //FIXME: also implement logic for RUNS
+                    //TODO: also implement logic for RUNS
                     if (currentCardSpot.Type != CardSpot.SpotType.SET)
                         break;
 
@@ -562,6 +562,36 @@ namespace romme
             if (!hasLaidDown)
                 possibleDiscards = KeepUsableCards(possibleDiscards);
 
+            //Check for duos and exclude them from discarding, if possible
+            if (possibleDiscards.Count > 2)
+            {
+                var duoSetsByRank = CardUtil.GetAllDuoSetsByRank(HandCardSpot.Cards);
+
+                if (duoSetsByRank.Any())
+                {
+                    var eligibleDuos = new List<List<Card>>();
+                    foreach (var entry in duoSetsByRank)
+                    {
+                        foreach (var duo in entry.Value)
+                        {
+                            if (possibleDiscards.Contains(duo[0]) && possibleDiscards.Contains(duo[1]))
+                                eligibleDuos.Add(new List<Card> { duo[0], duo[1] });
+                        }
+                    }
+
+                    var sortedDuos = eligibleDuos.OrderByDescending(duo => duo[0].Value + duo[1].Value).ToList();
+                    foreach (var duo in sortedDuos)
+                    {
+                        if (possibleDiscards.Except(duo).Count() >= 1)
+                        {
+                            possibleDiscards.Remove(duo[0]);
+                            possibleDiscards.Remove(duo[1]);
+                            Debug.Log("Keeping duo (" + duo[0] + ", " + duo[1] + ")");
+                        }
+                    }
+                }
+            }
+
             if (possibleDiscards.Count == 0)
             {
                 Debug.LogWarning("No possible cards to discard. (This should not happen!) Choosing random one");
@@ -587,23 +617,25 @@ namespace romme
 
         /// <summary>
         /// Removes all the cards from 'possibleDiscards' which are part of a set/run or 
-        /// are going to be laid down to an existing pack as a single
-        /// At least one card remains in 'possibleDiscards', being either a whole card pack 
-        /// or the lowest valued single card
+        /// are going to be laid down as single
         /// </summary>
         private List<Card> KeepUsableCards(List<Card> possibleDiscards)
         {
             var sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
             var runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, sets, runs);
             foreach (var run in runs)
                 possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
             foreach (var set in sets)
                 possibleDiscards = possibleDiscards.Except(set.Cards).ToList();
+            foreach (var jokerSet in jokerSets)
+                possibleDiscards = possibleDiscards.Except(jokerSet.Cards).ToList();
 
-            // If the hand only consists of possible sets and runs, discard the card with the highest
-            // value which does also not destroy the currently best card combo
+            // If the hand only consists of possible sets&runs, try to discard the card 
+            // with the highest value which does also not destroy the currently best card combo
             if (possibleDiscards.Count == 0)
             {
+                Debug.Log("Cannot keep all cards for later.");
                 int maxValue = GetBestCardCombo(HandCardSpot.Cards).Value;
                 List<Card> possibleCards = new List<Card>();
                 foreach (Card possibleCard in HandCardSpot.Cards)
@@ -617,14 +649,15 @@ namespace romme
                 //Discard the card with the highest value out of the possible ones
                 if (possibleCards.Count > 0)
                 {
-                    Card bestCard = possibleCards.OrderByDescending(c => c.Value).ElementAt(0);
+                    Card bestCard = possibleCards.OrderByDescending(c => c.Value).First();
                     possibleDiscards.Add(bestCard);
+                    Debug.Log("Found a card to discard without messing with the highest valued combo.");
                 }
                 else //No card can be removed without destroying the currently best card combo
                 {
                     //Find out which discarded cards allow for the highest combo of the remaining cards
                     maxValue = 0;
-                    List<Card> bestCards = new List<Card>(); ;
+                    possibleCards = new List<Card>(); ;
                     foreach (Card card in HandCardSpot.Cards)
                     {
                         var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards);
@@ -633,14 +666,19 @@ namespace romme
                         if (hypotheticalValue > maxValue)
                         {
                             maxValue = hypotheticalValue;
-                            bestCards = new List<Card>() { card };
+                            possibleCards = new List<Card>() { card };
                         }
                         else if (hypotheticalValue == maxValue)
-                            bestCards.Add(card);
+                            possibleCards.Add(card);
                     }
 
-                    if (bestCards.Any()) //Discard the card with the highest value out of the possible ones
-                        possibleDiscards.Add(bestCards.OrderByDescending(c => c.Value).ElementAt(0));
+                    if (possibleCards.Any())
+                    {
+                        //Discard the card with the highest value out of the possible ones
+                        var bestCard = possibleCards.OrderByDescending(c => c.Value).First();
+                        possibleDiscards.Add(bestCard);
+                        Debug.Log("Found a card to discard.");
+                    }
                     else //No card was found. Allow discarding the cards of the set/run with the lowest value
                     {
                         var minValRun = runs.OrderBy(run => run.Value).FirstOrDefault();
@@ -648,22 +686,28 @@ namespace romme
                         if (minValRun != null && minValSet != null)
                         {
                             if (minValRun.Value < minValSet.Value)
+                            {
                                 possibleDiscards.AddRange(minValRun.Cards);
+                                Debug.Log("Allowed discarding all cards of " + minValSet);
+                            }
                             else
+                            {
                                 possibleDiscards.AddRange(minValSet.Cards);
+                                Debug.Log("Allowed discarding all cards of " + minValSet);
+                            }
                         }
                         else if (minValRun != null)
                         {
                             possibleDiscards.AddRange(minValRun.Cards);
+                            Debug.Log("Allowed discarding all cards of " + minValRun);
                         }
                         else if (minValSet != null)
                         {
                             possibleDiscards.AddRange(minValSet.Cards);
+                            Debug.Log("Allowed discarding all cards of " + minValSet);
                         }
                         else
-                        {
                             Debug.Log("Could not discard a run/set with the lowest value because there are none");
-                        }
                     }
                 }
             }
@@ -671,12 +715,7 @@ namespace romme
             //If we have the freedom to choose, keep cards which can serve as singles later
             if (possibleDiscards.Count > 1)
             {
-                //Single cards which will be laid down also have to be excluded
-                //This is only important for the following scenario:
-                //      Imagine that a player might not have laid cards yet but still want to keep a card 
-                //      which they want to add to their opponent's card stack once they have laid cards down
-                // UpdateSingleLaydownCards();  //FIXME: This might not be necessary since it is called 
-                //at the start of the turn and after waiting, this method is called
+                Debug.Log("Could also keep some singles.");
                 var singleCards = new List<Card>();
                 foreach (var entry in singleLayDownCards)
                     singleCards.Add(entry.Card);
@@ -685,24 +724,19 @@ namespace romme
 
                 //If saving all single cards is not possible, discard the one with the highest value
                 if (possibleDiscards.Count == 0)
+                {
                     possibleDiscards.Add(singleCards.OrderByDescending(c => c.Value).FirstOrDefault());
+                    Debug.Log("Need to discard one single.");
+                }
             }
-
-            //If there's more options of discardable cards, check for duos (sets/runs) and exclude them from discarding
-            if (possibleDiscards.Count > 1)
-            {
-                //TODO:
-                // var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, sets, runs);
-                // TODO: jokerRuns
-            }
-
             return possibleDiscards;
         }
 
         private void DiscardCardMoveFinished(Card card)
         {
             //Refresh the list of possible card combos and singles for the UI
-            GetAllPossibleCombos(HandCardSpot.Cards, true);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCardSpot.Cards);
+            possibleCardCombos.OnNext(possibleCombos);
             UpdateSingleLaydownCards();
 
             cardMoveSubscription.Dispose();

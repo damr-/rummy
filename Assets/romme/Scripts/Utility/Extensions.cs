@@ -103,7 +103,7 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns the first card of the given list of cards which is not a joker
+        /// Returns the first card of the given list of cards which is not a joker, null otherwise
         /// </summary>
         public static Card GetFirstCard(this List<Card> cards)
         {
@@ -112,7 +112,6 @@ namespace romme.Utility
                 if(!card.IsJoker())
                     return card;
             }
-            Debug.LogError("GetFirstCard() could not find a card which is not a joker!");
             return null;
         }
     }

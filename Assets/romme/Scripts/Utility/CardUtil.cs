@@ -1,9 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 using romme.Cards;
-using System;
 
 namespace romme.Utility
 {
@@ -11,11 +11,32 @@ namespace romme.Utility
     public static class CardUtil
     {
         /// <summary>
+        /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
+        /// combinations extracted from the given 'HandCards'
+        /// </summary>
+        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards)
+        {
+            var sets = CardUtil.GetPossibleSets(HandCards);
+            var runs = CardUtil.GetPossibleRuns(HandCards);
+
+            //Find sets which can be completed by joker sets
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, sets, runs);
+            sets.AddRange(jokerSets);
+
+            // TODO: Find runs which can be completed by joker cards 
+            // var possibleJokerRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCards, 2));
+            // possibleJokerRuns = possibleJokerRuns.Where(r => r.Count == 2).ToList();
+
+            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count);
+            return possibleCombos;
+        }
+
+        /// <summary>
         /// Get all possible card combinations which could be created from the given sets and runs.
         /// Each combo's sets and runs are sorted descending by value.
         /// 'handCardCount' is the number of cards on the player's hand
         /// </summary>
-        public static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
+        private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
         {
             var combos = new List<CardCombo>();
             CardUtil.GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
@@ -154,7 +175,7 @@ namespace romme.Utility
         /// 'firstInRun': whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING
         /// </summary>
         /// <returns> The card or null if none was found </returns>
-        public static List<Card> GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
+        private static List<Card> GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
         {
             List<Card> foundCards = new List<Card>();
             foreach (Card otherCard in PlayerCards)
@@ -172,15 +193,14 @@ namespace romme.Utility
 
         /// <summary>
         /// Returns all possible sets which can be created using joker cards
-        /// excluding cards used in  'possibleSets' and 'possibleRuns'
+        /// excluding cards used in 'possibleSets' and 'possibleRuns'
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Set> possibleSets, List<Run> possibleRuns)
         {
-            //FIXME: Game 12244: Player 2 tries to use the same joker for 2 sets
-            var duoSetsByRank = GetAllDuosByRank(PlayerCards);
+            var duoSetsByRank = GetAllDuoSetsByRank(PlayerCards);
 
             //Stop here if no duos were found
-            if (duoSetsByRank.Count == 0)
+            if (!duoSetsByRank.Any())
                 return new List<Set>();
 
             List<Card[]> duos = new List<Card[]>();
@@ -189,6 +209,9 @@ namespace romme.Utility
 
             var possibleJokerSets = new List<Set>();
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
+
+            if (!jokerCards.Any())
+                return new List<Set>();
 
             // First, create trios out of duos where both cards have the same color
             // for each trio, save all posslbe combinations with available jokers
@@ -226,7 +249,7 @@ namespace romme.Utility
         /// <summary>
         /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards', sorted by rank
         /// </summary>
-        private static List<KeyValuePair<Card.CardRank, List<Card[]>>> GetAllDuosByRank(List<Card> PlayerCards)
+        public static List<KeyValuePair<Card.CardRank, List<Card[]>>> GetAllDuoSetsByRank(List<Card> PlayerCards)
         {
             var allDuos = new List<KeyValuePair<Card.CardRank, List<Card[]>>>();
 
@@ -252,26 +275,6 @@ namespace romme.Utility
             return allDuos;
         }
 
-        private static void asd(List<List<Card>> list, List<Card> other, List<Card> current)
-        {
-            for (int i = 0; i < other.Count; i++)
-            {
-                Card card = other[i];
-                var newCurrent = new List<Card>(current);
-                newCurrent.Add(card);
-
-                if (newCurrent.Count == 1)
-                {
-                    var newOther = other.GetRange(i + 1, other.Count - (i + 1)).Where(c => c.Suit != card.Suit).ToList();
-                    asd(list, newOther, newCurrent);
-                }
-                else if (newCurrent.Count == 2)
-                {
-                    list.Add(newCurrent);
-                }
-            }
-        }
-
         public static bool IsValidRun(List<Card> cards)
         {
             if (cards.Count == 0)
@@ -279,6 +282,9 @@ namespace romme.Utility
 
             //A run can only consist of cards with the same suit (or joker with the matching color)
             Card representiveCard = cards.GetFirstCard();
+            if(representiveCard == null)
+                return false;
+
             foreach (var card in cards)
             {
                 if (!card.IsJoker())

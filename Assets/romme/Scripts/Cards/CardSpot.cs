@@ -22,15 +22,20 @@ namespace romme.Cards
 
         public int GetValue()
         {
-            if (Type == SpotType.RUN && CardUtil.IsValidRun(Cards))
-                return new Run(Cards).Value;
+            if (Type == SpotType.RUN)
+            {
+                if(CardUtil.IsValidRun(Cards))
+                    return new Run(Cards).Value;
+                else
+                    return 0;
+            }
             else if (Type == SpotType.SET)
             {
                 if(CardUtil.IsValidSet(Cards))
                     return new Set(Cards).Value;
                 else if(Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
                     return (Cards.Count - 1) * Cards.GetFirstCard().Value;
-                else //When the spot is currently
+                else //When the spot is currently under construction
                     return 0;
             }
             else

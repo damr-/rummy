@@ -78,21 +78,6 @@ namespace romme.Cards
                 return Card.CardColor.BLACK;
             return Card.CardColor.RED;
         }
-        
-        /// <summary>
-        /// Check whether the any card in this run is the same as any in the given set
-        /// </summary>
-        public bool Intersects(Set set)
-        {
-            //First find all the cards which share the rank
-            var rank = set.Cards[0].Rank;
-            var matches = Cards.Where(c => c.Rank == rank).ToList();
-            if (matches.Count == 0)
-                return false;
-
-            //Check if any of the found cards are actually also part of the set
-            return Cards.Intersects(matches);
-        }
 
         ///<summary>
         ///Returns whether the cards of the other run LOOK the same as the cards in this
