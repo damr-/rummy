@@ -24,16 +24,16 @@ namespace romme.Cards
         {
             if (Type == SpotType.RUN)
             {
-                if(CardUtil.IsValidRun(Cards))
+                if (CardUtil.IsValidRun(Cards))
                     return new Run(Cards).Value;
                 else
                     return 0;
             }
             else if (Type == SpotType.SET)
             {
-                if(CardUtil.IsValidSet(Cards))
+                if (CardUtil.IsValidSet(Cards))
                     return new Set(Cards).Value;
-                else if(Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
+                else if (Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
                     return (Cards.Count - 1) * Cards.GetFirstCard().Value;
                 else //When the spot is currently under construction
                     return 0;
@@ -69,7 +69,8 @@ namespace romme.Cards
                 {
                     idx = 0;
                 }
-                //If the first item in the run is an ACE, the new card can only be added at the end
+                //If the first item in the run is an ACE, the new card can only be added at the end 
+                //FIXME: questionable for joker swaps
                 else if (cards[0].Rank == Card.CardRank.ACE)
                 {
                     idx = cards.Count;
@@ -78,7 +79,25 @@ namespace romme.Cards
                 {
                     for (int i = 0; i < cards.Count; i++)
                     {
-                        if (cards[i].Rank > card.Rank)
+                        var rank = cards[i].Rank;
+                        if (cards[i].IsJoker())
+                        {
+                            if (i == 0)
+                            {
+                                //Joker is the only card in the run (when it is laid down, for example)
+                                //Therefore, the next card comes AFTER the joker
+                                if (cards.Count == 1)
+                                {
+                                    idx = 1;
+                                    break;
+                                }
+                                else
+                                    rank = cards[1].Rank - 1;
+                            }
+                            else
+                                rank = cards[i - 1].Rank + 1;
+                        }
+                        if (rank > card.Rank)
                         {
                             idx = i;
                             break;
@@ -131,7 +150,7 @@ namespace romme.Cards
                             if (set.HasTwoReds() && joker.IsBlack() && newCard.IsRed())
                                 return false;
 
-                            if(joker.Color == newCard.Color)
+                            if (joker.Color == newCard.Color)
                                 Joker = joker;
 
                             //Otherwise, only allow adding a card whose suit is not already there
