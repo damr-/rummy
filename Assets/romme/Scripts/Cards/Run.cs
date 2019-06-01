@@ -22,17 +22,45 @@ namespace romme.Cards
                     {
                         if (i == 0)
                         {
+                            if (Cards.Count == 1) //The joker is the first and only card in the run, abort.
+                                break;
+
                             if (Cards[1].Rank == Card.CardRank.TWO)
-                                value += 1; //JOKER is ACE, ACE counts 1 in ACE-2-3
+                                value += 1;                             //JOKER is ACE, ACE counts 1 in ACE-2-3
                             else
-                                value += Card.CardValues[Cards[1].Rank - 1];
+                            {
+                                for (int j = 1; j < Count; j++)
+                                {
+                                    if (!Cards[j].IsJoker())
+                                    {
+                                        value += Card.CardValues[Cards[j].Rank - j];
+                                        break;
+                                    }
+                                }
+                            }
+
                         }
                         else
                         {
-                            value += Card.CardValues[Cards[i - 1].Rank + 1];
+                            for (int j = i - 1; j >= 0; j--)
+                            {
+                                if (!Cards[j].IsJoker())
+                                {
+                                    value += Card.CardValues[Cards[j].Rank + (i - j)];
+                                    break;
+                                }
+                            }
+                            for (int j = i; j < Count; j++)
+                            {
+                                if (!Cards[j].IsJoker())
+                                {
+                                    value += Card.CardValues[Cards[j].Rank - (j - i)];
+                                    break;
+                                }
+                            }
                         }
                     }
-                    else if(rank == Card.CardRank.ACE && i == 0)
+                    else if (rank == Card.CardRank.ACE && i == 0)
                     {
                         value += 1; //ACE counts 1 in ACE-2-3
                     }
@@ -51,12 +79,11 @@ namespace romme.Cards
             {
                 string output = "";
                 cards.ForEach(card => output += card + ", ");
-                Debug.LogError("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")");
+                Debug.LogWarning("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")");
                 return;
             }
 
-            Cards = new List<Card>();
-            Cards.AddRange(cards);
+            Cards = new List<Card>(cards);
             Suit = Cards.GetFirstCard().Suit;
         }
 
@@ -74,7 +101,7 @@ namespace romme.Cards
 
         public Card.CardColor GetRunColor()
         {
-            if(Suit == Card.CardSuit.CLOVERS || Suit == Card.CardSuit.PIKE)
+            if (Suit == Card.CardSuit.CLOVERS || Suit == Card.CardSuit.PIKE)
                 return Card.CardColor.BLACK;
             return Card.CardColor.RED;
         }
@@ -85,17 +112,17 @@ namespace romme.Cards
         ///</summary>
         public bool LooksEqual(Run other)
         {
-            if(Count != other.Count)
+            if (Count != other.Count)
                 return false;
-            if(Suit != other.Suit)
+            if (Suit != other.Suit)
                 return false;
 
-            for(int i = 0; i < Cards.Count(); i++)
+            for (int i = 0; i < Cards.Count(); i++)
             {
                 Card.CardRank r1 = Cards.ElementAt(i).Rank;
                 Card.CardRank r2 = other.Cards.ElementAt(i).Rank;
 
-                if(r1 != r2)
+                if (r1 != r2)
                     return false;
             }
             return true;
