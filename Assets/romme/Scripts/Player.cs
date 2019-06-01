@@ -35,7 +35,7 @@ namespace romme
         public int PlayerHandValue { get { return HandCardSpot.GetValue(); } }
 
         public Transform PlayerCardSpotsParent;
-        private List<CardSpot> GetPlayerCardSpots()
+        public List<CardSpot> GetPlayerCardSpots()
         {
             if (playerCardSpots.Count == 0)
                 playerCardSpots = PlayerCardSpotsParent.GetComponentsInChildren<CardSpot>().ToList();
@@ -562,6 +562,10 @@ namespace romme
             if (!hasLaidDown)
                 possibleDiscards = KeepUsableCards(possibleDiscards);
 
+            //For now, don't allow discarding joker cards
+            var jokerCards = possibleDiscards.Where(c => c.IsJoker());
+            possibleDiscards = possibleDiscards.Except(jokerCards).ToList();
+
             //Check for duos and exclude them from discarding, if possible
             if (possibleDiscards.Count > 2)
             {
@@ -594,8 +598,14 @@ namespace romme
 
             if (possibleDiscards.Count == 0)
             {
-                Debug.LogWarning("No possible cards to discard. (This should not happen!) Choosing random one");
-                possibleDiscards.Add(HandCardSpot.Cards.ElementAt(UnityEngine.Random.Range(0, HandCardSpot.Cards.Count)));
+                //All remaining cards are joker, allow the player to discard them
+                possibleDiscards.AddRange(jokerCards);
+
+                if (possibleDiscards.Count == 0)
+                {
+                    Debug.LogWarning("No possible cards to discard. (This should not happen!) Choosing random one");
+                    possibleDiscards.Add(HandCardSpot.Cards.ElementAt(UnityEngine.Random.Range(0, HandCardSpot.Cards.Count)));
+                }
             }
 
             //Discard the card with the highest value

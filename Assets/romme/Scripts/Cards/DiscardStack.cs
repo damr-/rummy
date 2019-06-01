@@ -19,6 +19,7 @@ namespace romme.Cards
             Card lastDiscarded = Cards.Pop();
             var cards = RemoveCards();
             AddCard(lastDiscarded);
+            lastDiscarded.transform.position = GetNextCardPos();
             return cards;
         }
 

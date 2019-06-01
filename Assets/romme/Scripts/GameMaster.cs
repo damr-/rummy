@@ -55,7 +55,7 @@ namespace romme
         private readonly ISubject<int> gameOver = new Subject<int>();
 
         public CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
-        
+
         public KeyCode PauseKey = KeyCode.P;
 
         private void Start()
@@ -77,7 +77,7 @@ namespace romme
             RoundCount = 1;
 
             Tb.I.CardStack.CreateCardStack(CardStackType);
-            if(CardStackType != CardStack.CardStackType.CUSTOM)
+            if (CardStackType != CardStack.CardStackType.CUSTOM)
                 Tb.I.CardStack.ShuffleCardStack();
 
             if (Players.Count == 0)
@@ -89,7 +89,7 @@ namespace romme
 
         private void Update()
         {
-            if(Input.GetKeyDown(PauseKey))
+            if (Input.GetKeyDown(PauseKey))
                 TogglePause();
 
             if (Mathf.Abs(Time.timeScale - GameSpeed) > Mathf.Epsilon)
@@ -148,6 +148,50 @@ namespace romme
                         PlayerWaitDuration = tmpPlayerWaitDuration;
                         PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
                         GameSpeed = DefaultGameSpeed;
+                    }
+                    bool draw = true;
+                    foreach (var p in Players)
+                    {
+                        var cardSpots = p.GetPlayerCardSpots();
+                        var setSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.SET);
+                        var runSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.RUN);
+
+                        if (!setSpots.Any() && !runSpots.Any())
+                        {
+                            draw = false;
+                            break;
+                        }
+
+                        if (setSpots.Any())
+                        {
+                            var fullSetsCount = setSpots.Where(spot => spot.Cards.Count == 4 && spot.Cards.All(c => !c.IsJoker())).Count();
+                            if (fullSetsCount != setSpots.Count())
+                            {
+                                draw = false;
+                                break;
+                            }
+                        }
+
+                        if (runSpots.Any())
+                        {
+                            var fullRunsCounr = runSpots.Where(spot => spot.Cards.Count == 14 && spot.Cards.All(c => !c.IsJoker())).Count();
+                            if (fullRunsCounr != runSpots.Count())
+                            {
+                                draw = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(draw && Players.Any(p => p.PlayerCardCount > 2))
+                        draw = false;
+                        
+                    if (draw)
+                    {
+                        Debug.LogWarning(Seed + " was a draw!");
+                        gameOver.OnNext(-999);
+                        gameState = GameState.NONE;
+                        return;
                     }
                 }
 

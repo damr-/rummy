@@ -1731,6 +1731,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameOverCanvas: {fileID: 1507469351}
   loserCardValue: {fileID: 119213200}
+  continueImmediately: 0
 --- !u!1 &490849496
 GameObject:
   m_ObjectHideFlags: 0

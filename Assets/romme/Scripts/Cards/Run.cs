@@ -51,7 +51,7 @@ namespace romme.Cards
             {
                 string output = "";
                 cards.ForEach(card => output += card + ", ");
-                Debug.LogWarning("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")");
+                Debug.LogError("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")");
                 return;
             }
 
