@@ -141,7 +141,7 @@ namespace romme.Cards
                         if (newCard.Rank != set.Rank)
                             return false;
 
-                        Card joker = Cards.Where(c => c.IsJoker()).FirstOrDefault();
+                        Card joker = Cards.FirstOrDefault(c => c.IsJoker());
                         if (joker != null)
                         {
                             //Allow adding a third card of one color if one of the other two is a joker

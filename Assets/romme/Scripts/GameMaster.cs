@@ -164,7 +164,7 @@ namespace romme
 
                         if (setSpots.Any())
                         {
-                            var fullSetsCount = setSpots.Where(spot => spot.Cards.Count == 4).Count();
+                            var fullSetsCount = setSpots.Count(spot => spot.Cards.Count == 4);
                             if (fullSetsCount != setSpots.Count())
                             {
                                 draw = false;
@@ -174,7 +174,7 @@ namespace romme
 
                         if (runSpots.Any())
                         {
-                            var fullRunsCount = runSpots.Where(spot => spot.Cards.Count == 14).Count();
+                            var fullRunsCount = runSpots.Count(spot => spot.Cards.Count == 14);
                             if (fullRunsCount != runSpots.Count())
                             {
                                 draw = false;

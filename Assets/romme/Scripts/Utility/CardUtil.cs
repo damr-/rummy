@@ -14,7 +14,7 @@ namespace romme.Utility
         /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
         /// combinations extracted from the given 'HandCards'
         /// </summary>
-        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards)
+        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, bool allowLayingAll)
         {
             var sets = CardUtil.GetPossibleSets(HandCards);
             var runs = CardUtil.GetPossibleRuns(HandCards);
@@ -27,21 +27,26 @@ namespace romme.Utility
             // var possibleJokerRuns = new List<Run>(CardUtil.GetPossibleRuns(HandCards, 2));
             // possibleJokerRuns = possibleJokerRuns.Where(r => r.Count == 2).ToList();
 
-            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
             return possibleCombos;
         }
 
         /// <summary>
         /// Get all possible card combinations which could be created from the given sets and runs.
         /// Each combo's sets and runs are sorted descending by value.
-        /// 'handCardCount' is the number of cards on the player's hand
+        /// - 'handCardCount' is the number of cards on the player's hand
+        /// - 'allowLayingAll': Whether combos are allowed which would require the player to lay down all cards from his hand.
+        ///                  This is usually not usedful, unless hypothetical hands are examined, where one card was removed before. 
         /// </summary>
-        private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount)
+        private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount, bool allowLayingAll)
         {
             var combos = new List<CardCombo>();
             CardUtil.GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
             CardUtil.GetPossibleRunCombos(combos, runs, new CardCombo());
             combos = combos.Where(ldc => ldc.PackCount > 0).ToList();
+
+            if(allowLayingAll)
+                return combos;
 
             //Don't allow combinations which cannot be reduced further but would require the player to lay down all cards
             //for example don't allow laying down 3 sets of 3, when having 9 cards in hand in total
@@ -340,7 +345,7 @@ namespace romme.Utility
             }
 
             //Check joker now if necessary
-            Card joker = cards.Where(c => c.IsJoker()).FirstOrDefault();
+            Card joker = cards.FirstOrDefault(c => c.IsJoker());
             if (joker != null)
             {
                 if (joker.IsBlack()
