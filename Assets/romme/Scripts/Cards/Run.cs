@@ -85,22 +85,18 @@ namespace romme.Cards
 
         public Card.CardRank GetHighestRank()
         {
-            for (int i = Cards.Count - 1; i >= 0; i--)
-            {
-                if (!Cards[i].IsJoker())
-                    return Cards[i].Rank + (Cards.Count - 1 - i);
-            }
+            int idx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, Cards.Count - 1);
+            if(idx != -1)
+                return Cards[idx].Rank + (Cards.Count - 1 - idx);
             Debug.LogWarning(ToString() + " only consists of jokers");
             return Card.CardRank.JOKER;
         }
 
         public Card.CardRank GetLowestRank()
         {
-            for (int i = 0; i < Cards.Count; i++)
-            {
-                if (!Cards[i].IsJoker())
-                    return Cards[i].Rank - i;
-            }
+            int idx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, 0);
+            if(idx != -1)
+                return Cards[idx].Rank - idx;
             Debug.LogWarning(ToString() + " only consists of jokers");
             return Card.CardRank.JOKER;
         }

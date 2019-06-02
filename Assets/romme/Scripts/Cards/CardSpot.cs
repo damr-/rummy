@@ -62,7 +62,9 @@ namespace romme.Cards
             if (Type == SpotType.RUN && cards.Count > 0)
             {
                 int idx = cards.Count; //By default, add the new card at the end
-                var highestRank = Cards[cards.Count - 1].Rank;
+                
+                int highestNonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(cards, cards.Count - 1);
+                var highestRank = cards[highestNonJokerIdx].Rank + (cards.Count - 1 - highestNonJokerIdx);
                 //1st priority: add ace after king. If the highest rank is not a king,
                 //add the ace at the beginning, in front of the TWO
                 if (card.Rank == Card.CardRank.ACE && highestRank != Card.CardRank.KING)
