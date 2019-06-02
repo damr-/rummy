@@ -78,8 +78,8 @@ namespace romme.Cards
                 {
                     idx = 0;
                 }
-                //If the first item in the run is an ACE, the new card can only be added at the end 
-                else if (cards[0].Rank == Card.CardRank.ACE || card.IsJoker()) //Also, if the added card is a joker, add it at the end
+                //If the added card is a joker, it can only be added at the end
+                else if (card.IsJoker()) 
                 {
                     idx = cards.Count;
                 }
@@ -88,7 +88,8 @@ namespace romme.Cards
                     for (int i = 0; i < cards.Count; i++)
                     {
                         var rank = cards[i].Rank;
-                        if (cards[i].IsJoker())
+
+                        if (cards[i].IsJoker()) //Figure out the rank of the card which the joker is replacing
                         {
                             if (i == 0)
                             {
@@ -99,7 +100,7 @@ namespace romme.Cards
                                     idx = 1;
                                     break;
                                 }
-                                else //Figure out the rank of the card which the joker is replacing
+                                else
                                 {
                                     var nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(cards, 1);
                                     rank = cards[nonJokerIdx].Rank - nonJokerIdx;
@@ -121,6 +122,9 @@ namespace romme.Cards
                                 }
                             }
                         }
+                        else if(rank == Card.CardRank.ACE && i == 0)
+                            rank = (Card.CardRank)1;
+
                         if (rank > card.Rank)
                         {
                             idx = i;
