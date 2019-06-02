@@ -94,23 +94,23 @@ namespace romme.Cards
             for(int i = 0; i < 100; i++)
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEART);
 
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.PIKE);
+
             CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
             CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
 
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.CLOVERS);
-
             CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.TILE);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
 
             CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.PIKE);
 
             CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.PIKE);
 
             CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.JOKER, Card.CardSuit.CLOVERS);
         }
 
         public void CreateCardStack(CardStackType cardServeType)

@@ -106,9 +106,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf438839a73264b3fb0ac0ad50c473b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Number: 2
-  Symbol: 1
-  CardMoveSpeed: 100
+  Rank: 2
+  Suit: 1
 --- !u!114 &3651395446447094413
 MonoBehaviour:
   m_ObjectHideFlags: 0

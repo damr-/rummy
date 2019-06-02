@@ -24,39 +24,25 @@ namespace romme.Cards
                         {
                             if (Cards.Count == 1) //The joker is the first and only card in the run, abort.
                                 break;
-
-                            if (Cards[1].Rank == Card.CardRank.TWO)
-                                value += 1;                             //JOKER is ACE, ACE counts 1 in ACE-2-3
-                            else
+                            if (Cards[1].Rank == Card.CardRank.TWO) //JOKER is ACE, ACE counts 1 in ACE-2-3
+                                value += 1;
+                            else //Find the next highest card which is not a joker and calculate the current joker's rank/value
                             {
-                                for (int j = 1; j < Count; j++)
-                                {
-                                    if (!Cards[j].IsJoker())
-                                    {
-                                        value += Card.CardValues[Cards[j].Rank - j];
-                                        break;
-                                    }
-                                }
+                                var nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, 1);
+                                value += Card.CardValues[Cards[nonJokerIdx].Rank - nonJokerIdx];
                             }
-
                         }
                         else
                         {
-                            for (int j = i - 1; j >= 0; j--)
+                            //Try to find the first card below the current joker which is not one
+                            var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, i - 1);
+                            if (nonJokerIdx != -1)
+                                value += Card.CardValues[Cards[nonJokerIdx].Rank + (i - nonJokerIdx)];
+                            else //No card below was found, search for higher card
                             {
-                                if (!Cards[j].IsJoker())
-                                {
-                                    value += Card.CardValues[Cards[j].Rank + (i - j)];
-                                    break;
-                                }
-                            }
-                            for (int j = i; j < Count; j++)
-                            {
-                                if (!Cards[j].IsJoker())
-                                {
-                                    value += Card.CardValues[Cards[j].Rank - (j - i)];
-                                    break;
-                                }
+                                nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, i + 1);
+                                if(nonJokerIdx != -1)
+                                    value += Card.CardValues[Cards[nonJokerIdx].Rank - (nonJokerIdx - i)];
                             }
                         }
                     }
@@ -89,14 +75,24 @@ namespace romme.Cards
 
         public Card.CardRank GetHighestRank()
         {
-            var lastCardRank = Cards[Cards.Count - 1].Rank;
-            return lastCardRank != Card.CardRank.JOKER ? lastCardRank : Cards[Cards.Count - 2].Rank + 1;
+            for (int i = Cards.Count - 1; i >= 0; i--)
+            {
+                if (!Cards[i].IsJoker())
+                    return Cards[i].Rank + (Cards.Count - 1 - i);
+            }
+            Debug.LogWarning(ToString() + " only consists of jokers");
+            return Card.CardRank.JOKER;
         }
 
         public Card.CardRank GetLowestRank()
         {
-            var firstCardRank = Cards[0].Rank;
-            return firstCardRank != Card.CardRank.JOKER ? firstCardRank : Cards[1].Rank - 1;
+            for (int i = 0; i < Cards.Count; i++)
+            {
+                if (!Cards[i].IsJoker())
+                    return Cards[i].Rank - i;
+            }
+            Debug.LogWarning(ToString() + " only consists of jokers");
+            return Card.CardRank.JOKER;
         }
 
         public Card.CardColor GetRunColor()

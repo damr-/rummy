@@ -63,15 +63,14 @@ namespace romme.Cards
             {
                 int idx = cards.Count; //By default, add the new card at the end
                 var highestRank = Cards[cards.Count - 1].Rank;
-                //1st priority: add ace after king. If the highest rank card in the run is not a king,
-                //manually add the ace at the beginning, in front of the TWO
+                //1st priority: add ace after king. If the highest rank is not a king,
+                //add the ace at the beginning, in front of the TWO
                 if (card.Rank == Card.CardRank.ACE && highestRank != Card.CardRank.KING)
                 {
                     idx = 0;
                 }
                 //If the first item in the run is an ACE, the new card can only be added at the end 
-                //FIXME: questionable for joker swaps
-                else if (cards[0].Rank == Card.CardRank.ACE)
+                else if (cards[0].Rank == Card.CardRank.ACE || card.IsJoker()) //Also, if the added card is a joker, add it at the end
                 {
                     idx = cards.Count;
                 }
@@ -84,18 +83,34 @@ namespace romme.Cards
                         {
                             if (i == 0)
                             {
-                                //Joker is the only card in the run (when it is laid down, for example)
+                                //Joker is the only card in the run (when it is currently being laid down, for example)
                                 //Therefore, the next card comes AFTER the joker
                                 if (cards.Count == 1)
                                 {
                                     idx = 1;
                                     break;
                                 }
-                                else
-                                    rank = cards[1].Rank - 1;
+                                else //Figure out the rank of the card which the joker is replacing
+                                {
+                                    var nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(cards, 1);
+                                    rank = cards[nonJokerIdx].Rank - nonJokerIdx;
+                                }
                             }
                             else
-                                rank = cards[i - 1].Rank + 1;
+                            {
+                                //Try to find the first card below the current joker which is not one
+                                var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, i - 1);
+                                if (nonJokerIdx != -1)
+                                    rank = cards[nonJokerIdx].Rank + (i - nonJokerIdx);
+                                else //No card below was found, search for higher card
+                                {
+                                    nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, i + 1);
+                                    if (nonJokerIdx != -1)
+                                        rank = cards[nonJokerIdx].Rank - (nonJokerIdx - i);
+                                    else
+                                        Debug.LogError("Rank of joker card could not be figured out! This should never happen!");
+                                }
+                            }
                         }
                         if (rank > card.Rank)
                         {
@@ -174,13 +189,44 @@ namespace romme.Cards
                     }
                 default: //SpotType.RUN:
                     Run run = new Run(Cards);
+                    var highestRank = run.GetHighestRank();
+                    var lowestRank = run.GetLowestRank();
                     if (!newCard.IsJoker())
                     {
                         if (newCard.Suit != run.Suit)
                             return false;
 
-                        var highestRank = run.GetHighestRank();
-                        var lowestRank = run.GetLowestRank();
+                        var jokers = Cards.Where(c => c.IsJoker());
+                        Card replacedJoker = null;
+
+                        foreach (var joker in jokers)
+                        {
+                            Card.CardRank actualJokerRank = Card.CardRank.JOKER;
+                            int jokerIdx = Cards.IndexOf(joker);
+                            int higherNonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, jokerIdx + 1);
+                            if (higherNonJokerIdx != -1)
+                                actualJokerRank = Cards[higherNonJokerIdx].Rank - (higherNonJokerIdx - jokerIdx);
+                            else
+                            {
+                                int lowerNonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, jokerIdx - 1);
+                                if (lowerNonJokerIdx != -1)
+                                    actualJokerRank = Cards[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
+                                else
+                                    Debug.LogError("Rank of joker card could not be figured out! This should never happen!");
+                            }
+
+                            if (actualJokerRank == newCard.Rank)
+                            {
+                                replacedJoker = joker;
+                                break;
+                            }
+                        }
+
+                        if (replacedJoker != null)
+                        {
+                            Joker = replacedJoker;
+                            return true;
+                        }
 
                         return (newCard.Rank == highestRank + 1 && highestRank != Card.CardRank.ACE) ||
                                 (newCard.Rank == lowestRank - 1 && lowestRank != Card.CardRank.ACE) ||
@@ -188,7 +234,7 @@ namespace romme.Cards
                     }
                     else
                     {
-                        return newCard.Color == run.GetRunColor();
+                        return newCard.Color == run.GetRunColor() && (highestRank != Card.CardRank.ACE || lowestRank != Card.CardRank.ACE);
                     }
             }
         }

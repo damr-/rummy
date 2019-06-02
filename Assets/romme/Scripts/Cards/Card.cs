@@ -73,37 +73,37 @@ namespace romme.Cards
 
         public static string GetSuitSymbol(Card card)
         {
-            if(card.IsJoker())
+            if (card.IsJoker())
             {
                 return card.IsBlack() ? "b" : "r";
             }
-            
-            switch(card.Suit)
+
+            switch (card.Suit)
             {
-                case CardSuit.CLOVERS: return "♣"; 
-                case CardSuit.HEART: return "♥"; 
-                case CardSuit.PIKE: return "♠"; 
+                case CardSuit.CLOVERS: return "♣";
+                case CardSuit.HEART: return "♥";
+                case CardSuit.PIKE: return "♠";
                 default: return "♦"; //TILE
             }
         }
 
         public static string GetRankLetter(CardRank rank)
         {
-            switch(rank)
+            switch (rank)
             {
-                case CardRank.TWO: return "2"; 
-                case CardRank.THREE: return "3"; 
-                case CardRank.FOUR: return "4"; 
-                case CardRank.FIVE: return "5"; 
-                case CardRank.SIX: return "6"; 
-                case CardRank.SEVEN: return "7"; 
-                case CardRank.EIGHT: return "8"; 
-                case CardRank.NINE: return "9"; 
-                case CardRank.TEN: return "10"; 
-                case CardRank.JACK: return "J"; 
-                case CardRank.QUEEN: return "Q"; 
-                case CardRank.KING: return "K"; 
-                case CardRank.ACE: return "A"; 
+                case CardRank.TWO: return "2";
+                case CardRank.THREE: return "3";
+                case CardRank.FOUR: return "4";
+                case CardRank.FIVE: return "5";
+                case CardRank.SIX: return "6";
+                case CardRank.SEVEN: return "7";
+                case CardRank.EIGHT: return "8";
+                case CardRank.NINE: return "9";
+                case CardRank.TEN: return "10";
+                case CardRank.JACK: return "J";
+                case CardRank.QUEEN: return "Q";
+                case CardRank.KING: return "K";
+                case CardRank.ACE: return "A";
                 default: return "?"; //JOKER
             }
         }

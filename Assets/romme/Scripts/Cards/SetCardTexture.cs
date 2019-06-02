@@ -11,7 +11,6 @@ namespace romme.Cards
 
         private Card.CardRank currentRank;
         private Card.CardSuit currentSuit;
-        //private Card.CardColor currentColor;
 
         private void Start()
         {
@@ -29,7 +28,7 @@ namespace romme.Cards
             Texture texture = Resources.Load<Texture>("cards/" + card.GetFileString());
 
             if (texture == null)
-                Debug.Log("No texture for " + card + "(missing " + card.GetFileString() + ")");
+                Debug.Log("No texture for " + card + " (missing " + card.GetFileString() + ")");
 
             meshRend.sharedMaterial = new Material(meshRend.material) { mainTexture = texture };
         }
