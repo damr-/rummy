@@ -69,7 +69,7 @@ namespace romme.Cards
                 if (highestNonJokerIdx != -1)
                 {
                     highestRank = cards[highestNonJokerIdx].Rank + (cards.Count - 1 - highestNonJokerIdx);
-                    if (highestNonJokerIdx == 0 && Cards[highestNonJokerIdx].Rank == Card.CardRank.ACE)
+                    if (highestNonJokerIdx == 0 && cards[highestNonJokerIdx].Rank == Card.CardRank.ACE)
                         highestRank = (Card.CardRank)(cards.Count);
                 }
                 //1st priority: add ace after king. If the highest rank is not a king,
@@ -108,13 +108,17 @@ namespace romme.Cards
                             }
                             else
                             {
-                                //Try to find the first card below the current joker which is not one
-                                var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, i - 1);
+                                //Try to find the first card below the current joker which isn't one
+                                var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(cards, i - 1);
                                 if (nonJokerIdx != -1)
+                                {
                                     rank = cards[nonJokerIdx].Rank + (i - nonJokerIdx);
+                                    if (nonJokerIdx == 0 && cards[nonJokerIdx].Rank == Card.CardRank.ACE)
+                                        rank = (Card.CardRank)(i + 1);
+                                }
                                 else //No card below was found, search for higher card
                                 {
-                                    nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, i + 1);
+                                    nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(cards, i + 1);
                                     if (nonJokerIdx != -1)
                                         rank = cards[nonJokerIdx].Rank - (nonJokerIdx - i);
                                     else
