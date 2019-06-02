@@ -29,7 +29,8 @@ namespace romme.Cards
                             else //Find the next highest card which is not a joker and calculate the current joker's rank/value
                             {
                                 var nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, 1);
-                                value += Card.CardValues[Cards[nonJokerIdx].Rank - nonJokerIdx];
+                                var jokerRank = Cards[nonJokerIdx].Rank - nonJokerIdx;
+                                value += Card.CardValues[jokerRank];
                             }
                         }
                         else
@@ -37,12 +38,21 @@ namespace romme.Cards
                             //Try to find the first card below the current joker which is not one
                             var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, i - 1);
                             if (nonJokerIdx != -1)
-                                value += Card.CardValues[Cards[nonJokerIdx].Rank + (i - nonJokerIdx)];
+                            {
+                                Card.CardRank jokerRank = Cards[nonJokerIdx].Rank + (i - nonJokerIdx);
+                                if (Cards[nonJokerIdx].Rank == Card.CardRank.ACE) // <=> nonJokerIdx is 0 <=> Cards[0].Rank is 1
+                                    jokerRank = (Card.CardRank)(i + 1);
+
+                                value += Card.CardValues[jokerRank];
+                            }
                             else //No card below was found, search for higher card
                             {
                                 nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, i + 1);
-                                if(nonJokerIdx != -1)
-                                    value += Card.CardValues[Cards[nonJokerIdx].Rank - (nonJokerIdx - i)];
+                                if (nonJokerIdx != -1)
+                                {
+                                    var jokerRank = Cards[nonJokerIdx].Rank - (nonJokerIdx - i);
+                                    value += Card.CardValues[jokerRank];
+                                }
                             }
                         }
                     }
