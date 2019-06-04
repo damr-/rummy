@@ -95,22 +95,31 @@ namespace romme.Cards
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEART);
 
             CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
 
-            CreateCard(Card.CardRank.FIVE, Card.CardSuit.TILE);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
 
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
             CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.HEART);
 
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.TILE);
 
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
 
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.PIKE);
-            CreateCard(Card.CardRank.JOKER, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.TILE);
+
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+
+            CreateCard(Card.CardRank.KING, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
         }
 
         public void CreateCardStack(CardStackType cardServeType)

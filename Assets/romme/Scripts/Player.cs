@@ -236,7 +236,7 @@ namespace romme
                 return;
             }
 
-            laydownCards = GetBestCardCombo(HandCardSpot.Cards, false, true);
+            laydownCards = GetBestCardCombo(HandCardSpot.Cards, false, true, true);
             UpdateSingleLaydownCards();
 
             if (Tb.I.GameMaster.RoundCount >= Tb.I.GameMaster.EarliestAllowedLaydownRound)
@@ -587,8 +587,8 @@ namespace romme
             if (possibleDiscards.Count > 2)
             {
                 var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards);
-                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards, laidDownCards));
+                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards, !hasLaidDown);     // Only broadcast not-keeping duos when 
+                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards, laidDownCards, !hasLaidDown)); // it hasn't been done already after drawing
 
                 var eligibleDuos = new List<List<Card>>();
                 foreach (var duo in duos)

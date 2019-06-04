@@ -288,7 +288,7 @@ namespace romme.Utility
                     (!anyHigherLeft && lowerRank == Card.CardRank.JOKER) ||
                     (!anyHigherLeft && !anyLowerLeft))
                 {
-                    if(logMessage)
+                    if (logMessage)
                         Debug.Log("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.");
                     duoRuns.Remove(duoRun);
                 }
@@ -309,7 +309,7 @@ namespace romme.Utility
                         var middleSuit = c1.Suit;
                         if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
                             duoRuns.Add(new List<Card>() { c1, c2 });
-                        else
+                        else if(logMessage)
                             Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
                     }
                 }
@@ -394,7 +394,7 @@ namespace romme.Utility
 
                         if (count1 + count2 < 4)
                             newDuos.Add(new List<Card>() { c1, c2 });
-                        else if(logMessage)
+                        else if (logMessage)
                             Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(rank) + Card.GetSuitSymbol(otherSuits[0]) + "/" + Card.GetSuitSymbol(otherSuits[1]) + " already laid twice each.");
                     }
                 }
