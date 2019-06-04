@@ -188,7 +188,7 @@ namespace romme
 
                     if (draw)
                     {
-                        Debug.LogWarning(Seed + " was a draw!");
+                        Debug.Log(Seed + " was a draw!");
                         gameOver.OnNext(null);
                         gameState = GameState.NONE;
                         return;

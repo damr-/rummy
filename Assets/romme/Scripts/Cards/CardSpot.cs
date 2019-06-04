@@ -72,16 +72,19 @@ namespace romme.Cards
                     if (highestNonJokerIdx == 0 && cards[highestNonJokerIdx].Rank == Card.CardRank.ACE)
                         highestRank = (Card.CardRank)(cards.Count);
                 }
+                
                 //1st priority: add ace after king. If the highest rank is not a king,
                 //add the ace at the beginning, in front of the TWO
                 if (card.Rank == Card.CardRank.ACE && highestRank != Card.CardRank.KING)
                 {
                     idx = 0;
                 }
-                //If the added card is a joker, it can only be added at the end
-                else if (card.IsJoker()) 
+                else if (card.IsJoker()) //Joker will be added at the end, if possible
                 {
-                    idx = cards.Count;
+                    if(highestRank == Card.CardRank.ACE)
+                        idx = 0;
+                    else
+                        idx = cards.Count;
                 }
                 else //Any other case, the card will be sorted by rank
                 {
