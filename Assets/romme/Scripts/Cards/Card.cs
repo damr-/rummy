@@ -43,6 +43,40 @@ namespace romme.Cards
             CLOVERS = 4 //KREUZ
         }
 
+        public static List<CardSuit> GetOtherTwo(CardSuit s1, CardSuit s2)
+        {
+            if (s1 == s2)
+                return new List<CardSuit>(); ;
+
+            switch (s1)
+            {
+                case CardSuit.HEART:
+                    if (s2 == CardSuit.TILE)
+                        return new List<CardSuit>() { CardSuit.PIKE, CardSuit.CLOVERS };
+                    if (s2 == CardSuit.PIKE)
+                        return new List<CardSuit>() { CardSuit.TILE, CardSuit.CLOVERS };
+                    return new List<CardSuit>() { CardSuit.TILE, CardSuit.PIKE };   //CLOVERS
+                case CardSuit.TILE:
+                    if (s2 == CardSuit.HEART)
+                        return new List<CardSuit>() { CardSuit.PIKE, CardSuit.CLOVERS };
+                    if (s2 == CardSuit.PIKE)
+                        return new List<CardSuit>() { CardSuit.HEART, CardSuit.CLOVERS };
+                    return new List<CardSuit>() { CardSuit.HEART, CardSuit.PIKE };   //CLOVERS
+                case CardSuit.PIKE:
+                    if (s2 == CardSuit.HEART)
+                        return new List<CardSuit>() { CardSuit.TILE, CardSuit.CLOVERS };
+                    if (s2 == CardSuit.TILE)
+                        return new List<CardSuit>() { CardSuit.HEART, CardSuit.CLOVERS };
+                    return new List<CardSuit>() { CardSuit.HEART, CardSuit.TILE };   //CLOVERS
+                default: //CardSuit.CLOVERS
+                    if (s2 == CardSuit.HEART)
+                        return new List<CardSuit>() { CardSuit.TILE, CardSuit.PIKE };
+                    if (s2 == CardSuit.TILE)
+                        return new List<CardSuit>() { CardSuit.HEART, CardSuit.PIKE };
+                    return new List<CardSuit>() { CardSuit.HEART, CardSuit.TILE };   //PIKE
+            }
+        }
+
         public static readonly IDictionary<CardRank, int> CardValues = new Dictionary<CardRank, int>
         {
             { CardRank.JOKER, 0 },
@@ -74,11 +108,13 @@ namespace romme.Cards
         public static string GetSuitSymbol(Card card)
         {
             if (card.IsJoker())
-            {
                 return card.IsBlack() ? "b" : "r";
-            }
+            return GetSuitSymbol(card.Suit);
+        }
 
-            switch (card.Suit)
+        public static string GetSuitSymbol(Card.CardSuit suit)
+        {
+            switch (suit)
             {
                 case CardSuit.CLOVERS: return "♣";
                 case CardSuit.HEART: return "♥";

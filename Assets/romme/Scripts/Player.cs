@@ -251,7 +251,7 @@ namespace romme
         /// </summary>
         private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadCastPossibleCombos)
         {
-            List<CardCombo> possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, allowLayingAll);
+            List<CardCombo> possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), allowLayingAll);
             if (broadCastPossibleCombos)
                 possibleCardCombos.OnNext(possibleCombos);
             possibleCombos = possibleCombos.OrderByDescending(c => c.Value).ToList();
@@ -280,12 +280,9 @@ namespace romme
             //Find single cards which fit with already lying cards
             do
             {
-                var cardSpots = new List<CardSpot>(GetPlayerCardSpots());
-                var otherPlayerCardSpots = Tb.I.GameMaster.GetOtherPlayer(this).GetPlayerCardSpots();
-                cardSpots.AddRange(otherPlayerCardSpots);
+                var cardSpots = Tb.I.GameMaster.GetAllCardSpots();
 
                 canFitCard = false;
-
                 foreach (CardSpot cardSpot in cardSpots)
                 {
                     foreach (Card card in availableCards)
@@ -580,8 +577,9 @@ namespace romme
             //Check for duo sets&runs and exclude them from discarding, if possible
             if (possibleDiscards.Count > 2)
             {
-                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards);
-                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards));
+                var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
+                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards);
+                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards, laidDownCards));
 
                 var eligibleDuos = new List<List<Card>>();
                 foreach (var duo in duos)
@@ -649,8 +647,9 @@ namespace romme
         {
             var sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
             var runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, sets, runs);
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Cards, sets, runs);
+            var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, laidDownCards, sets, runs);
+            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Cards, laidDownCards, sets, runs);
             foreach (var run in runs)
                 possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
             foreach (var set in sets)
@@ -757,7 +756,7 @@ namespace romme
         private void DiscardCardMoveFinished(Card card)
         {
             //Refresh the list of possible card combos and singles for the UI
-            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCardSpot.Cards, false);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCardSpot.Cards, Tb.I.GameMaster.GetAllCardSpotCards(), false);
             possibleCardCombos.OnNext(possibleCombos);
             UpdateSingleLaydownCards();
 

@@ -14,17 +14,17 @@ namespace romme.Utility
         /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
         /// combinations extracted from the given 'HandCards'
         /// </summary>
-        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, bool allowLayingAll)
+        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll)
         {
             var sets = CardUtil.GetPossibleSets(HandCards);
             var runs = CardUtil.GetPossibleRuns(HandCards);
 
             // Find sets which can be completed by joker sets
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, sets, runs);
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs);
             sets.AddRange(jokerSets);
 
             // Find runs which can be completed by joker cards 
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, sets, runs);
+            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs);
             runs.AddRange(jokerRuns);
 
             var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
@@ -203,13 +203,13 @@ namespace romme.Utility
             return foundCards;
         }
 
-        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Set> possibleSets, List<Run> possibleRuns)
+        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Run>();
 
-            var duoRuns = GetAllDuoRuns(PlayerCards);
+            var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards);
             if (!duoRuns.Any())
                 return new List<Run>();
 
@@ -244,12 +244,53 @@ namespace romme.Utility
             return possibleJokerRuns;
         }
 
-        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards /* //FIXME:, List<Card> LaidDownCards */)
+        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
             var duoRuns = new List<List<Card>>();
             var playerCardsWithoutJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
             GetPossibleRuns(duoRuns, playerCardsWithoutJokers, playerCardsWithoutJokers, new List<Card>(), 2, 2);
-            //FIXME: remove all runs from duoRuns where highestRank+1 and lowestRank-1 cards (with the same suit) are already laid down twice!
+
+
+            // Don't bother keeping duo runs if all possible run combinations were laid down already
+            var tmpRuns = new List<List<Card>>(duoRuns);
+            foreach (var duoRun in tmpRuns)
+            {
+                Card c1 = duoRun[0];
+                Card c2 = duoRun[1];
+                Card.CardSuit runSuit = c1.Suit;
+
+                Card.CardRank lowerRank = Card.CardRank.JOKER;
+                int lowerCount = 0;
+                bool anyLowerLeft = true;
+                if (c1.Rank == Card.CardRank.TWO)
+                    lowerRank = Card.CardRank.ACE;
+                else if (c1.Rank > Card.CardRank.TWO)
+                    lowerRank = c1.Rank - 1;
+                if (lowerRank != Card.CardRank.JOKER)
+                {
+                    lowerCount = LaidDownCards.Count(c => c.Rank == lowerRank && c.Suit == runSuit);
+                    anyLowerLeft = lowerCount < 2;
+                }
+
+                Card.CardRank higherRank = Card.CardRank.JOKER;
+                int higherCount = 0;
+                bool anyHigherLeft = true;
+                if (c2.Rank < Card.CardRank.ACE)
+                    higherRank = c2.Rank + 1;
+                if (higherRank != Card.CardRank.JOKER)
+                {
+                    higherCount = LaidDownCards.Count(c => c.Rank == higherRank && c.Suit == runSuit);
+                    anyHigherLeft = higherCount < 2;
+                }
+
+                if ((!anyLowerLeft && higherRank == Card.CardRank.JOKER) ||
+                    (!anyHigherLeft && lowerRank == Card.CardRank.JOKER) ||
+                    (!anyHigherLeft && !anyLowerLeft))
+                {
+                    Debug.LogWarning("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.");
+                    duoRuns.Remove(duoRun);
+                }
+            }
 
             //Find duos with the card in the middle missing
             foreach (Card c1 in playerCardsWithoutJokers)
@@ -261,7 +302,14 @@ namespace romme.Utility
 
                     if ((c1.Rank == Card.CardRank.ACE && c2.Rank == Card.CardRank.THREE) ||
                         (c1.Rank == c2.Rank - 2))
-                        duoRuns.Add(new List<Card>() { c1, c2 }); //FIXME: Don't add if the middle card has already been laid down twice!
+                    {
+                        var middleRank = c1.Rank + 1;
+                        var middleSuit = c1.Suit;
+                        if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
+                            duoRuns.Add(new List<Card>() { c1, c2 });
+                        else
+                            Debug.LogWarning("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
+                    }
                 }
             }
             return duoRuns;
@@ -271,13 +319,13 @@ namespace romme.Utility
         /// Returns all possible sets which can be created using joker cards
         /// excluding cards used in 'possibleSets' and 'possibleRuns'
         /// </summary>
-        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Set> possibleSets, List<Run> possibleRuns)
+        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Set>();
 
-            var duoSets = GetAllDuoSets(PlayerCards);
+            var duoSets = GetAllDuoSets(PlayerCards, LaidDownCards);
             if (!duoSets.Any())
                 return new List<Set>();
 
@@ -317,27 +365,35 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards', sorted by rank
+        /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards'
         /// </summary>
-        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards /* //FIXME:, List<Card> LaidDownCards */)
+        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
             var allDuos = new List<List<Card>>();
 
-            var cardsByRank =
-                    PlayerCards.GetUniqueCardsByRank()
-                        .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2).ToList();
-
+            var cardsByRank = PlayerCards.GetCardsByRank()
+                                            .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2)
+                                            .ToList();
 
             foreach (var entry in cardsByRank)
             {
                 var newDuos = new List<List<Card>>();
+                var rank = entry.Key;
                 foreach (Card c1 in entry.Value)
                 {
                     for (int j = entry.Value.IndexOf(c1); j < entry.Value.Count; j++)
                     {
                         Card c2 = entry.Value[j];
-                        if (c1.Suit != c2.Suit) //FIXME: don't add duo if the other two suits of c1.rank (=c2.rank) are already laid down twice!
+                        if (c1.Suit == c2.Suit)
+                            continue;
+                        var otherSuits = Card.GetOtherTwo(c1.Suit, c2.Suit);
+                        int count1 = LaidDownCards.Count(c => c.Rank == rank && c.Suit == otherSuits[0]);
+                        int count2 = LaidDownCards.Count(c => c.Rank == rank && c.Suit == otherSuits[1]);
+
+                        if (count1 + count2 < 4)
                             newDuos.Add(new List<Card>() { c1, c2 });
+                        else
+                            Debug.LogWarning("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(rank) + Card.GetSuitSymbol(otherSuits[0]) + "/" + Card.GetSuitSymbol(otherSuits[1]) + " already laid twice each.");
                     }
                 }
                 allDuos.AddRange(newDuos);

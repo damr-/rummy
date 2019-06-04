@@ -23,17 +23,17 @@ namespace romme.UI
 
         private void Update()
         {
-            if(continueImmediately && gameOverCanvas.activeInHierarchy)
+            if (continueImmediately && gameOverCanvas.activeInHierarchy)
             {
                 Tb.I.GameMaster.NextGame();
                 Hide();
             }
         }
 
-        private void GameOver(int cardValue)
+        private void GameOver(Player player)
         {
             gameOverCanvas.SetActive(true);
-            loserCardValue.text = "Loser card value: " + cardValue;
+            loserCardValue.text = "Loser card value: " + (player == null ? "0" : player.PlayerHandValue.ToString());
         }
 
         public void Hide()

@@ -20,7 +20,7 @@ namespace romme
         private float drawWaitStartTime;
 
         /// <summary>
-        /// Don't animate card movement and set the wait durations to 0 until the given round starts. Used for testing. '0' means no round is skipped
+        /// Disable card movement animation and set the wait durations to 0 until the given round starts. Used for testing. '0' means no round is skipped
         /// </summary>
         public int SkipUntilRound = 0;
         private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, DefaultGameSpeed;
@@ -51,8 +51,8 @@ namespace romme
 
         private IDisposable playerFinished = Disposable.Empty;
 
-        public IObservable<int> GameOver { get { return gameOver; } }
-        private readonly ISubject<int> gameOver = new Subject<int>();
+        public IObservable<Player> GameOver { get { return gameOver; } }
+        private readonly ISubject<Player> gameOver = new Subject<Player>();
 
         public CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
@@ -183,13 +183,13 @@ namespace romme
                         }
                     }
 
-                    if(draw && Players.Any(p => p.PlayerCardCount > 2))
+                    if (draw && Players.Any(p => p.PlayerCardCount > 2))
                         draw = false;
-                        
+
                     if (draw)
                     {
                         Debug.LogWarning(Seed + " was a draw!");
-                        gameOver.OnNext(-999);
+                        gameOver.OnNext(null);
                         gameState = GameState.NONE;
                         return;
                     }
@@ -207,7 +207,7 @@ namespace romme
             else
             {
                 Player otherPlayer = Players[currentPlayerID];
-                gameOver.OnNext(otherPlayer.PlayerHandValue);
+                gameOver.OnNext(otherPlayer);
                 gameState = GameState.NONE;
             }
         }
@@ -247,6 +247,23 @@ namespace romme
         public void TogglePause()
         {
             GameSpeed = (GameSpeed > 0 ? 0 : DefaultGameSpeed);
+        }
+
+        public List<CardSpot> GetAllCardSpots()
+        {
+            var cardSpots = new List<CardSpot>();
+            foreach (var player in Players)
+                cardSpots.AddRange(player.GetPlayerCardSpots());
+            return cardSpots;
+        }
+
+        public List<Card> GetAllCardSpotCards()
+        {
+            var cards = new List<Card>();
+            var cardSpots = GetAllCardSpots();
+            foreach (var spot in cardSpots)
+                cards.AddRange(spot.Cards);
+            return cards;
         }
 
     }
