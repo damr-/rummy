@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using romme.Cards;
+using UniRx;
 
 namespace romme.Utility
 {
@@ -13,18 +14,19 @@ namespace romme.Utility
         /// <summary>
         /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
         /// combinations extracted from the given 'HandCards'
+        /// 'logMessage': Whether to log when a duo set/run was NOT added because all necessary cards are already laid down
         /// </summary>
-        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll)
+        public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll, bool logMessage)
         {
             var sets = CardUtil.GetPossibleSets(HandCards);
             var runs = CardUtil.GetPossibleRuns(HandCards);
 
             // Find sets which can be completed by joker sets
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs);
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs, logMessage);
             sets.AddRange(jokerSets);
 
             // Find runs which can be completed by joker cards 
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs);
+            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs, logMessage);
             runs.AddRange(jokerRuns);
 
             var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
@@ -203,13 +205,13 @@ namespace romme.Utility
             return foundCards;
         }
 
-        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns)
+        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage = false)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Run>();
 
-            var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards);
+            var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, logMessage);
             if (!duoRuns.Any())
                 return new List<Run>();
 
@@ -244,12 +246,11 @@ namespace romme.Utility
             return possibleJokerRuns;
         }
 
-        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards)
+        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage = false)
         {
             var duoRuns = new List<List<Card>>();
             var playerCardsWithoutJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
             GetPossibleRuns(duoRuns, playerCardsWithoutJokers, playerCardsWithoutJokers, new List<Card>(), 2, 2);
-
 
             // Don't bother keeping duo runs if all possible run combinations were laid down already
             var tmpRuns = new List<List<Card>>(duoRuns);
@@ -287,7 +288,8 @@ namespace romme.Utility
                     (!anyHigherLeft && lowerRank == Card.CardRank.JOKER) ||
                     (!anyHigherLeft && !anyLowerLeft))
                 {
-                    Debug.LogWarning("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.");
+                    if(logMessage)
+                        Debug.Log("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.");
                     duoRuns.Remove(duoRun);
                 }
             }
@@ -308,7 +310,7 @@ namespace romme.Utility
                         if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
                             duoRuns.Add(new List<Card>() { c1, c2 });
                         else
-                            Debug.LogWarning("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
+                            Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
                     }
                 }
             }
@@ -319,13 +321,13 @@ namespace romme.Utility
         /// Returns all possible sets which can be created using joker cards
         /// excluding cards used in 'possibleSets' and 'possibleRuns'
         /// </summary>
-        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns)
+        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage = false)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Set>();
 
-            var duoSets = GetAllDuoSets(PlayerCards, LaidDownCards);
+            var duoSets = GetAllDuoSets(PlayerCards, LaidDownCards, logMessage);
             if (!duoSets.Any())
                 return new List<Set>();
 
@@ -367,7 +369,7 @@ namespace romme.Utility
         /// <summary>
         /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards'
         /// </summary>
-        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards)
+        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage = false)
         {
             var allDuos = new List<List<Card>>();
 
@@ -392,8 +394,8 @@ namespace romme.Utility
 
                         if (count1 + count2 < 4)
                             newDuos.Add(new List<Card>() { c1, c2 });
-                        else
-                            Debug.LogWarning("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(rank) + Card.GetSuitSymbol(otherSuits[0]) + "/" + Card.GetSuitSymbol(otherSuits[1]) + " already laid twice each.");
+                        else if(logMessage)
+                            Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(rank) + Card.GetSuitSymbol(otherSuits[0]) + "/" + Card.GetSuitSymbol(otherSuits[1]) + " already laid twice each.");
                     }
                 }
                 allDuos.AddRange(newDuos);
