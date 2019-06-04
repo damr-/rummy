@@ -205,7 +205,7 @@ namespace romme.Utility
             return foundCards;
         }
 
-        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage = false)
+        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
@@ -246,7 +246,7 @@ namespace romme.Utility
             return possibleJokerRuns;
         }
 
-        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage = false)
+        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
         {
             var duoRuns = new List<List<Card>>();
             var playerCardsWithoutJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
@@ -321,7 +321,7 @@ namespace romme.Utility
         /// Returns all possible sets which can be created using joker cards
         /// excluding cards used in 'possibleSets' and 'possibleRuns'
         /// </summary>
-        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage = false)
+        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
@@ -369,7 +369,7 @@ namespace romme.Utility
         /// <summary>
         /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards'
         /// </summary>
-        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage = false)
+        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
         {
             var allDuos = new List<List<Card>>();
 

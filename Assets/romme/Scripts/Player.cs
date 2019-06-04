@@ -205,10 +205,10 @@ namespace romme
                 //          Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards) { discardedCard };
-                var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false, false);
+                var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false, false, false);
                 int hypotheticalValue = hypotheticalBestCombo.Value;
 
-                int currentValue = GetBestCardCombo(HandCardSpot.Cards, false, false).Value;
+                int currentValue = GetBestCardCombo(HandCardSpot.Cards, false, false, false).Value;
 
                 if (hypotheticalValue > currentValue)
                 {
@@ -258,7 +258,7 @@ namespace romme
         /// Returns the card combo which yield the highest possible points
         /// broadcastNonDuos: Whether to log when a duo set/run was NOT added because all necessary cards are already laid down
         /// </summary>
-        private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos = false)
+        private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos)
         {
             List<CardCombo> possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), allowLayingAll, broadcastNonDuos);
             if (broadcastPossibleCombos)
@@ -371,7 +371,7 @@ namespace romme
                 var keptCard = eligibleCards.OrderBy(c => c.Value).First();
                 var optimalHand = new List<Card>(HandCardSpot.Cards);
                 optimalHand.Remove(keptCard);
-                laydownCards = GetBestCardCombo(optimalHand, true, false);
+                laydownCards = GetBestCardCombo(optimalHand, true, false, false);
                 newThought.OnNext("Keeping " + keptCard + ", the rest forms best combo " + laydownCards);
                 return;
             }
@@ -452,7 +452,7 @@ namespace romme
             {
                 var hypotheticalHandCards = new List<Card>(PlayerHandCards);
                 hypotheticalHandCards.Remove(card);
-                int hypotheticalValue = GetBestCardCombo(hypotheticalHandCards, true, false).Value;
+                int hypotheticalValue = GetBestCardCombo(hypotheticalHandCards, true, false, false).Value;
                 if (hypotheticalValue > maxValue)
                 {
                     maxValue = hypotheticalValue;
@@ -534,7 +534,7 @@ namespace romme
             returningJoker = null;
 
             //All possible runs/sets/singles have to be calculated again with that newly returned joker
-            laydownCards = GetBestCardCombo(HandCardSpot.Cards, false, true);
+            laydownCards = GetBestCardCombo(HandCardSpot.Cards, false, true, false);
             UpdateSingleLaydownCards();
 
             if (laydownCards.CardCount == HandCardSpot.Cards.Count)
@@ -657,8 +657,8 @@ namespace romme
             var sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
             var runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
             var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, laidDownCards, sets, runs);
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Cards, laidDownCards, sets, runs);
+            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, laidDownCards, sets, runs, false);
+            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Cards, laidDownCards, sets, runs, false);
             foreach (var run in runs)
                 possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
             foreach (var set in sets)
@@ -673,13 +673,13 @@ namespace romme
             if (possibleDiscards.Count == 0)
             {
                 newThought.OnNext("Cannot keep all cards for later.");
-                int maxValue = GetBestCardCombo(HandCardSpot.Cards, false, false).Value;
+                int maxValue = GetBestCardCombo(HandCardSpot.Cards, false, false, false).Value;
                 List<Card> eligibleCards = new List<Card>();
                 foreach (Card possibleCard in HandCardSpot.Cards)
                 {
                     var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards);
                     hypotheticalHandCards.Remove(possibleCard);
-                    if (GetBestCardCombo(hypotheticalHandCards, true, false).Value == maxValue)
+                    if (GetBestCardCombo(hypotheticalHandCards, true, false, false).Value == maxValue)
                         eligibleCards.Add(possibleCard);
                 }
 

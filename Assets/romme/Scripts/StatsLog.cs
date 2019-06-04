@@ -24,6 +24,12 @@ namespace romme
 
         private void GameOver(Player player)
         {
+            if(player == null)
+            {
+                WriteToFile(gameMaster.Seed + "\t" + gameMaster.RoundCount + "\t-1\t-1\t-1\t-1");
+                return;
+            }
+            
             string output = gameMaster.Seed + "\t" +
                             gameMaster.RoundCount + "\t" +
                             player.PlayerCardCount + "\t" +
