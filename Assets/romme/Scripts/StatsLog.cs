@@ -19,7 +19,7 @@ namespace romme
             path += System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
             gameMaster = Tb.I.GameMaster;
             gameMaster.GameOver.Subscribe(GameOver);
-            WriteToFile("Seed\tRound\tLoserHandCardCount\tLoserHandValue\tLoserFilledCardSpots\tLoserCardSpotsValue");
+            WriteToFile("Seed\tPlayerNr\tRound\tLoserHandCardCount\tLoserHandValue\tLoserFilledCardSpots\tLoserCardSpotsValue");
         }
 
         private void GameOver(Player player)
