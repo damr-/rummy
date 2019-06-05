@@ -26,11 +26,12 @@ namespace romme
         {
             if(player == null)
             {
-                WriteToFile(gameMaster.Seed + "\t" + gameMaster.RoundCount + "\t-1\t-1\t-1\t-1");
+                WriteToFile(gameMaster.Seed + "\t-1\t" + gameMaster.RoundCount + "\t-1\t-1\t-1\t-1");
                 return;
             }
             
             string output = gameMaster.Seed + "\t" +
+                            gameMaster.Players.IndexOf(player) + "\t" +
                             gameMaster.RoundCount + "\t" +
                             player.PlayerCardCount + "\t" +
                             player.PlayerHandValue + "\t" +
