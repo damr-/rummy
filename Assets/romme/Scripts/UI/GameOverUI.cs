@@ -16,16 +16,25 @@ namespace romme.UI
         [Tooltip("Enable to automatically continue with the next game when a game has ended")]
         public bool continueImmediately;
 
+        [Tooltip("After which seed number to stop continuing automatically. '-1' to never stop")]
+        public int stopAfterSeed = -1;
+
+        private GameMaster gameMaster;
+
         private void Start()
         {
-            GetComponent<GameMaster>().GameOver.Subscribe(GameOver);
+            gameMaster = GetComponent<GameMaster>();
+            gameMaster.GameOver.Subscribe(GameOver);
         }
 
         private void Update()
         {
+            if(stopAfterSeed > -1 && gameMaster.RoundCount < stopAfterSeed)
+                return;
+
             if (continueImmediately && gameOverCanvas.activeInHierarchy)
             {
-                Tb.I.GameMaster.NextGame();
+                gameMaster.NextGame();
                 Hide();
             }
         }
