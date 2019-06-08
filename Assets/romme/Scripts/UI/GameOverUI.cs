@@ -29,7 +29,7 @@ namespace romme.UI
 
         private void Update()
         {
-            if(stopAfterSeed > -1 && gameMaster.RoundCount < stopAfterSeed)
+            if(stopAfterSeed > -1 && gameMaster.Seed < stopAfterSeed)
                 return;
 
             if (continueImmediately && gameOverCanvas.activeInHierarchy)
