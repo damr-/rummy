@@ -13,8 +13,8 @@ A Unity application which plays the famous game 'Romme' against itself. I create
   - lay down sets/runs of any value during their turn,
   - add single cards to already laid down card packs during their turn. A card can also be added to a card pack where the joker originally replaced the card in question. In that case, the card replaces the joker and the latter is picked up by the player who replaced it.
 - The goal is to get rid of all the cards in one's hand. This means the all cards in the player's hand are gone, except one, which is then discarded to finish the game.
-  
-  ## Remarks
+
+## Remarks
 - The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands (unless they cannot yet lay down at all). Same goes for single laydown cards.
 - The players do not "count"/memorize cards which had been discarded to figure out possible card combinations.
 - Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every cards exists twice in the game, if the duo's missing third card is part of already laid down card packs twice, the duo will *not* be kept, since it cannot be completed.
