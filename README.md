@@ -6,7 +6,7 @@ The application was used to simulate many hundreds of games to create meaningful
 
 [Download (Mac OS)](https://github.com/damr-/romme/raw/master/Builds/Romme_MacOS.app.zip)
 
-Obviously, it would have been better to simulate these games without the visual representation, allowing for much higher computation speed. The visuals were initially implemented to test the system for errors, since the whole logic behind the player behavior was created from scratch. The setup was then kept in the process and also improved upon with various features. Ffor example, all possible card packs and their values, possible single cards and duos which were detected are logged on the screen for an easier understanding of the player's decision making. This information turned out to be very useful when watching the simulation, therefore it stayed.
+Obviously, it would have been better to simulate these games without the visual representation, allowing for much higher computation speed. The visuals were initially implemented to test the system for errors, since the whole logic behind the player behavior was created from scratch. The setup was then kept in the process and also improved upon with various features. For example, all possible card packs and their values, possible single cards and duos which were detected are logged on the screen for an easier understanding of the player's decision making. This information turned out to be very useful when watching the simulation, therefore it stayed.
 
 ## Rules
 - 2 players, each start with 13 cards in their hand.
