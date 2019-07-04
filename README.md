@@ -1,5 +1,12 @@
 # Romme/Rummy
-A Unity application which plays the famous game 'Rummy' against itself. I created this to simulate many games to find out whether it would be advantageous in any way to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
+A Unity application which plays the famous game 'Rummy' against itself. I created this to find out whether it would be advantageous to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
+The application was used to simulate many hundreds of games to create meaningful statistics. The downloadable versions are not meant for simulation and data gathering, but for presenting the application. Therefore, these versions do not track stats and include an option-menu which lets the user control some of the most important values of the simulation.
+
+[Download (Windows)](coming soon)
+
+[Download (Mac OS)](coming soon)
+
+Obviously, it would have been better to simulate these games without the visual representation, allowing for much higher computation speed. Since the whole logic behind the player behavior was created from scratch, the visuals were also implemented to check the behavior for errors and the whole setup was kept in the process.
 
 ## Rules
 - 2 players, each start with 13 cards in their hand.
@@ -12,12 +19,12 @@ A Unity application which plays the famous game 'Rummy' against itself. I create
   - pick up the top card of the discard stack instead of drawing one from the card stack at the start of their turn,
   - lay down sets/runs of any value during their turn,
   - add single cards to already laid down card packs during their turn. A card can also be added to a card pack where the joker originally replaced the card in question. In that case, the card replaces the joker and the latter is picked up by the player who replaced it.
-- The goal is to get rid of all the cards in one's hand. This means the all cards in the player's hand are gone, except one, which is then discarded to finish the game.
+- The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are gone, except one, which is then discarded to finish the game.
 
 ## Remarks
-- The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands (unless they cannot yet lay down at all). Same goes for single laydown cards.
-- The players do not "count"/memorize cards which had been discarded to figure out possible card combinations.
-- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every cards exists twice in the game, if the duo's missing third card is part of already laid down card packs twice, the duo will *not* be kept, since it cannot be completed.
+- The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands (unless they cannot yet lie down at all). Same goes for single laydown cards.
+- The players do not "count"/memorize the cards which had been discarded to figure out possible card combinations.
+- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every card exists twice in the game, if the duo's missing third card is part of already laid down card packs twice, the duo will *not* be kept, since it cannot be completed.
 - Starting with 13 cards, there exists the possibility that the game ends in a draw. This happens when both players laid down 3 complete sets of 4 cards each. With one card remaining in their hand, no player can win. In that case, the game is forcefully ended as a draw.
 - The seed is used to shuffle the cards in the deck. As a result, running the application with the same seed always results in the same game being played.
-- LINQ is used for the logic behind finding possible sets/runs and duos. That code could definitively be improved a lot both in terms of elegance, shortness and performance.
+- LINQ is used for the logic behind finding possible sets/runs and duos. That code could definitely be improved a lot both in terms of elegance, shortness and performance.
