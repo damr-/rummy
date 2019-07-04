@@ -14,12 +14,12 @@ Obviously, it would have been better to simulate these games without the visual 
 - To end the turn, the player discards one card.
 - After round 2, if a player can form card packs with a combined value greater than a minimum required value, these packs are laid down. Card packs are sets and runs.
   - Sets are formed by cards of the same rank but different suits. A set consists of 3 or 4 cards, one of which can be replaced by a joker of the appropriate color.
-  - Runs consist of at least 3 cards of the same suit which form an ascending sequence. A run can start with Ace-2-3 and end with Q-K-Ace but must not form loops (K-Ace-2 segments are forbidden). One card in a run can be replaced by a joker of the matching color (adding more joker cards later is not forbidden though).
-- A player who has laid down cards possesses the ability to
+  - Runs consist of at least 3 cards of the same suit which form an ascending sequence. A run can start with Ace-2-3 and end with Q-K-Ace but must not form loops (K-Ace-2 segments are forbidden). One card in a run can be replaced by a joker of matching color (adding more joker cards later is not forbidden though).
+- A player who has laid down card packs possesses the ability to
   - pick up the top card of the discard stack instead of drawing one from the card stack at the start of their turn,
   - lay down sets/runs of any value during their turn,
   - add single cards to already laid down card packs during their turn. A card can also be added to a card pack where the joker originally replaced the card in question. In that case, the card replaces the joker and the latter is picked up by the player who replaced it.
-- The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are gone, except one, which is then discarded to finish the game.
+- The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are laid down, except one, which is then discarded to finish the game.
 
 ## Remarks
 - The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands (unless they cannot yet lie down at all). Same goes for single laydown cards.
