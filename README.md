@@ -2,11 +2,11 @@
 A Unity application which plays the famous game 'Rummy' against itself. I created this to find out whether it would be advantageous to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
 The application was used to simulate many hundreds of games to create meaningful statistics. The downloadable versions are not meant for simulation and data gathering, but for presenting the application. Therefore, these versions do not track stats and include an option-menu which lets the user control some of the most important values of the simulation.
 
-[Download (Windows)](coming soon)
+[Download (Windows)](https://github.com/damr-/romme/raw/master/Builds/Romme_Windows.zip)
 
-[Download (Mac OS)](coming soon)
+[Download (Mac OS)](https://github.com/damr-/romme/raw/master/Builds/Romme_MacOS.app.zip)
 
-Obviously, it would have been better to simulate these games without the visual representation, allowing for much higher computation speed. Since the whole logic behind the player behavior was created from scratch, the visuals were also implemented to check the behavior for errors and the whole setup was kept in the process.
+Obviously, it would have been better to simulate these games without the visual representation, allowing for much higher computation speed. The visuals were initially implemented to test the system for errors, since the whole logic behind the player behavior was created from scratch. The setup was then kept in the process and also improved upon with various features. Ffor example, all possible card packs and their values, possible single cards and duos which were detected are logged on the screen for an easier understanding of the player's decision making. This information turned out to be very useful when watching the simulation, therefore it stayed.
 
 ## Rules
 - 2 players, each start with 13 cards in their hand.
