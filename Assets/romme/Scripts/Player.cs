@@ -5,7 +5,6 @@ using System.Linq;
 using UnityEngine;
 using romme.Cards;
 using romme.Utility;
-using romme.UI;
 using Single = romme.Cards.Single;
 
 namespace romme
@@ -113,7 +112,7 @@ namespace romme
 
         private void Update()
         {
-            if (playerState == PlayerState.WAITING && Time.time - waitStartTime > Tb.I.GameMaster.PlayerWaitDuration)
+            if (playerState == PlayerState.WAITING && Time.time - waitStartTime > Tb.I.GameMaster.PlayWaitDuration)
             {
                 playerState = PlayerState.PLAYING;
                 if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !hasLaidDown)

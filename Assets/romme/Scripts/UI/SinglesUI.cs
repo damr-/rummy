@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using romme.Cards;
+﻿using System.Collections.Generic;
 using UniRx;
 using Single = romme.Cards.Single;
 

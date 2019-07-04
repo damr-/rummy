@@ -1,16 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 using romme.Cards;
+using UnityEngine;
 using UniRx;
+using romme.Utility;
 
 namespace romme.UI
 {
 
     public class CardCombosUI : CardOutputUI
     {
+        private Color notEnoughPointsColor = new Color(25/255f, 25/255f, 25/255f, 0.5f);
+
         protected override void SetupPlayerSub()
         {
             player.PossibleCardCombosChanged.Subscribe(UpdateCombos);
@@ -54,7 +55,9 @@ namespace romme.UI
                         msg += run + ", ";
                 }
                 msg = msg.TrimEnd().TrimEnd(',') + " (" + cardCombo.Value + ")";
-                outputView.PrintMessage(new ScrollView.Message(msg));
+
+                Color msgColor = cardCombo.Value < Tb.I.GameMaster.MinimumLaySum ? notEnoughPointsColor : Color.black;
+                outputView.PrintMessage(new ScrollView.Message(msg, msgColor));
             }
         }
     }

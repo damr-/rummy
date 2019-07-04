@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using romme.Utility;
 using romme.Cards;
 using System.Linq;
@@ -13,25 +12,31 @@ namespace romme
     public class GameMaster : MonoBehaviour
     {
         public int Seed;
+
         public float GameSpeed = 1.0f;
+        public void SetGameSpeed(float value) => GameSpeed = value;
+
         public bool AnimateCardMovement = true;
-        public float PlayerWaitDuration = 2f;
-        public float PlayerDrawWaitDuration = 2f;
+        public void SetAnimateCardMovement(bool value) => AnimateCardMovement = value;
+
+        public float DrawWaitDuration = 2f;
+        public void SetDrawWaitDuration(float value) => DrawWaitDuration = value;
+
+        public float PlayWaitDuration = 2f;
+        public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
+
         private float drawWaitStartTime;
 
         /// <summary>
-        /// Disable card movement animation and set the wait durations to 0 until the given round starts. Used for testing. '0' means no round is skipped
+        /// FOR DEV PURPOSES ONLY! Disable card movement animation and set the wait durations to 0 until the given round starts. '0' means no round is skipped
         /// </summary>
         public int SkipUntilRound = 0;
-        private float tmpPlayerWaitDuration, tmpPlayerDrawWaitDuration, DefaultGameSpeed;
+        private float tmpPlayerWaitDuration, tmpDrawWaitDuration, DefaultGameSpeed;
 
+        public int CardsPerPlayer = 13;
         public int EarliestAllowedLaydownRound = 2;
         public int MinimumLaySum = 40;
-        public int CardsPerPlayer = 13;
-
-        public float CardMoveSpeed { get; private set; }
-        [SerializeField]
-        private float PlayCardSpeed = 50f, DealCardSpeed = 50f;
+        public float CardMoveSpeed = 50f;
 
         public int RoundCount { get; private set; }
         public List<Player> Players = new List<Player>();
@@ -61,19 +66,18 @@ namespace romme
         private void Start()
         {
             DefaultGameSpeed = GameSpeed;
-            tmpPlayerWaitDuration = PlayerWaitDuration;
-            tmpPlayerDrawWaitDuration = PlayerDrawWaitDuration;
+            tmpPlayerWaitDuration = PlayWaitDuration;
+            tmpDrawWaitDuration = DrawWaitDuration;
             if (SkipUntilRound > 0)
             {
                 AnimateCardMovement = false;
-                PlayerWaitDuration = 0f;
-                PlayerDrawWaitDuration = 0f;
+                PlayWaitDuration = 0f;
+                DrawWaitDuration = 0f;
                 GameSpeed = 4;
             }
 
             Extensions.Seed = Seed;
             Time.timeScale = GameSpeed;
-            CardMoveSpeed = DealCardSpeed;
             RoundCount = 1;
 
             Tb.I.CardStack.CreateCardStack(CardStackType);
@@ -110,7 +114,6 @@ namespace romme
                     if (currentPlayerID == 0 && CurPlayer.PlayerCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
-                        CardMoveSpeed = PlayCardSpeed;
                     }
                 }
             }
@@ -124,7 +127,7 @@ namespace romme
             }
             else if (gameState == GameState.PAUSED)
             {
-                if (Time.time - drawWaitStartTime > PlayerDrawWaitDuration)
+                if (Time.time - drawWaitStartTime > DrawWaitDuration)
                 {
                     gameState = GameState.PLAYING;
                 }
@@ -145,8 +148,8 @@ namespace romme
                     if (SkipUntilRound > 0 && RoundCount >= SkipUntilRound && !AnimateCardMovement) //only do this once
                     {
                         AnimateCardMovement = true;
-                        PlayerWaitDuration = tmpPlayerWaitDuration;
-                        PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
+                        PlayWaitDuration = tmpPlayerWaitDuration;
+                        DrawWaitDuration = tmpDrawWaitDuration;
                         GameSpeed = DefaultGameSpeed;
                     }
                     bool draw = true;
@@ -228,9 +231,12 @@ namespace romme
 
         public void RestartGame()
         {
-            GameSpeed = DefaultGameSpeed;
-            PlayerWaitDuration = tmpPlayerWaitDuration;
-            PlayerDrawWaitDuration = tmpPlayerDrawWaitDuration;
+            if (SkipUntilRound > 0)
+            {
+                GameSpeed = DefaultGameSpeed;
+                DrawWaitDuration = tmpDrawWaitDuration;
+                PlayWaitDuration = tmpPlayerWaitDuration;
+            }
 
             Tb.I.CardStack.ResetStack();
             Tb.I.DiscardStack.ResetStack();
@@ -265,6 +271,6 @@ namespace romme
                 cards.AddRange(spot.Cards);
             return cards;
         }
-
     }
+
 }

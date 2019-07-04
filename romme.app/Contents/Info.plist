@@ -12,7 +12,7 @@
 	<key>CFBundleExecutable</key>
 	<string>romme</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Unity Player version 2018.3.12f1 (8afd630d1f5b). (c) 2019 Unity Technologies ApS. All rights reserved.</string>
+	<string>Unity Player version 2019.1.5f1 (6f1140cf2297). (c) 2019 Unity Technologies ApS. All rights reserved.</string>
 	<key>CFBundleIconFile</key>
 	<string>PlayerIcon.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -38,7 +38,7 @@
 	<key>NSPrincipalClass</key>
 	<string>PlayerApplication</string>
 	<key>UnityBuildNumber</key>
-	<string>8afd630d1f5b</string>
+	<string>6f1140cf2297</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.9.0</string>
 </dict>

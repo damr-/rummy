@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UniRx;
-using romme.Utility;
 
 namespace romme.UI
 {
@@ -16,9 +12,6 @@ namespace romme.UI
         [Tooltip("Enable to automatically continue with the next game when a game has ended")]
         public bool continueImmediately;
 
-        [Tooltip("After which seed number to stop continuing automatically. '-1' to never stop")]
-        public int stopAfterSeed = -1;
-
         private GameMaster gameMaster;
 
         private void Start()
@@ -29,9 +22,6 @@ namespace romme.UI
 
         private void Update()
         {
-            if(stopAfterSeed > -1 && gameMaster.Seed >= stopAfterSeed)
-                return;
-
             if (continueImmediately && gameOverCanvas.activeInHierarchy)
             {
                 gameMaster.NextGame();

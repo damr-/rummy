@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using romme.Cards;
-using UniRx;
+﻿using UniRx;
 
 namespace romme.UI
 {
