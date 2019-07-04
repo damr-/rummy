@@ -1,5 +1,5 @@
-# Romme
-A Unity application which plays the famous game 'Romme' against itself. I created this to simulate many games to find out whether it would be advantageous in any way to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
+# Romme/Rummy
+A Unity application which plays the famous game 'Rummy' against itself. I created this to simulate many games to find out whether it would be advantageous in any way to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
 
 ## Rules
 - 2 players, each start with 13 cards in their hand.
