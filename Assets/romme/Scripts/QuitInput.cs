@@ -2,7 +2,7 @@
 
 public class QuitInput : MonoBehaviour
 {
-	private float firstPressTime, detectDuration = 1f;
+	private float firstPressTime = -1f, detectDuration = 1f;
 	
     private void Update()
     {

@@ -164,7 +164,7 @@ namespace romme.Cards
                 if (Rank == CardRank.JOKER)
                 {
                     //Most of the time, joker values are calculated in-situ since it depends on the context
-                    //Here, Joker on hand is worth 0 so it will always be discarded last
+                    //Here, joker on hand is worth 0 so it will always be discarded last
                     return 0;
                 }
                 return CardValues[Rank];

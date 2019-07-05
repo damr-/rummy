@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using romme.Cards;
 using UniRx;
+using romme.Cards;
 
 namespace romme.Utility
 {
@@ -12,18 +12,18 @@ namespace romme.Utility
         /// <summary>
         /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
         /// combinations extracted from the given 'HandCards'
-        /// 'logMessage': Whether to log when a duo set/run was NOT added because all necessary cards are already laid down
+        /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
+        ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
+        /// <param name="logMessage"> Whether to log when a duo set/run was NOT added because all necessary cards are already laid down </param>
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll, bool logMessage)
         {
             var sets = CardUtil.GetPossibleSets(HandCards);
             var runs = CardUtil.GetPossibleRuns(HandCards);
 
-            // Find sets which can be completed by joker sets
             var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs, logMessage);
             sets.AddRange(jokerSets);
 
-            // Find runs which can be completed by joker cards 
             var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs, logMessage);
             runs.AddRange(jokerRuns);
 
@@ -34,9 +34,9 @@ namespace romme.Utility
         /// <summary>
         /// Get all possible card combinations which could be created from the given sets and runs.
         /// Each combo's sets and runs are sorted descending by value.
-        /// - 'handCardCount' is the number of cards on the player's hand
-        /// - 'allowLayingAll': Whether combos are allowed which would require the player to lay down all cards from his hand.
-        ///                  This is usually not useful, unless hypothetical hands are examined, where one card was removed before. 
+        /// <param name="handCardCount"> The number of cards on the player's hand </param>
+        /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand.
+        ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
         /// </summary>
         private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount, bool allowLayingAll)
         {
@@ -68,40 +68,41 @@ namespace romme.Utility
         {
             for (int i = 0; i < runs.Count; i++)
             {
-                CardCombo cc = new CardCombo(currentRunCombo);
-                cc.AddRun(runs[i]);
+                CardCombo currentCombo = new CardCombo(currentRunCombo);
+                currentCombo.AddRun(runs[i]);
 
                 //This fixed run alone is also a possibility
-                possibleRunCombos.Add(cc);
+                possibleRunCombos.Add(currentCombo);
 
                 List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - (i + 1)).Where(run => !run.Intersects(runs[i])).ToList();
                 if (otherRuns.Count > 0)
-                    GetPossibleRunCombos(possibleRunCombos, otherRuns, cc);
+                    GetPossibleRunCombos(possibleRunCombos, otherRuns, currentCombo);
             }
         }
 
         /// <summary>
         /// Calculates all possible combinations of card packs that could be laid down.
-        /// Stores the result in the passed List<LaydownCards> 'combinations'
+        /// Stores the result in the passed List of LaydownCards 'possibleCombos'
+        /// <param name="possibleCombos"> The list which will contain all possible combinations in the end</param>
         /// </summary>
         private static void GetPossibleSetAndRunCombos(List<CardCombo> possibleCombos, List<Set> sets, List<Run> runs, CardCombo currentCombo)
         {
             for (int i = 0; i < sets.Count; i++)
             {
-                CardCombo cc = new CardCombo(currentCombo);
-                cc.AddSet(sets[i]);
+                CardCombo combo = new CardCombo(currentCombo);
+                combo.AddSet(sets[i]);
 
                 //This fixed set alone is also a possibility
-                possibleCombos.Add(cc);
+                possibleCombos.Add(combo);
 
-                //Get all runs which are possible with the current set fixed
+                //Get all runs which are possible with the current set
                 List<Run> possibleRuns = runs.Where(run => !run.Intersects(sets[i])).ToList();
-                GetPossibleRunCombos(possibleCombos, possibleRuns, cc);
+                GetPossibleRunCombos(possibleCombos, possibleRuns, combo);
 
                 //Only sets which don't intersect the current one are possible combinations
                 List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Intersects(sets[i])).ToList();
                 if (otherSets.Count > 0)
-                    GetPossibleSetAndRunCombos(possibleCombos, otherSets, possibleRuns, cc);
+                    GetPossibleSetAndRunCombos(possibleCombos, otherSets, possibleRuns, combo);
             }
         }
 
@@ -113,7 +114,6 @@ namespace romme.Utility
             List<Set> possibleSets = new List<Set>();
 
             var cardsByRank = PlayerCards.GetCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER).ToList();
-
             foreach (var rank in cardsByRank)
                 GetPossibleSets(possibleSets, rank.Value, new List<Card>());
 
@@ -146,8 +146,9 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns all possible runs of length >= 3 which can be found in PlayerCards
-        /// <summary>
+        /// Returns all possible runs of length >= 3 which can be found in 'PlayerCards'
+        /// <param name="PlayerCards">The list of cards in the player's hand</param>
+        /// </summary>
         public static List<Run> GetPossibleRuns(List<Card> PlayerCards)
         {
             var possibleRuns = new List<List<Card>>();
@@ -161,7 +162,7 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// 'PlayerCardsWithoutJoker' should not contain any joker cards!
+        /// <param name="PlayerCardsWithoutJoker"> Must not contain any joker cards!</param>
         /// </summary>
         private static void GetPossibleRuns(List<List<Card>> possibleRuns, List<Card> PlayerCardsWithoutJoker, List<Card> availableCards, List<Card> currentRun, int minLength = 3, int maxLength = 14)
         {
@@ -203,6 +204,9 @@ namespace romme.Utility
             return foundCards;
         }
 
+        /// <summary>
+        /// Looks for duos which could form complete 3-card-runs using a joker and returns all possible combinations using the available joker cards
+        /// </summary>
         public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
@@ -307,7 +311,7 @@ namespace romme.Utility
                         var middleSuit = c1.Suit;
                         if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
                             duoRuns.Add(new List<Card>() { c1, c2 });
-                        else if(logMessage)
+                        else if (logMessage)
                             Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
                     }
                 }
@@ -316,8 +320,7 @@ namespace romme.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets which can be created using joker cards
-        /// excluding cards used in 'possibleSets' and 'possibleRuns'
+        /// Returns all possible sets which can be created using joker cards excluding cards used in 'possibleSets' and 'possibleRuns'
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
@@ -400,7 +403,10 @@ namespace romme.Utility
             }
             return allDuos;
         }
-
+        
+        /// <summary>
+        /// Returns whether the given list of cards could form a valid run
+        /// </summary>
         public static bool IsValidRun(List<Card> cards)
         {
             if (cards.Count < 3)
@@ -441,6 +447,9 @@ namespace romme.Utility
             return true;
         }
 
+        /// <summary>
+        /// Returns whether the given list of cards could form a valid set
+        /// </summary>
         public static bool IsValidSet(List<Card> cards)
         {
             if (cards.Count < 3 || cards.Count > 4)

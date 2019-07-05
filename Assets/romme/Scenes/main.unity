@@ -1350,12 +1350,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 199940559}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 000f1d4a80d614aa3b458afd38cf0a1d, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Player: {fileID: 0}
-  CardStack: {fileID: 1551303502}
-  DiscardStack: {fileID: 0}
+  OutputValue: 4
 --- !u!114 &199940562
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1812,6 +1810,11 @@ PrefabInstance:
     - target: {fileID: 4816748650932867022, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816748650932867022, guid: be6c50d0e3d5c4a3e9576812d5611d90,
+        type: 3}
+      propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6693671369617983552, guid: be6c50d0e3d5c4a3e9576812d5611d90,
@@ -3263,7 +3266,6 @@ MonoBehaviour:
   AnimateCardMovement: 1
   DrawWaitDuration: 0.5
   PlayWaitDuration: 0.5
-  SkipUntilRound: 0
   CardsPerPlayer: 13
   EarliestAllowedLaydownRound: 2
   MinimumLaySum: 40
@@ -3271,6 +3273,7 @@ MonoBehaviour:
   Players:
   - {fileID: 221342174}
   - {fileID: 2039885474}
+  SkipUntilRound: 0
   CardStackType: 0
   PauseKey: 112
 --- !u!4 &485916708
@@ -3635,9 +3638,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 634931453}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 176b0b4f36abb451da6f599a1b2816d5, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OutputValue: 1
 --- !u!114 &634931456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3870,9 +3874,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 663422903}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e5e174276e97471a8691b112c0d72fe, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OutputValue: 0
 --- !u!114 &663422906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6090,12 +6095,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1344804959}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 000f1d4a80d614aa3b458afd38cf0a1d, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Player: {fileID: 0}
-  CardStack: {fileID: 0}
-  DiscardStack: {fileID: 2021842223}
+  OutputValue: 5
 --- !u!114 &1344804962
 MonoBehaviour:
   m_ObjectHideFlags: 0

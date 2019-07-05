@@ -1,10 +1,4 @@
-﻿using System.Collections;
-using System.Linq;
-using System.Collections.Generic;
-using UnityEngine;
-using romme.Utility;
-
-namespace romme.Cards
+﻿namespace romme.Cards
 {
 
     public class Single
@@ -13,7 +7,7 @@ namespace romme.Cards
         public CardSpot CardSpot { get; private set; }
 
         ///<summary>
-        /// The joker which this card will replace
+        /// The joker which will be replaced by this single card
         ///</summary>
         public Card Joker { get; private set; }
 

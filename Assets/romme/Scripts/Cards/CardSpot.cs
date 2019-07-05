@@ -33,9 +33,9 @@ namespace romme.Cards
             {
                 if (CardUtil.IsValidSet(Cards))
                     return new Set(Cards).Value;
-                else if (Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
-                    return (Cards.Count - 1) * Cards.GetFirstCard().Value;
-                else //When the spot is currently under construction
+                // else if (Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
+                //     return (Cards.Count - 1) * Cards.GetFirstCard().Value;
+                else //When the spot is currently under construction or a joker is being swapped out (so there's 5 cards and the set is invalid)
                     return 0;
             }
             else
@@ -180,9 +180,9 @@ namespace romme.Cards
                         if (joker != null)
                         {
                             //Allow adding a third card of one color if one of the other two is a joker
-                            if (set.HasTwoBlacks() && joker.IsRed() && newCard.IsBlack())
+                            if (set.HasTwoBlackCards() && joker.IsRed() && newCard.IsBlack())
                                 return false;
-                            if (set.HasTwoReds() && joker.IsBlack() && newCard.IsRed())
+                            if (set.HasTwoRedCards() && joker.IsBlack() && newCard.IsRed())
                                 return false;
 
                             if (joker.Color == newCard.Color)
@@ -201,9 +201,9 @@ namespace romme.Cards
                         if (Cards.Any(c => c.IsJoker()))
                             return false;
 
-                        if (newCard.IsBlack() && set.HasTwoBlacks())
+                        if (newCard.IsBlack() && set.HasTwoBlackCards())
                             return false;
-                        if (newCard.IsRed() && set.HasTwoReds())
+                        if (newCard.IsRed() && set.HasTwoRedCards())
                             return false;
                         return true;
                     }

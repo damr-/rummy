@@ -12,7 +12,6 @@ namespace romme
 
     public class Player : MonoBehaviour
     {
-        public bool ShowCards = false;
         private float waitStartTime;
         private IDisposable cardMoveSubscription = Disposable.Empty;
 
@@ -23,7 +22,7 @@ namespace romme
             WAITING = 2,
             PLAYING = 3,
             LAYING = 4,
-            RETURNING = 5, //Returning a joker to their hand
+            RETURNING_JOKER = 5,
             DISCARDING = 6
         }
         public PlayerState playerState { get; private set; } = PlayerState.IDLE;
@@ -50,7 +49,6 @@ namespace romme
         private List<Single> singleLayDownCards = new List<Single>();
         private int currentCardPackIdx = 0, currentCardIdx = 0;
         private Card returningJoker;
-
         private bool isCardBeingLaidDown, isJokerBeingReturned;
 
         private enum LayStage
@@ -59,16 +57,12 @@ namespace romme
             RUNS = 1,
             SINGLES = 2
         }
-
-        /// <summary>
-        ///  Whether the player is currently laying runs or not, in which case it is currently laying sets
-        /// </summary>
         private LayStage layStage = LayStage.SETS;
 
         /// <summary>
         /// Whether the player can lay down cards and pick up cards from the discard stack
         /// </summary>
-        private bool hasLaidDown;
+        public bool HasLaidDown { get; private set; }
         #endregion
 
         #region Observables
@@ -88,13 +82,12 @@ namespace romme
         private void AddCard(Card card)
         {
             HandCardSpot.AddCard(card);
-            if (ShowCards)
-                card.SetVisible(true);
+            card.SetVisible(true);
         }
 
         public void ResetPlayer()
         {
-            hasLaidDown = false;
+            HasLaidDown = false;
             playerState = PlayerState.IDLE;
             GetPlayerCardSpots().ForEach(spot => spot.ResetSpot());
             HandCardSpot.ResetSpot();
@@ -115,7 +108,7 @@ namespace romme
             if (playerState == PlayerState.WAITING && Time.time - waitStartTime > Tb.I.GameMaster.PlayWaitDuration)
             {
                 playerState = PlayerState.PLAYING;
-                if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !hasLaidDown)
+                if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !HasLaidDown)
                     DiscardUnusableCard();
                 else
                 {
@@ -139,7 +132,6 @@ namespace romme
             {
                 if (isCardBeingLaidDown)
                     return;
-
                 isCardBeingLaidDown = true;
 
                 if (layStage == LayStage.SINGLES)
@@ -171,11 +163,10 @@ namespace romme
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
             }
 
-            if (playerState == PlayerState.RETURNING)
+            if (playerState == PlayerState.RETURNING_JOKER)
             {
                 if (isJokerBeingReturned)
                     return;
-
                 isJokerBeingReturned = true;
 
                 currentCardSpot.RemoveCard(returningJoker);
@@ -196,12 +187,11 @@ namespace romme
 
             Card card;
             bool takeFromDiscardStack = false;
-            if (!isServingCard && hasLaidDown)
+            if (!isServingCard && HasLaidDown)
             {
                 // Check if we want to draw from discard stack
-                //          Note that every player always makes sure not to discard a
-                //          card which can be added to an already laid-down card pack.
-                //          Therefore, no need to check for that case here.
+                // Note that every player always makes sure not to discard a card which can be added to an already laid-down card pack.
+                // Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Cards) { discardedCard };
                 var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false, false, false);
@@ -241,11 +231,11 @@ namespace romme
             if (Tb.I.GameMaster.RoundCount >= Tb.I.GameMaster.EarliestAllowedLaydownRound)
             {
                 //If the player has not laid down card packs yet, check if their sum would be enough to do so
-                if (!hasLaidDown)
-                    hasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
+                if (!HasLaidDown)
+                    HasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
                 //At least one card must remain when laying down
-                if (hasLaidDown && laydownCards.CardCount == HandCardSpot.Cards.Count)
+                if (HasLaidDown && laydownCards.CardCount == HandCardSpot.Cards.Count)
                     KeepOneCard();
             }
 
@@ -255,7 +245,10 @@ namespace romme
 
         /// <summary>
         /// Returns the card combo which yield the highest possible points
-        /// broadcastNonDuos: Whether to log when a duo set/run was NOT added because all necessary cards are already laid down
+        /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
+        ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
+        /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for output</param>
+        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT added because all necessary cards are already laid down</param>
         /// </summary>
         private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos)
         {
@@ -490,7 +483,7 @@ namespace romme
                         returningJoker = singleLayDownCards[currentCardIdx].Joker;
                         if (returningJoker != null)
                         {
-                            playerState = PlayerState.RETURNING;
+                            playerState = PlayerState.RETURNING_JOKER;
                             return;
                         }
                     }
@@ -575,7 +568,7 @@ namespace romme
             List<Card> possibleDiscards = new List<Card>(HandCardSpot.Cards);
 
             //Keep possible runs/sets/singles on hand for laying down later
-            if (!hasLaidDown)
+            if (!HasLaidDown)
                 possibleDiscards = KeepUsableCards(possibleDiscards);
 
             //For now, don't allow discarding joker cards
@@ -586,8 +579,8 @@ namespace romme
             if (possibleDiscards.Count > 2)
             {
                 var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards, !hasLaidDown);     // Only broadcast not-keeping duos when 
-                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards, laidDownCards, !hasLaidDown)); // it hasn't been done already after drawing
+                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards, !HasLaidDown);     // Only broadcast not keeping duos when 
+                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Cards, laidDownCards, !HasLaidDown)); // it hasn't been done already after drawing
 
                 var eligibleDuos = new List<List<Card>>();
                 foreach (var duo in duos)
@@ -616,31 +609,10 @@ namespace romme
             }
 
             if (possibleDiscards.Count == 0)
-            {
-                //All remaining cards are joker, allow the player to discard them
-                possibleDiscards.AddRange(jokerCards);
-
-                if (possibleDiscards.Count == 0)
-                {
-                    Debug.LogWarning("No possible cards to discard. (This should not happen!)");
-                    if (HandCardSpot.Cards.Count > 0)
-                        possibleDiscards.Add(HandCardSpot.Cards.ElementAt(UnityEngine.Random.Range(0, HandCardSpot.Cards.Count)));
-                    else
-                        Debug.LogError("Player has no cards in hand! (AAAhhh!)");
-                }
-            }
+                possibleDiscards.AddRange(jokerCards); //All remaining cards are joker cards, allow discarding them
 
             //Discard the card with the highest value
             Card card = possibleDiscards.OrderByDescending(c => c.Value).FirstOrDefault();
-
-            //In case any discardable card is not a Joker, make sure the discarded one is NOT a Joker
-            if (card.IsJoker() && possibleDiscards.Any(c => !c.IsJoker()))
-            {
-                do
-                {
-                    card = possibleDiscards[UnityEngine.Random.Range(0, possibleDiscards.Count)];
-                } while (card.IsJoker());
-            }
 
             HandCardSpot.RemoveCard(card);
             cardMoveSubscription = card.MoveFinished.Subscribe(DiscardCardMoveFinished);
@@ -648,28 +620,29 @@ namespace romme
         }
 
         /// <summary>
-        /// Removes all the cards from 'possibleDiscards' which are part of a set/run 
+        /// Removes all the cards from 'possibleDiscards' which are part of a finished set/run 
         /// or which are going to be laid down as single
         /// </summary>
         private List<Card> KeepUsableCards(List<Card> possibleDiscards)
         {
+            List<Card> newPossibleDiscards = new List<Card>(possibleDiscards);
             var sets = CardUtil.GetPossibleSets(HandCardSpot.Cards);
             var runs = CardUtil.GetPossibleRuns(HandCardSpot.Cards);
             var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
             var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Cards, laidDownCards, sets, runs, false);
             var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Cards, laidDownCards, sets, runs, false);
             foreach (var run in runs)
-                possibleDiscards = possibleDiscards.Except(run.Cards).ToList();
+                newPossibleDiscards = newPossibleDiscards.Except(run.Cards).ToList();
             foreach (var set in sets)
-                possibleDiscards = possibleDiscards.Except(set.Cards).ToList();
+                newPossibleDiscards = newPossibleDiscards.Except(set.Cards).ToList();
             foreach (var jokerSet in jokerSets)
-                possibleDiscards = possibleDiscards.Except(jokerSet.Cards).ToList();
+                newPossibleDiscards = newPossibleDiscards.Except(jokerSet.Cards).ToList();
             foreach (var jokerRun in jokerRuns)
-                possibleDiscards = possibleDiscards.Except(jokerRun.Cards).ToList();
+                newPossibleDiscards = newPossibleDiscards.Except(jokerRun.Cards).ToList();
 
             // If the hand only consists of possible sets&runs, try to discard the card 
             // with the highest value which does also not destroy the currently best card combo
-            if (possibleDiscards.Count == 0)
+            if (newPossibleDiscards.Count == 0)
             {
                 newThought.OnNext("Cannot keep all cards for later.");
                 int maxValue = GetBestCardCombo(HandCardSpot.Cards, false, false, false).Value;
@@ -686,8 +659,8 @@ namespace romme
                 if (eligibleCards.Count > 0)
                 {
                     Card bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
-                    possibleDiscards.Add(bestCard);
-                    newThought.OnNext("Discard" + bestCard + "without destroying the highest valued combo.");
+                    newPossibleDiscards.Add(bestCard);
+                    newThought.OnNext("Discard" + bestCard + "without destroying the highest valued combo");
                 }
                 else //No card can be removed without destroying the currently best card combo
                 {
@@ -698,7 +671,7 @@ namespace romme
                     {
                         //Discard the card with the highest value out of the possible ones
                         var bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
-                        possibleDiscards.Add(bestCard);
+                        newPossibleDiscards.Add(bestCard);
                         newThought.OnNext("Discard " + bestCard);
                     }
                     else //No card was found. Allow discarding the cards of the set/run with the lowest value
@@ -709,45 +682,45 @@ namespace romme
                         {
                             if (minValRun.Value < minValSet.Value)
                             {
-                                possibleDiscards.AddRange(minValRun.Cards);
+                                newPossibleDiscards.AddRange(minValRun.Cards);
                                 newThought.OnNext("Allow discarding all cards of " + minValSet);
                             }
                             else
                             {
-                                possibleDiscards.AddRange(minValSet.Cards);
+                                newPossibleDiscards.AddRange(minValSet.Cards);
                                 newThought.OnNext("Allow discarding all cards of " + minValSet);
                             }
                         }
                         else if (minValRun != null)
                         {
-                            possibleDiscards.AddRange(minValRun.Cards);
+                            newPossibleDiscards.AddRange(minValRun.Cards);
                             newThought.OnNext("Allow discarding all cards of " + minValRun);
                         }
                         else if (minValSet != null)
                         {
-                            possibleDiscards.AddRange(minValSet.Cards);
+                            newPossibleDiscards.AddRange(minValSet.Cards);
                             newThought.OnNext("Allow discarding all cards of " + minValSet);
                         }
                         else
-                            Debug.LogWarning("Could not discard a run/set with the lowest value because there are none");
+                            Debug.LogWarning("Could not discard a run/set with the lowest value because there are none!");
                     }
                 }
             }
 
             //If we have the freedom to choose, keep cards which can serve as singles later
-            if (possibleDiscards.Count > 1)
+            if (newPossibleDiscards.Count > 1)
             {
                 var singleCards = new List<Card>();
                 foreach (var entry in singleLayDownCards)
                     singleCards.Add(entry.Card);
 
-                possibleDiscards = possibleDiscards.Except(singleCards).ToList();
+                newPossibleDiscards = newPossibleDiscards.Except(singleCards).ToList();
 
                 //If saving all single cards is not possible, discard the one with the highest value
-                if (possibleDiscards.Count == 0)
+                if (newPossibleDiscards.Count == 0)
                 {
                     var keptSingle = singleCards.OrderByDescending(c => c.Value).FirstOrDefault();
-                    possibleDiscards.Add(keptSingle);
+                    newPossibleDiscards.Add(keptSingle);
                     singleCards.Remove(keptSingle);
                 }
 
@@ -758,18 +731,19 @@ namespace romme
                     newThought.OnNext("Keeping singles " + msg.TrimEnd().TrimEnd(','));
                 }
             }
-            return possibleDiscards;
+            return newPossibleDiscards;
         }
 
         private void DiscardCardMoveFinished(Card card)
         {
+            cardMoveSubscription.Dispose();
+            Tb.I.DiscardStack.AddCard(card);
+
             //Refresh the list of possible card combos and singles for the UI
             var possibleCombos = CardUtil.GetAllPossibleCombos(HandCardSpot.Cards, Tb.I.GameMaster.GetAllCardSpotCards(), false, false);
             possibleCardCombos.OnNext(possibleCombos);
             UpdateSingleLaydownCards();
 
-            cardMoveSubscription.Dispose();
-            Tb.I.DiscardStack.AddCard(card);
             turnFinishedSubject.OnNext(this);
             playerState = PlayerState.IDLE;
         }
@@ -781,8 +755,7 @@ namespace romme
                 if (!spot.HasCards)
                     return spot;
             }
-            Debug.LogError(gameObject.name + " couldn't find an empty CardSpot");
-            return null;
+            throw new MissingReferenceException(gameObject.name + " couldn't find an empty CardSpot");
         }
     }
 

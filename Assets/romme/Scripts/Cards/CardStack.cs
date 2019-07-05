@@ -174,7 +174,7 @@ namespace romme.Cards
         }
 
         /// <summary>
-        /// Shuffles and adds the cards to the card stack. 
+        /// Shuffles and adds the given list of cards to the card stack. 
         /// Usually the card stack is restocked with the cards from the discard stack
         /// </summary>
         public void Restock(List<Card> cards)

@@ -23,14 +23,6 @@ namespace romme.Cards
             return cards;
         }
 
-        public List<Card> RemoveCards()
-        {
-            List<Card> removedCards = new List<Card>();
-            while (Cards.Count > 0)
-                removedCards.Add(Cards.Pop());
-            return removedCards;
-        }
-
         public void ResetStack()
         {
             var cards = RemoveCards();
@@ -40,6 +32,14 @@ namespace romme.Cards
                 cards.RemoveAt(0);
                 Destroy(c.gameObject);
             }
+        }
+
+        private List<Card> RemoveCards()
+        {
+            List<Card> removedCards = new List<Card>();
+            while (Cards.Count > 0)
+                removedCards.Add(Cards.Pop());
+            return removedCards;
         }
     }
 

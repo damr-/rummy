@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using romme.Utility;
 
 namespace romme.Cards

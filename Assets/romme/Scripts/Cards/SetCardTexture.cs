@@ -30,7 +30,6 @@ namespace romme.Cards
             if (texture == null)
                 Debug.Log("No texture for " + card + " (missing " + card.GetFileString() + ")");
 
-            //FIXME: try if there's still lots of lag (GC?) when stopping after running hundreds of games 
             meshRend.sharedMaterial = new Material(meshRend.sharedMaterial != null ? meshRend.sharedMaterial : meshRend.material) { mainTexture = texture };
         }
     }

@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace romme.Cards
 {
@@ -10,6 +8,9 @@ namespace romme.Cards
     {
         public List<Set> Sets { get; private set; }
         public List<Run> Runs { get; private set; }
+        
+        public void AddSet(Set set) => Sets.Add(set);
+        public void AddRun(Run run) => Runs.Add(run);
 
         public int CardCount => Sets.Sum(s => s.Count) + Runs.Sum(r => r.Count);
         public int PackCount => Sets.Count() + Runs.Count();
@@ -37,16 +38,6 @@ namespace romme.Cards
                 Runs.Add(run);
         }
 
-        public void AddSet(Set set)
-        {
-            Sets.Add(set);
-        }
-
-        public void AddRun(Run run)
-        {
-            Runs.Add(run);
-        }
-
         /// <summary>
         /// Sorts the combo's sets and runs DESCENDING according to their value
         /// </summary>
@@ -54,24 +45,6 @@ namespace romme.Cards
         {
             Sets = Sets.OrderByDescending(set => set.Value).ToList();
             Runs = Runs.OrderByDescending(run => run.Value).ToList();
-        }
-
-        public Set RemoveLastSet()
-        {
-            if (Sets.Count == 0)
-                return null;
-            Set removedSet = Sets[Sets.Count - 1];
-            Sets.Remove(removedSet);
-            return removedSet;
-        }
-
-        public Run RemoveLastRun()
-        {
-            if (Runs.Count == 0)
-                return null;
-            Run removedRun = Runs[Runs.Count - 1];
-            Runs.Remove(removedRun);
-            return removedRun;
         }
 
         public override string ToString()
@@ -83,8 +56,7 @@ namespace romme.Cards
         }
 
         ///<summary>
-        /// Returns whether the 'other' CardCombo looks the same as this one, 
-        /// meaning that it has the same runs and sets.
+        /// Returns whether the 'other' CardCombo looks the same as this one, meaning that it has the same runs and sets.
         /// ONLY CHECKING the suit and rank, not whether the cards are actually identical Objects.
         ///</summary>
         public bool LooksEqual(CardCombo other)

@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
 using romme.Utility;
 using romme.Cards;
-using System.Linq;
-using UniRx;
-using System;
 
 namespace romme
 {
@@ -19,19 +19,12 @@ namespace romme
         public bool AnimateCardMovement = true;
         public void SetAnimateCardMovement(bool value) => AnimateCardMovement = value;
 
+        private float drawWaitStartTime;
         public float DrawWaitDuration = 2f;
         public void SetDrawWaitDuration(float value) => DrawWaitDuration = value;
 
         public float PlayWaitDuration = 2f;
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
-
-        private float drawWaitStartTime;
-
-        /// <summary>
-        /// FOR DEV PURPOSES ONLY! Disable card movement animation and set the wait durations to 0 until the given round starts. '0' means no round is skipped
-        /// </summary>
-        public int SkipUntilRound = 0;
-        private float tmpPlayerWaitDuration, tmpDrawWaitDuration, DefaultGameSpeed;
 
         public int CardsPerPlayer = 13;
         public int EarliestAllowedLaydownRound = 2;
@@ -40,17 +33,23 @@ namespace romme
 
         public int RoundCount { get; private set; }
         public List<Player> Players = new List<Player>();
-        private Player CurPlayer { get { return Players[currentPlayerID]; } }
+        private Player CurrentPlayer { get { return Players[currentPlayerID]; } }
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
+
+        /// <summary>
+        /// FOR DEV PURPOSES ONLY! Disable card movement animation and set the wait durations to 0 until the given round starts. '0' means no round is skipped
+        /// </summary>
+        public int SkipUntilRound = 0;
+        private float tmpPlayerWaitDuration, tmpDrawWaitDuration, DefaultGameSpeed;
 
         private enum GameState
         {
             NONE = 0,
             DEALING = 1,
             PLAYING = 2,
-            PAUSED = 3
+            DRAWWAIT = 3
         }
         private GameState gameState = GameState.NONE;
 
@@ -59,9 +58,10 @@ namespace romme
         public IObservable<Player> GameOver { get { return gameOver; } }
         private readonly ISubject<Player> gameOver = new Subject<Player>();
 
-        public CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
-
-        public KeyCode PauseKey = KeyCode.P;
+        [SerializeField]
+        private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
+        [SerializeField]
+        private KeyCode PauseKey = KeyCode.P;
 
         private void Start()
         {
@@ -104,14 +104,14 @@ namespace romme
                 if (!isCardBeingDealt)
                 {
                     isCardBeingDealt = true;
-                    CurPlayer.DrawCard(true);
+                    CurrentPlayer.DrawCard(true);
                 }
-                else if (CurPlayer.playerState == Player.PlayerState.IDLE)
+                else if (CurrentPlayer.playerState == Player.PlayerState.IDLE)
                 {
                     isCardBeingDealt = false;
                     currentPlayerID = (currentPlayerID + 1) % Players.Count;
 
-                    if (currentPlayerID == 0 && CurPlayer.PlayerCardCount == CardsPerPlayer)
+                    if (currentPlayerID == 0 && CurrentPlayer.PlayerCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
                     }
@@ -119,114 +119,92 @@ namespace romme
             }
             else if (gameState == GameState.PLAYING)
             {
-                if (CurPlayer.playerState == Player.PlayerState.IDLE)
+                if (CurrentPlayer.playerState == Player.PlayerState.IDLE)
                 {
-                    playerFinished = CurPlayer.TurnFinished.Subscribe(PlayerFinished);
-                    CurPlayer.BeginTurn();
+                    playerFinished = CurrentPlayer.TurnFinished.Subscribe(PlayerFinished);
+                    CurrentPlayer.BeginTurn();
                 }
             }
-            else if (gameState == GameState.PAUSED)
+            else if (gameState == GameState.DRAWWAIT)
             {
                 if (Time.time - drawWaitStartTime > DrawWaitDuration)
-                {
                     gameState = GameState.PLAYING;
-                }
             }
         }
 
         private void PlayerFinished(Player player)
         {
             playerFinished.Dispose();
-
             currentPlayerID = (currentPlayerID + 1) % Players.Count;
 
-            if (player.PlayerCardCount > 0)
+            if (player.PlayerCardCount == 0)
             {
-                if (currentPlayerID == 0)
-                {
-                    RoundCount++;
-                    if (SkipUntilRound > 0 && RoundCount >= SkipUntilRound && !AnimateCardMovement) //only do this once
-                    {
-                        AnimateCardMovement = true;
-                        PlayWaitDuration = tmpPlayerWaitDuration;
-                        DrawWaitDuration = tmpDrawWaitDuration;
-                        GameSpeed = DefaultGameSpeed;
-                    }
-                    bool draw = true;
-                    foreach (var p in Players)
-                    {
-                        var cardSpots = p.GetPlayerCardSpots();
-                        var setSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.SET);
-                        var runSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.RUN);
-
-                        if (!setSpots.Any() && !runSpots.Any())
-                        {
-                            draw = false;
-                            break;
-                        }
-
-                        if (setSpots.Any())
-                        {
-                            var fullSetsCount = setSpots.Count(spot => spot.Cards.Count == 4);
-                            if (fullSetsCount != setSpots.Count())
-                            {
-                                draw = false;
-                                break;
-                            }
-                        }
-
-                        if (runSpots.Any())
-                        {
-                            var fullRunsCount = runSpots.Count(spot => spot.Cards.Count == 14);
-                            if (fullRunsCount != runSpots.Count())
-                            {
-                                draw = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (draw && Players.Any(p => p.PlayerCardCount > 2))
-                        draw = false;
-
-                    if (draw)
-                    {
-                        Debug.Log(Seed + " was a draw!");
-                        gameOver.OnNext(null);
-                        gameState = GameState.NONE;
-                        return;
-                    }
-                }
-
-                if (Tb.I.CardStack.CardCount == 0)
-                {
-                    List<Card> discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
-                    Tb.I.CardStack.Restock(discardedCards);
-                }
-
-                drawWaitStartTime = Time.time;
-                gameState = GameState.PAUSED;
-            }
-            else
-            {
-                Player otherPlayer = Players[currentPlayerID];
-                gameOver.OnNext(otherPlayer);
+                gameOver.OnNext(CurrentPlayer);
                 gameState = GameState.NONE;
+                return;
             }
+
+            if (currentPlayerID == 0)
+            {
+                RoundCount++;
+                if (SkipUntilRound > 0 && RoundCount >= SkipUntilRound && !AnimateCardMovement) //only do this once
+                {
+                    AnimateCardMovement = true;
+                    PlayWaitDuration = tmpPlayerWaitDuration;
+                    DrawWaitDuration = tmpDrawWaitDuration;
+                    GameSpeed = DefaultGameSpeed;
+                }
+
+                if (IsGameADraw())
+                {
+                    gameOver.OnNext(null);
+                    gameState = GameState.NONE;
+                    return;
+                }
+            }
+
+            if (Tb.I.CardStack.CardCount == 0)
+            {
+                List<Card> discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
+                Tb.I.CardStack.Restock(discardedCards);
+            }
+
+            drawWaitStartTime = Time.time;
+            gameState = GameState.DRAWWAIT;
         }
 
         /// <summary>
-        /// Returns the player which is not 'player' or null if the other one was not found
+        /// Returns whether the current game is a draw and cannot be won by any player
         /// </summary>
-        public Player GetOtherPlayer(Player player)
+        private bool IsGameADraw()
         {
-            Player otherPlayer = null;
-            foreach (Player p in Players)
+            if (Players.Any(p => p.PlayerCardCount > 2))
+                return false;
+
+            foreach (var p in Players)
             {
-                if (p != player)
-                    otherPlayer = p;
+                var cardSpots = p.GetPlayerCardSpots();
+                var setSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.SET);
+                var runSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.RUN);
+
+                if (!setSpots.Any() && !runSpots.Any())
+                    return false;
+
+                if (setSpots.Any())
+                {
+                    var fullSetsCount = setSpots.Count(spot => spot.Cards.Count == 4);
+                    if (fullSetsCount != setSpots.Count())
+                        return false;
+                }
+
+                if (runSpots.Any())
+                {
+                    var fullRunsCount = runSpots.Count(spot => spot.Cards.Count == 14);
+                    if (fullRunsCount != runSpots.Count())
+                        return false;
+                }
             }
-            return otherPlayer;
+            return true;
         }
 
         public void RestartGame()

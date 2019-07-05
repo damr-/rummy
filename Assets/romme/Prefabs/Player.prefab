@@ -134,7 +134,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 275, y: 50}
+  m_SizeDelta: {x: 350, y: 50}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &3089484843561660404
 MonoBehaviour:
@@ -742,7 +742,7 @@ GameObject:
   - component: {fileID: 4922848105189188700}
   - component: {fileID: 1423555231898027518}
   - component: {fileID: 2644338175093104641}
-  - component: {fileID: 6058576164044148592}
+  - component: {fileID: 550579273556057368}
   m_Layer: 5
   m_Name: CardCount
   m_TagString: Untagged
@@ -811,7 +811,7 @@ MonoBehaviour:
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: count
---- !u!114 &6058576164044148592
+--- !u!114 &550579273556057368
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -820,12 +820,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 3384907498209116957}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 000f1d4a80d614aa3b458afd38cf0a1d, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Player: {fileID: 2595258543103639682}
-  CardStack: {fileID: 0}
-  DiscardStack: {fileID: 0}
+  OutputValue: 3
 --- !u!1 &4242183443789076917
 GameObject:
   m_ObjectHideFlags: 0
@@ -866,7 +864,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 275, y: 100}
+  m_SizeDelta: {x: 350, y: 100}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &9006366245585043130
 MonoBehaviour:
@@ -976,7 +974,7 @@ GameObject:
   - component: {fileID: 6924355904615602054}
   - component: {fileID: 2612996331838979797}
   - component: {fileID: 7789932489998126513}
-  - component: {fileID: 6399908643688768783}
+  - component: {fileID: 5624035829364679098}
   m_Layer: 5
   m_Name: CardSum
   m_TagString: Untagged
@@ -1045,7 +1043,7 @@ MonoBehaviour:
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: sum
---- !u!114 &6399908643688768783
+--- !u!114 &5624035829364679098
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1054,10 +1052,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4244302431166423052}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7e7e28b9f4a0435ba9c6ff4cfe11914, type: 3}
+  m_Script: {fileID: 11500000, guid: fc5c460b5c7f44befbd407c8df0d5241, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Player: {fileID: 2595258543103639682}
+  OutputValue: 2
 --- !u!1 &4628308728450486997
 GameObject:
   m_ObjectHideFlags: 0
@@ -1098,7 +1096,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 50}
-  m_SizeDelta: {x: 275, y: 50}
+  m_SizeDelta: {x: 350, y: 50}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &178916119586156259
 MonoBehaviour:
@@ -1617,7 +1615,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2768082343147355982}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0
+  m_Size: 0.33333334
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2207,7 +2205,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 4816748650932867022}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0
+  m_Size: 0.16666667
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2333,7 +2331,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 7191294791744211994}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0
+  m_Size: 0.16666667
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
