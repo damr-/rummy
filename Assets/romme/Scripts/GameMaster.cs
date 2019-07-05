@@ -95,9 +95,7 @@ namespace romme
         {
             if (Input.GetKeyDown(PauseKey))
                 TogglePause();
-
-            if (Mathf.Abs(Time.timeScale - GameSpeed) > Mathf.Epsilon)
-                Time.timeScale = GameSpeed;
+            Time.timeScale = GameSpeed;
 
             if (gameState == GameState.DEALING)
             {

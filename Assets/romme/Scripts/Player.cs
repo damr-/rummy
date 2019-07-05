@@ -660,7 +660,7 @@ namespace romme
                 {
                     Card bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
                     newPossibleDiscards.Add(bestCard);
-                    newThought.OnNext("Discard" + bestCard + "without destroying the highest valued combo");
+                    newThought.OnNext("Discard " + bestCard + " without destroying the highest valued combo");
                 }
                 else //No card can be removed without destroying the currently best card combo
                 {

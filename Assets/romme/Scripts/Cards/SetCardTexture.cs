@@ -6,6 +6,8 @@ namespace romme.Cards
     [RequireComponent(typeof(Card))]
     public class SetCardTexture : MonoBehaviour
     {
+        public Material Material;
+        private Material[] localMaterials = new Material[1];
         private Card card;
         private MeshRenderer meshRend;
 
@@ -30,7 +32,8 @@ namespace romme.Cards
             if (texture == null)
                 Debug.Log("No texture for " + card + " (missing " + card.GetFileString() + ")");
 
-            meshRend.sharedMaterial = new Material(meshRend.sharedMaterial != null ? meshRend.sharedMaterial : meshRend.material) { mainTexture = texture };
+            localMaterials[0] = new Material(Material) { mainTexture = texture };
+            meshRend.materials = localMaterials;
         }
     }
 }

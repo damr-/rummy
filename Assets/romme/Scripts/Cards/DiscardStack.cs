@@ -12,7 +12,7 @@ namespace romme.Cards
         public void AddCard(Card card) => Cards.Push(card);
         public Card DrawCard() => Cards.Pop();
         public Card PeekCard() => Cards.Peek();
-        public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.001f * Cards.Count;
+        public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.0001f * Cards.Count;
 
         public List<Card> RecycleDiscardedCards()
         {

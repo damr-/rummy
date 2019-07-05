@@ -159,7 +159,7 @@ namespace romme.Cards
             {
                 float x = cardRadius * Mathf.Cos((startAngle + i * deltaAngle) * Mathf.PI / 180f);
                 float z = cardRadius * Mathf.Sin((startAngle + i * deltaAngle) * Mathf.PI / 180f);
-                Cards[i].transform.position = transform.position + new Vector3(x, -0.1f * i, z);
+                Cards[i].transform.position = transform.position + new Vector3(x, -0.01f * i, z);
             }
         }
 

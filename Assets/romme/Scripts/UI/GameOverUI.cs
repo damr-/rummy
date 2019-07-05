@@ -11,6 +11,7 @@ namespace romme.UI
         public Text loserCardValue;
         [Tooltip("Enable to automatically continue with the next game when a game has ended")]
         public bool continueImmediately;
+        public void SetContinueImmediately(bool newValue) => continueImmediately = newValue;
 
         private GameMaster gameMaster;
 

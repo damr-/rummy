@@ -220,7 +220,7 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 6693671369617983552}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 45
+  CharsPerLine: 55
 --- !u!114 &8724135574287151886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1494,7 +1494,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5714324eef71d4ff0aa43915b122ceb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowCards: 0
   PlayerCardSpotsParent: {fileID: 0}
 --- !u!1 &5608181649481816726
 GameObject:
@@ -1615,7 +1614,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2768082343147355982}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.33333334
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2205,7 +2204,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 4816748650932867022}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.16666667
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2331,7 +2330,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 7191294791744211994}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.16666667
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
