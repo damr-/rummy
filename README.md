@@ -1,6 +1,5 @@
 # Romme/Rummy
-A Unity application which plays the famous game 'Rummy' against itself. I created this to find out whether it would be advantageous to set the minimum value for laying down cards to 30 compared to the 'usual' 40.
-Important values of the simulation can be controleld through the UI.
+A Unity application which plays the famous game 'Rummy' against itself.
 
 [Download (Windows)](https://github.com/damr-/romme/raw/master/Builds/Romme_Windows.zip)
 
