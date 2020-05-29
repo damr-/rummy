@@ -33,10 +33,12 @@ namespace rummy.Cards
             {
                 if (CardUtil.IsValidSet(Cards))
                     return new Set(Cards).Value;
-                // else if (Cards.Count == 5) //When swapping for a joker, ther'll be 5 cards at the spot for some time and the value has to be calculated manually
-                //     return (Cards.Count - 1) * Cards.GetFirstCard().Value;
-                else //When the spot is currently under construction or a joker is being swapped out (so there's 5 cards and the set is invalid)
+                else
+                {
+                    //When the spot is currently under construction or a joker is being swapped out
+                    //(so there momentarily are 5 cards and the set is invalid)
                     return 0;
+                }
             }
             else
             {
@@ -64,7 +66,7 @@ namespace rummy.Cards
                 int idx = cards.Count; //By default, add the new card at the end
 
                 //Find out the rank of the last card in the run
-                int highestNonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(cards, cards.Count - 1);
+                int highestNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, cards.Count - 1, false);
                 Card.CardRank highestRank = Card.CardRank.JOKER;
                 if (highestNonJokerIdx != -1)
                 {
@@ -105,14 +107,14 @@ namespace rummy.Cards
                                 }
                                 else
                                 {
-                                    var nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(cards, 1);
+                                    var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, 1, true);
                                     rank = cards[nonJokerIdx].Rank - nonJokerIdx;
                                 }
                             }
                             else
                             {
                                 //Try to find the first card below the current joker which isn't one
-                                var nonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(cards, i - 1);
+                                var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, i - 1, false);
                                 if (nonJokerIdx != -1)
                                 {
                                     rank = cards[nonJokerIdx].Rank + (i - nonJokerIdx);
@@ -121,11 +123,11 @@ namespace rummy.Cards
                                 }
                                 else //No card below was found, search for higher card
                                 {
-                                    nonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(cards, i + 1);
+                                    nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, i + 1, true);
                                     if (nonJokerIdx != -1)
                                         rank = cards[nonJokerIdx].Rank - (nonJokerIdx - i);
                                     else
-                                        Debug.LogError("Rank of joker card could not be figured out! This should never happen!");
+                                        Tb.I.GameMaster.LogMsg("Rank of joker card could not be figured out! This should never happen!", LogType.Error);
                                 }
                             }
                         }
@@ -144,7 +146,7 @@ namespace rummy.Cards
             else
             {
                 if (cards.Contains(card))
-                    Debug.LogError("CardSpot " + gameObject.name + " already contains " + card);
+                    Tb.I.GameMaster.LogMsg("CardSpot " + gameObject.name + " already contains " + card, LogType.Error);
                 cards.Add(card);
             }
             Cards = new List<Card>(cards);
@@ -158,7 +160,6 @@ namespace rummy.Cards
                 return;
 
             float deltaAngle = cardsAngleSpread / Cards.Count;
-
             for (int i = 0; i < Cards.Count; i++)
             {
                 float x = cardRadius * Mathf.Cos((startAngle + i * deltaAngle) * Mathf.PI / 180f);
@@ -227,16 +228,16 @@ namespace rummy.Cards
                         {
                             Card.CardRank actualJokerRank = Card.CardRank.JOKER;
                             int jokerIdx = Cards.IndexOf(joker);
-                            int higherNonJokerIdx = CardUtil.GetFirstHigherNonJokerCardIdx(Cards, jokerIdx + 1);
+                            int higherNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, jokerIdx + 1, true);
                             if (higherNonJokerIdx != -1)
                                 actualJokerRank = Cards[higherNonJokerIdx].Rank - (higherNonJokerIdx - jokerIdx);
                             else
                             {
-                                int lowerNonJokerIdx = CardUtil.GetFirstLowerNonJokerCardIdx(Cards, jokerIdx - 1);
+                                int lowerNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, jokerIdx - 1, false);
                                 if (lowerNonJokerIdx != -1)
                                     actualJokerRank = Cards[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
                                 else
-                                    Debug.LogError("Rank of joker card could not be figured out! This should never happen!");
+                                    Tb.I.GameMaster.LogMsg("Rank of joker card could not be figured out! This should never happen!", LogType.Error);
                             }
 
                             if (actualJokerRank == newCard.Rank)
@@ -258,7 +259,7 @@ namespace rummy.Cards
                     }
                     else
                     {
-                        return newCard.Color == run.GetRunColor() && (highestRank != Card.CardRank.ACE || lowestRank != Card.CardRank.ACE);
+                        return newCard.Color == run.Color && (highestRank != Card.CardRank.ACE || lowestRank != Card.CardRank.ACE);
                     }
             }
         }

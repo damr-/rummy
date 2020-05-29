@@ -705,7 +705,7 @@ namespace rummy
                             NewThought.Invoke("Allow discarding all cards of " + minValSet);
                         }
                         else
-                            Debug.LogWarning("Could not discard a run/set with the lowest value because there are none!");
+                            Tb.I.GameMaster.LogMsg("Could not discard a run/set with the lowest value because there are none!", LogType.Error);
                     }
                 }
             }

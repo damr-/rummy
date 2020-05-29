@@ -74,7 +74,7 @@ namespace rummy
                 GameSpeed = 4;
             }
 
-            Extensions.Seed = Seed;
+            UnityEngine.Random.InitState(Seed);
             Time.timeScale = GameSpeed;
             RoundCount = 1;
 
@@ -244,6 +244,23 @@ namespace rummy
             foreach (var spot in cardSpots)
                 cards.AddRange(spot.Cards);
             return cards;
+        }
+
+        public void LogMsg(string message, LogType type)
+        {
+            string prefix = "[Seed " + Seed + ", Round " + RoundCount + "] ";
+            switch (type)
+            {
+                case LogType.Error:
+                    Debug.LogError(prefix + message);
+                    break;
+                case LogType.Warning:
+                    Debug.LogWarning(prefix + message);
+                    break;
+                default:
+                    Debug.Log(prefix + message);
+                    break;
+            }
         }
     }
 

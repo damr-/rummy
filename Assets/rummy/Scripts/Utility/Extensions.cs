@@ -1,26 +1,19 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using rummy.Cards;
 
 namespace rummy.Utility
 {
     public static class Extensions
     {
-        public static int Seed;
-
-        public static Stack<T> Shuffle<T>(this Stack<T> stack)
-        {
-            Random.InitState(Seed);
-            return new Stack<T>(stack.OrderBy(x => Random.Range(0, int.MaxValue)));
-        }
-
-        public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this List<Card> Cards)
+        /// <summary>
+        /// Returns the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list.
+        /// </summary>
+        public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this List<Card> cards)
         {
             var cardsByRank = new Dictionary<Card.CardRank, List<Card>>();
-            for (int i = 0; i < Cards.Count; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
-                Card card = Cards[i];
+                Card card = cards[i];
                 if (cardsByRank.ContainsKey(card.Rank))
                     cardsByRank[card.Rank].Add(card);
                 else
@@ -30,7 +23,7 @@ namespace rummy.Utility
         }
         
         /// <summary>
-        /// Returns whether the list intersects the other list of cards - whether the two lists have (at least) one card in common
+        /// Returns whether the list intersects the other list of cards (whether the two lists have at least one card in common)
         /// </summary>
         public static bool Intersects(this List<Card> list, List<Card> otherList)
         {

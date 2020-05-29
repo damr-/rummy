@@ -30,7 +30,7 @@ namespace rummy.Cards
             Texture texture = Resources.Load<Texture>("cards/" + card.GetFileString());
 
             if (texture == null)
-                Debug.Log("No texture for " + card + " (missing " + card.GetFileString() + ")");
+                Debug.LogError("No texture for " + card + " (missing " + card.GetFileString() + ")");
 
             localMaterials[0] = new Material(Material) { mainTexture = texture };
             meshRend.materials = localMaterials;

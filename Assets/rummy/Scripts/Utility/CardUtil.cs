@@ -290,7 +290,7 @@ namespace rummy.Utility
                     (!anyHigherLeft && !anyLowerLeft))
                 {
                     if (logMessage)
-                        Debug.Log("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.");
+                        Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.", LogType.Log);
                     duoRuns.Remove(duoRun);
                 }
             }
@@ -311,7 +311,9 @@ namespace rummy.Utility
                         if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
                             duoRuns.Add(new List<Card>() { c1, c2 });
                         else if (logMessage)
-                            Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(middleRank) + Card.GetSuitSymbol(middleSuit) + " was already laid down twice!");
+                            Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 +
+                                " because " + Card.RankLetters[middleRank] + Card.SuitSymbols[middleSuit] +
+                                " was already laid down twice!", LogType.Log);
                     }
                 }
             }
@@ -395,7 +397,9 @@ namespace rummy.Utility
                         if (count1 + count2 < 4)
                             newDuos.Add(new List<Card>() { c1, c2 });
                         else if (logMessage)
-                            Debug.Log("Not saving " + c1 + c2 + " because " + Card.GetRankLetter(rank) + Card.GetSuitSymbol(otherSuits[0]) + "/" + Card.GetSuitSymbol(otherSuits[1]) + " already laid twice each.");
+                            Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 + " because " +
+                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] +
+                                "/" + Card.SuitSymbols[otherSuits[1]] + " already laid twice each.", LogType.Log);
                     }
                 }
                 allDuos.AddRange(newDuos);
@@ -475,38 +479,26 @@ namespace rummy.Utility
             if (joker != null)
             {
                 if (joker.IsBlack()
-                    && usedSuits.Contains(Card.CardSuit.CLOVERS)
-                    && usedSuits.Contains(Card.CardSuit.PIKE))
+                    && usedSuits.Contains(Card.CardSuit.CLUBS)
+                    && usedSuits.Contains(Card.CardSuit.SPADES))
                     return false;
                 if (joker.IsRed()
-                    && usedSuits.Contains(Card.CardSuit.HEART)
-                    && usedSuits.Contains(Card.CardSuit.TILE))
+                    && usedSuits.Contains(Card.CardSuit.HEARTS)
+                    && usedSuits.Contains(Card.CardSuit.DIAMONDS))
                     return false;
             }
             return true;
         }
 
         /// <summary>
-        /// Returns the index of the first card which is not a joker, starting the search at startIndex.
+        /// Returns the index of the first card which is not a joker, starting the search at startIndex and searching in the desired direction.
         /// Returns -1 if none was found.
         /// </summary>
-        public static int GetFirstHigherNonJokerCardIdx(List<Card> cards, int startIndex)
+        public static int GetFirstNonJokerCardIdx(List<Card> cards, int startIndex, bool searchForward)
         {
-            for (int i = startIndex; i < cards.Count; i++)
-            {
-                if (!cards[i].IsJoker())
-                    return i;
-            }
-            return -1;
-        }
+            int increment = searchForward ? +1 : -1;
 
-        /// <summary>
-        /// Returns the index of the first card which is not a joker, starting the search backwards from startIndex.
-        /// Returns -1 if none was found.
-        /// </summary>
-        public static int GetFirstLowerNonJokerCardIdx(List<Card> cards, int startIndex)
-        {
-            for (int i = startIndex; i >= 0; i--)
+            for (int i = startIndex; i < cards.Count && i >= 0; i += increment)
             {
                 if (!cards[i].IsJoker())
                     return i;

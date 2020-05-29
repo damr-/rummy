@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using rummy.Utility;
+using System.Linq;
 
 namespace rummy.Cards
 {
@@ -8,9 +9,9 @@ namespace rummy.Cards
     public class CardStack : MonoBehaviour
     {
         public GameObject CardPrefab;
-        public int CardCount => Cards.Count;
 
         private Stack<Card> Cards = new Stack<Card>();
+        public int CardCount => Cards.Count;
         private bool stackCreated;
 
         public enum CardStackType
@@ -84,7 +85,7 @@ namespace rummy.Cards
                     //Don't create jokers
                     if ((Card.CardRank)rank == Card.CardRank.JOKER)
                         continue;
-                    CreateCard((Card.CardRank)rank, Card.CardSuit.HEART);
+                    CreateCard((Card.CardRank)rank, Card.CardSuit.HEARTS);
                 }
             }
         }
@@ -92,41 +93,41 @@ namespace rummy.Cards
         private void TEST_CreateCustomStack()
         {
             for(int i = 0; i < 100; i++)
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEART);
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
 
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
 
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
 
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
 
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
 
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.TILE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.DIAMONDS);
 
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
 
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.TILE);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.DIAMONDS);
 
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.PIKE);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
 
-            CreateCard(Card.CardRank.KING, Card.CardSuit.HEART);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLOVERS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
         }
 
         public void CreateCardStack(CardStackType cardServeType)
         {
             if(stackCreated)
             {
-                Debug.LogWarning("Tried to create a stack but there already is one!");
+                Tb.I.GameMaster.LogMsg("Tried to create a stack but there already is one!", LogType.Error);
                 return;
             }
 
@@ -165,7 +166,7 @@ namespace rummy.Cards
         
         public void ShuffleCardStack()
         {
-            Cards = Cards.Shuffle();
+            Cards = new Stack<Card>(Cards.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
         public Card DrawCard()
@@ -174,7 +175,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Shuffles and adds the given list of cards to the card stack. 
+        /// Adds the given list of cards to the card stack and shuffles it.
         /// Usually the card stack is restocked with the cards from the discard stack
         /// </summary>
         public void Restock(List<Card> cards)

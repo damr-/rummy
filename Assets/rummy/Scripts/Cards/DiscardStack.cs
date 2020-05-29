@@ -6,8 +6,8 @@ namespace rummy.Cards
 
     public class DiscardStack : MonoBehaviour
     {
-        public int CardCount { get { return Cards.Count; } }
-        private Stack<Card> Cards = new Stack<Card>();
+        private readonly Stack<Card> Cards = new Stack<Card>();
+        public int CardCount => Cards.Count;
 
         public void AddCard(Card card) => Cards.Push(card);
         public Card DrawCard() => Cards.Pop();

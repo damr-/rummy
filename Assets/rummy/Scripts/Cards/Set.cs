@@ -15,7 +15,7 @@ namespace rummy.Cards
         {
             if (!CardUtil.IsValidSet(cards))
             {
-                Debug.LogWarning("The cards in a set are not all of the same rank or some share the same suit!");
+                Tb.I.GameMaster.LogMsg("The cards in a set are not all of the same rank or some share the same suit!", LogType.Error);
                 return;
             }
 
