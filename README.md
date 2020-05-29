@@ -20,9 +20,8 @@ Important values of the simulation can be controleld through the UI.
 - The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are laid down, except one, which is then discarded to finish the game.
 
 ## Remarks
-- The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands (unless they cannot yet lie down at all). Same goes for single laydown cards.
-- The players do not "count"/memorize the cards which had been discarded to figure out possible card combinations.
-- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every card exists twice in the game, if the duo's missing third card is part of already laid down card packs twice, the duo will *not* be kept, since it cannot be completed.
+- The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands. Same goes for single cards.
+- The players do not count/memorize the cards which had been discarded to figure out possible card combinations.
+- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every card exists twice in the game, if the duo's missing third card is already laid down twice, the duo will *not* be kept, since it cannot be completed.
 - Starting with 13 cards, there exists the possibility that the game ends in a draw. This happens when both players laid down 3 complete sets of 4 cards each. With one card remaining in their hand, neither player can win. In that case, the game is forcefully ended as a draw.
-- The seed is used to shuffle the cards in the deck. As a result, running the application with the same seed always results in the same game being played.
-- LINQ is used for the logic behind finding possible sets/runs and duos. That code could definitely be improved a lot both in terms of elegance, shortness and performance.
+- The code could definitely be improved a lot in terms of elegance, shortness and performance.
