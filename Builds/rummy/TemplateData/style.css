@@ -17,4 +17,4 @@
 .webgl-content .footer .title {margin-right: 10px; float: right;}
 .webgl-content .footer .fullscreen {background-image: url('fullscreen.png'); width: 38px; float: right;}
 
-div#unityContainer {width: 100vw; height: 90vh;}
+#unityContainer {width: 100vw; height: 90vh;}
