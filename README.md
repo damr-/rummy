@@ -1,6 +1,8 @@
 # Rummy
 A Unity application which plays the famous game 'Rummy' against itself.
 
+[Run in Browser (WebGL)](https://damr-.github.io/rummy/Builds/rummy/)
+
 [Download (Windows)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_Windows.zip)
 
 [Download (Mac OS)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_MacOS.app.zip)
