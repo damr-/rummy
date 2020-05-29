@@ -93,10 +93,18 @@ namespace rummy.Cards
         {
             switch (suit)
             {
+#if UNITY_WEBGL
+                case CardSuit.CLOVERS: return "C";
+                case CardSuit.HEART: return "H";
+                case CardSuit.PIKE: return "P";
+                default: return "T"; //TILE
+            
+#else
                 case CardSuit.CLOVERS: return "♣";
                 case CardSuit.HEART: return "♥";
                 case CardSuit.PIKE: return "♠";
                 default: return "♦"; //TILE
+#endif
             }
         }
 
@@ -120,7 +128,7 @@ namespace rummy.Cards
                 default: return "?"; //JOKER
             }
         }
-        #endregion
+#endregion
 
         public CardRank Rank = CardRank.TWO;
         public CardSuit Suit = CardSuit.HEART;
