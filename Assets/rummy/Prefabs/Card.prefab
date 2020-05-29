@@ -61,7 +61,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: b17eb87068ef84d36837be91042da50d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -94,8 +94,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf438839a73264b3fb0ac0ad50c473b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Rank: 2
-  Suit: 2
+  TypeChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3651395446447094413}
+        m_MethodName: UpdateTexture
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &3651395446447094413
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,7 +13,7 @@ namespace rummy.Utility
         /// combinations extracted from the given 'HandCards'
         /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
         ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
-        /// <param name="logMessage"> Whether to log when a duo set/run was NOT added because all necessary cards are already laid down </param>
+        /// <param name="logMessage"> Whether to log when a duo set/run was NOT added because all necessary cards have already been laid down </param>
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll, bool logMessage)
         {
@@ -112,7 +112,7 @@ namespace rummy.Utility
         {
             List<Set> possibleSets = new List<Set>();
 
-            var cardsByRank = PlayerCards.GetCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER).ToList();
+            var cardsByRank = PlayerCards.GetCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER);
             foreach (var rank in cardsByRank)
                 GetPossibleSets(possibleSets, rank.Value, new List<Card>());
 
@@ -201,12 +201,13 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Looks for duos which could form complete 3-card-runs using a joker and returns all possible combinations using the available joker cards
+        /// Looks for duos which could form complete 3-card-runs using a joker and
+        /// returns all possible combinations using the available joker cards
         /// </summary>
         public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
-            //TODO check why possibleSets and possibleRuns are not used!
-            List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
+            //TODO Check if possibleSets and possibleRuns really don't have to be checked here!
+            var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
                 return new List<Run>();
 
@@ -245,6 +246,13 @@ namespace rummy.Utility
             return possibleJokerRuns;
         }
 
+        /// <summary>
+        /// Returns all runs which only consist of two cards and could theoretically be completed by waiting for a third.
+        /// </summary>
+        /// <param name="PlayerCards">The cards on the player's hand</param>
+        /// <param name="LaidDownCards">The cards which have already been laid down by the players. Used to check whether a run is theoretically possible</param>
+        /// <param name="logMessage">Whether to log a message when a run is impossible to complete and the cards are therefore not kept on the player's hand.</param>
+        /// <returns></returns>
         public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
         {
             var duoRuns = new List<List<Card>>();
@@ -323,8 +331,8 @@ namespace rummy.Utility
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
-            //TODO check why possibleSets and possibleRuns are not used!
-            List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
+            //TODO Check if possibleSets and possibleRuns really don't have to be checked here!
+            var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
                 return new List<Set>();
 
@@ -335,7 +343,7 @@ namespace rummy.Utility
             var possibleJokerSets = new List<Set>();
 
             // First, create trios out of duos where both cards have the same color
-            // for each trio, save all posslbe combinations with available jokers
+            // for each trio, save all possible combinations with available jokers
             for (int i = 0; i < 2; i++)
             {
                 Card.CardColor color = (Card.CardColor)i;
@@ -370,13 +378,17 @@ namespace rummy.Utility
         /// <summary>
         /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards'
         /// </summary>
+        /// <param name="PlayerCards">The cards in the player's hand</param>
+        /// <param name="LaidDownCards">Cards which have already been laid down by players.
+        /// Used to check whether it is unnecessary to keep a certain duo, because the third card has already been laid down twice</param>
+        /// <param name="logMessage">Whether to log a message if a duo is not saved because the third card has already been laid down twice</param>
+        /// <returns></returns>
         public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
         {
             var allDuos = new List<List<Card>>();
 
             var cardsByRank = PlayerCards.GetCardsByRank()
-                                            .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2)
-                                            .ToList();
+                                         .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2);
 
             foreach (var entry in cardsByRank)
             {

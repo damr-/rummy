@@ -166,7 +166,6 @@ namespace rummy
                 if (isJokerBeingReturned)
                     return;
                 isJokerBeingReturned = true;
-
                 currentCardSpot.RemoveCard(returningJoker);
                 returningJoker.MoveFinished.AddListener(ReturnJokerMoveFinished);
                 returningJoker.MoveCard(HandCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
@@ -182,8 +181,6 @@ namespace rummy
         public void DrawCard(bool isServingCard)
         {
             playerState = PlayerState.DRAWING;
-
-            Card card;
             bool takeFromDiscardStack = false;
             if (!isServingCard && HasLaidDown)
             {
@@ -199,12 +196,13 @@ namespace rummy
 
                 if (hypotheticalValue > currentValue)
                 {
-                    NewThought.Invoke(gameObject.name + " takes " + discardedCard +
-                        " from discard pile to finish " + hypotheticalBestCombo);
+                    NewThought.Invoke("Take " + discardedCard + " from discard pile to finish " + hypotheticalBestCombo);
                     takeFromDiscardStack = true;
                 }
             }
 
+
+            Card card;
             if (takeFromDiscardStack)
                 card = Tb.I.DiscardStack.DrawCard();
             else
@@ -293,8 +291,7 @@ namespace rummy
                         if (singleLayDownCards.Any(kvp => kvp.Card == card))
                             continue;
 
-                        Card Joker;
-                        if (!cardSpot.CanFit(card, out Joker))
+                        if (!cardSpot.CanFit(card, out Card Joker))
                             continue;
 
                         //Find all single cards which are already gonna be added to the cardspot in question
@@ -574,12 +571,14 @@ namespace rummy
             if (!HasLaidDown)
                 possibleDiscards = KeepUsableCards(possibleDiscards);
 
-            //For now, don't allow discarding joker cards
+            //At first, don't allow discarding joker cards
             var jokerCards = possibleDiscards.Where(c => c.IsJoker());
             possibleDiscards = possibleDiscards.Except(jokerCards).ToList();
 
-            //Check for duo sets&runs and exclude them from discarding, if possible
-            if (possibleDiscards.Count > 2)
+            //Check for duo sets&runs and exclude them from discarding, if possible.
+            //Only check if there are more than 3 cards on the player's hand, because
+            //keeping a duo and discarding the third card makes no sense.
+            if (possibleDiscards.Count > 3)
             {
                 var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
                 var duos = CardUtil.GetAllDuoSets(HandCardSpot.Cards, laidDownCards, !HasLaidDown);     // Only broadcast not keeping duos when 
@@ -611,8 +610,9 @@ namespace rummy
                 }
             }
 
+            //If all the remaining cards are joker cards, allow discarding them
             if (possibleDiscards.Count == 0)
-                possibleDiscards.AddRange(jokerCards); //All remaining cards are joker cards, allow discarding them
+                possibleDiscards.AddRange(jokerCards);
 
             //Discard the card with the highest value
             Card card = possibleDiscards.OrderByDescending(c => c.Value).FirstOrDefault();
@@ -624,7 +624,7 @@ namespace rummy
 
         /// <summary>
         /// Removes all the cards from 'possibleDiscards' which are part of a finished set/run 
-        /// or which are going to be laid down as single
+        /// or which are going to be laid down as single card later.
         /// </summary>
         private List<Card> KeepUsableCards(List<Card> possibleDiscards)
         {

@@ -155,12 +155,17 @@ namespace rummy.Cards
             stackCreated = true;
         }
 
+        /// <summary>
+        /// Creates a card GameObject with <see cref="Card.CardRank"/> <see cref="rank"/>
+        /// and <see cref="Card.CardSuit"/> <see cref="suit"/> and adds it to the card stack.
+        /// </summary>
+        /// <param name="rank">The <see cref="Card.CardRank"/> of the new card</param>
+        /// <param name="suit">The <see cref="Card.CardSuit"/> of the new card</param>
         private void CreateCard(Card.CardRank rank, Card.CardSuit suit)
         {
             GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
             Card card = CardGO.GetComponent<Card>();
-            card.Rank = rank;
-            card.Suit = suit;
+            card.SetType(rank, suit);
             Cards.Push(card);
         }
         
@@ -169,6 +174,10 @@ namespace rummy.Cards
             Cards = new Stack<Card>(Cards.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
+        /// <summary>
+        /// Removes the next card from the cardstack and returns it.
+        /// </summary>
+        /// <returns>The next card which was removed from the stack</returns>
         public Card DrawCard()
         {
             return Cards.Pop();
@@ -189,6 +198,10 @@ namespace rummy.Cards
             ShuffleCardStack();
         }
 
+        /// <summary>
+        /// Destroys all cards and sets <see cref="stackCreated"/> to false so that
+        /// a new stack can be created.
+        /// </summary>
         public void ResetStack()
         {
             stackCreated = false;

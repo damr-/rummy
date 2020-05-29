@@ -123,8 +123,13 @@ namespace rummy.Cards
         }
         #endregion
 
-        public CardRank Rank = CardRank.TWO;
-        public CardSuit Suit = CardSuit.HEARTS;
+        public CardRank Rank { get; private set; } = CardRank.TWO;
+        public CardSuit Suit { get; private set; } = CardSuit.HEARTS;
+        public void SetType(CardRank rank, CardSuit suit) {
+            Rank = rank;
+            Suit = suit;
+            TypeChanged.Invoke();
+        }
         public CardColor Color
         {
             get
@@ -158,6 +163,8 @@ namespace rummy.Cards
 
         public class Event_MoveFinished : UnityEvent<Card> { }
         public Event_MoveFinished MoveFinished = new Event_MoveFinished();
+
+        public UnityEvent TypeChanged = new UnityEvent();
 
         public string GetFileString() => Rank + "_" + Suit;
         public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);

@@ -130,9 +130,9 @@ namespace rummy
         private void PlayerFinished()
         {
             CurrentPlayer.TurnFinished.RemoveAllListeners();
-
             if (CurrentPlayer.PlayerCardCount == 0)
             {
+                currentPlayerID = (currentPlayerID + 1) % Players.Count;
                 GameOver.Invoke(CurrentPlayer);
                 gameState = GameState.NONE;
                 return;
