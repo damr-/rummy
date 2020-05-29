@@ -17,7 +17,10 @@ namespace rummy.UI
 
         private void Update()
         {
-            text.text = isDrawWaitDuration ? Tb.I.GameMaster.DrawWaitDuration.ToString() : Tb.I.GameMaster.PlayWaitDuration.ToString();
+            if (isDrawWaitDuration)
+                text.text = Tb.I.GameMaster.DrawWaitDuration.ToString("0.00");
+            else
+                text.text = Tb.I.GameMaster.PlayWaitDuration.ToString("0.00");
         }
     }
 

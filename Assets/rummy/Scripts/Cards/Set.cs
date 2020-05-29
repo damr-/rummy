@@ -8,7 +8,8 @@ namespace rummy.Cards
     public class Set : Pack
     {
         public Card.CardRank Rank { get; private set; }
-        public int Value => Cards.Count * Cards.GetFirstCard().Value;
+        public bool HasTwoBlackCards { get; private set; }
+        public bool HasTwoRedCards { get; private set; }
 
         public Set(Card c1, Card c2, Card c3) : this(new List<Card>() { c1, c2, c3 }) { }
         public Set(List<Card> cards)
@@ -19,34 +20,30 @@ namespace rummy.Cards
                 return;
             }
 
-            Cards = new List<Card>() {};
-            Cards.AddRange(cards);
+            Cards = new List<Card>(cards);
             Rank = Cards.GetFirstCard().Rank;
+            Value = Cards.Count * Cards.GetFirstCard().Value;
+            HasTwoBlackCards = Cards.Count(c => c.IsBlack()) == 2;
+            HasTwoRedCards = Cards.Count(c => c.IsRed()) == 2;
         }
-        
-        public bool HasTwoBlackCards() => Cards.Count(c => c.IsBlack()) == 2;
-        public bool HasTwoRedCards() => Cards.Count(c => c.IsRed()) == 2;
 
         ///<summary>
-        ///Returns whether the cards of the other set LOOK the same as the cards in this
-        ///meaning that they are not change for object-equality but only for same suit 
+        /// Returns whether the cards of the other set LOOK the same as the cards in this
+        /// meaning that they are not checked for object-equality but only for same suit 
         ///</summary>
         public bool LooksEqual(Set other)
         {
-            if(Count != other.Count)
+            if (Count != other.Count)
                 return false;
-            if(Rank != other.Rank)
+            if (Rank != other.Rank)
                 return false;
-            
-            var ordered1 = Cards.OrderBy(c => c.Suit);
-            var ordered2 = other.Cards.OrderBy(c => c.Suit);
 
-            for(int i = 0; i < ordered1.Count(); i++)
+            var o1 = Cards.OrderBy(c => c.Suit);
+            var o2 = other.Cards.OrderBy(c => c.Suit);
+
+            for (int i = 0; i < o1.Count(); i++)
             {
-                Card.CardSuit s1 = ordered1.ElementAt(i).Suit;
-                Card.CardSuit s2 = ordered2.ElementAt(i).Suit;
-
-                if(s1 != s2)
+                if (o1.ElementAt(i).Suit != o2.ElementAt(i).Suit)
                     return false;
             }
             return true;

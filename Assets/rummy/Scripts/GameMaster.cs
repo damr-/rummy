@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -74,7 +73,7 @@ namespace rummy
                 GameSpeed = 4;
             }
 
-            UnityEngine.Random.InitState(Seed);
+            Random.InitState(Seed);
             Time.timeScale = GameSpeed;
             RoundCount = 1;
 
@@ -226,7 +225,15 @@ namespace rummy
 
         public void TogglePause()
         {
-            GameSpeed = (GameSpeed > 0 ? 0 : DefaultGameSpeed);
+            if (GameSpeed > 0)
+            {
+                DefaultGameSpeed = GameSpeed;
+                GameSpeed = 0;
+            }
+            else
+            {
+                GameSpeed = DefaultGameSpeed;
+            }
         }
 
         public List<CardSpot> GetAllCardSpots()

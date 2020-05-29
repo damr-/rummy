@@ -17,16 +17,16 @@ namespace rummy.Utility
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll, bool logMessage)
         {
-            var sets = CardUtil.GetPossibleSets(HandCards);
-            var runs = CardUtil.GetPossibleRuns(HandCards);
+            var sets = GetPossibleSets(HandCards);
+            var runs = GetPossibleRuns(HandCards);
 
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs, logMessage);
+            var jokerSets = GetPossibleJokerSets(HandCards, LaidDownCards, sets, runs, logMessage);
             sets.AddRange(jokerSets);
 
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs, logMessage);
+            var jokerRuns = GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs, logMessage);
             runs.AddRange(jokerRuns);
 
-            var possibleCombos = CardUtil.GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
+            var possibleCombos = GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
             return possibleCombos;
         }
 
@@ -35,13 +35,13 @@ namespace rummy.Utility
         /// Each combo's sets and runs are sorted descending by value.
         /// <param name="handCardCount"> The number of cards on the player's hand </param>
         /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand.
-        ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
+        /// This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
         /// </summary>
         private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount, bool allowLayingAll)
         {
             var combos = new List<CardCombo>();
-            CardUtil.GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
-            CardUtil.GetPossibleRunCombos(combos, runs, new CardCombo());
+            GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
+            GetPossibleRunCombos(combos, runs, new CardCombo());
             combos = combos.Where(ldc => ldc.PackCount > 0).ToList();
 
             if (allowLayingAll)
@@ -54,7 +54,7 @@ namespace rummy.Utility
             foreach (var combo in combos)
             {
                 if (combo.CardCount < handCardCount ||
-                    (combo.Sets.Any(set => set.Count > 3) || combo.Runs.Any(run => run.Count > 3)))
+                    combo.Sets.Any(set => set.Count > 3) || combo.Runs.Any(run => run.Count > 3))
                 {
                     combo.Sort();
                     possibleCombos.Add(combo);
@@ -124,8 +124,7 @@ namespace rummy.Utility
             for (int i = 0; i < availableCards.Count; i++)
             {
                 Card card = availableCards[i];
-                var newSet = new List<Card>(currentSet);
-                newSet.Add(card);
+                var newSet = new List<Card>(currentSet) { card };
 
                 if (newSet.Count > 4)
                     continue;
@@ -171,9 +170,7 @@ namespace rummy.Utility
                 if (currentRun.Count == 0 && card.Rank != Card.CardRank.ACE && (int)card.Rank + (minLength - 1) > (int)Card.CardRank.ACE)
                     continue;
 
-                var newRun = new List<Card>(currentRun);
-                newRun.Add(card);
-
+                var newRun = new List<Card>(currentRun) { card };
                 if (newRun.Count >= minLength && newRun.Count <= maxLength)
                     possibleRuns.Add(newRun);
 
@@ -208,6 +205,7 @@ namespace rummy.Utility
         /// </summary>
         public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
+            //TODO check why possibleSets and possibleRuns are not used!
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Run>();
@@ -325,6 +323,7 @@ namespace rummy.Utility
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
+            //TODO check why possibleSets and possibleRuns are not used!
             List<Card> jokerCards = PlayerCards.Where(c => c.IsJoker()).ToList();
             if (!jokerCards.Any())
                 return new List<Set>();
@@ -406,7 +405,7 @@ namespace rummy.Utility
             }
             return allDuos;
         }
-        
+
         /// <summary>
         /// Returns whether the given list of cards could form a valid run
         /// </summary>

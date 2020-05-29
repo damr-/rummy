@@ -10,8 +10,7 @@ namespace rummy.UI.Options
         public InputField NewSeedInput;
         public void ApplySeed()
         {
-            int newSeed = 0;
-            int.TryParse(NewSeedInput.text, out newSeed);
+            int.TryParse(NewSeedInput.text, out int newSeed);
             Tb.I.GameMaster.Seed = newSeed;
         }
     }

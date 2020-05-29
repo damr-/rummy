@@ -16,7 +16,7 @@ namespace rummy.UI.Options
 
         private void Update()
         {
-            text.text = Tb.I.GameMaster.GameSpeed.ToString();
+            text.text = Tb.I.GameMaster.GameSpeed.ToString("0.00");
         }
     }
 

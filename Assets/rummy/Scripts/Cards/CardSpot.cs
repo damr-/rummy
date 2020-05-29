@@ -72,7 +72,7 @@ namespace rummy.Cards
                 {
                     highestRank = cards[highestNonJokerIdx].Rank + (cards.Count - 1 - highestNonJokerIdx);
                     if (highestNonJokerIdx == 0 && cards[highestNonJokerIdx].Rank == Card.CardRank.ACE)
-                        highestRank = (Card.CardRank)(cards.Count);
+                        highestRank = (Card.CardRank)cards.Count;
                 }
 
                 //1st priority: add ace after king. If the highest rank is not a king,
@@ -185,9 +185,9 @@ namespace rummy.Cards
                         if (joker != null)
                         {
                             //Allow adding a third card of one color if one of the other two is a joker
-                            if (set.HasTwoBlackCards() && joker.IsRed() && newCard.IsBlack())
+                            if (set.HasTwoBlackCards && joker.IsRed() && newCard.IsBlack())
                                 return false;
-                            if (set.HasTwoRedCards() && joker.IsBlack() && newCard.IsRed())
+                            if (set.HasTwoRedCards && joker.IsBlack() && newCard.IsRed())
                                 return false;
 
                             if (joker.Color == newCard.Color)
@@ -206,16 +206,14 @@ namespace rummy.Cards
                         if (Cards.Any(c => c.IsJoker()))
                             return false;
 
-                        if (newCard.IsBlack() && set.HasTwoBlackCards())
+                        if (newCard.IsBlack() && set.HasTwoBlackCards)
                             return false;
-                        if (newCard.IsRed() && set.HasTwoRedCards())
+                        if (newCard.IsRed() && set.HasTwoRedCards)
                             return false;
                         return true;
                     }
                 default: //SpotType.RUN:
                     Run run = new Run(Cards);
-                    var highestRank = run.GetHighestRank();
-                    var lowestRank = run.GetLowestRank();
                     if (!newCard.IsJoker())
                     {
                         if (newCard.Suit != run.Suit)
@@ -253,13 +251,13 @@ namespace rummy.Cards
                             return true;
                         }
 
-                        return (newCard.Rank == highestRank + 1 && highestRank != Card.CardRank.ACE) ||
-                                (newCard.Rank == lowestRank - 1 && lowestRank != Card.CardRank.ACE) ||
-                                (newCard.Rank == Card.CardRank.ACE && lowestRank == Card.CardRank.TWO);
+                        return (newCard.Rank == run.HighestRank + 1 && run.HighestRank != Card.CardRank.ACE) ||
+                                (newCard.Rank == run.LowestRank - 1 && run.LowestRank != Card.CardRank.ACE) ||
+                                (newCard.Rank == Card.CardRank.ACE && run.LowestRank == Card.CardRank.TWO);
                     }
                     else
                     {
-                        return newCard.Color == run.Color && (highestRank != Card.CardRank.ACE || lowestRank != Card.CardRank.ACE);
+                        return newCard.Color == run.Color && (run.HighestRank != Card.CardRank.ACE || run.LowestRank != Card.CardRank.ACE);
                     }
             }
         }

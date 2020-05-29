@@ -8,6 +8,7 @@ namespace rummy.Cards
     {
         public List<Card> Cards { get; protected set; }
         public int Count => Cards.Count;
+        public int Value { get; protected set; } = 0;
 
         public override string ToString()
         {

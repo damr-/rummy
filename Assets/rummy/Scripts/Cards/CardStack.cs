@@ -134,19 +134,19 @@ namespace rummy.Cards
             switch (cardServeType)
             {
                 case CardStackType.DEFAULT:
-                    Tb.I.CardStack.CreateCardStack();
+                    CreateCardStack();
                     break;
                 case CardStackType.NO_JOKER:
-                    Tb.I.CardStack.CreateCardStackNoJoker();
+                    CreateCardStackNoJoker();
                     break;
                 case CardStackType.ONLY_JACKS:
-                    Tb.I.CardStack.TEST_CreateJackCardStack();
+                    TEST_CreateJackCardStack();
                     break;
                 case CardStackType.ONLY_HEARTS:
-                    Tb.I.CardStack.TEST_CreateHeartCardStack();
+                    TEST_CreateHeartCardStack();
                     break;
                 default: // TEST_CardServeType.CUSTOM
-                    Tb.I.CardStack.TEST_CreateCustomStack();
+                    TEST_CreateCustomStack();
                     break;
             }
 

@@ -245,9 +245,9 @@ namespace rummy
         /// <summary>
         /// Returns the card combo which yield the highest possible points
         /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
-        ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
+        /// This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
         /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for output</param>
-        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT added because all necessary cards are already laid down</param>
+        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT kept on hand because all necessary cards have already been laid down</param>
         /// </summary>
         private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos)
         {
@@ -384,7 +384,7 @@ namespace rummy
                 {
                     chosenRun = quadRuns.OrderBy(run => run.Value).First();
                     var runCards = chosenRun.Cards;
-                    var runCard = runCards.First().Rank != Card.CardRank.ACE ? runCards.First() : runCards.ElementAt(1);
+                    var runCard = runCards.First().Rank != Card.CardRank.ACE ? runCards.First() : runCards[1];
                     if (keptCard == null || runCard.Value < keptCard.Value)
                     {
                         chosenSet = null;

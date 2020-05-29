@@ -9,8 +9,9 @@ namespace rummy.Cards
     public class Run : Pack
     {
         public Card.CardSuit Suit { get; private set; }
-        public int Value { get; private set; } = 0;
         public Card.CardColor Color { get; private set; }
+        public Card.CardRank HighestRank { get; private set; }
+        public Card.CardRank LowestRank { get; private set; }
 
         public Run(List<Card> cards)
         {
@@ -27,24 +28,22 @@ namespace rummy.Cards
             Suit = firstCard.Suit;
             Color = firstCard.Color;
             CalculateValue();
+            HighestRank = CalculateRankExtremum(Cards.Count - 1, false);
+            LowestRank = CalculateRankExtremum(0, true);
         }
 
-        public Card.CardRank GetHighestRank()
+        private Card.CardRank CalculateRankExtremum(int startIndex, bool searchForward)
         {
-            int idx = CardUtil.GetFirstNonJokerCardIdx(Cards, Cards.Count - 1, false);
-            if (idx != -1)
-                return Cards[idx].Rank + (Cards.Count - 1 - idx);
-            Tb.I.GameMaster.LogMsg(ToString() + " only consists of jokers", LogType.Error);
-            return Card.CardRank.JOKER;
-        }
-
-        public Card.CardRank GetLowestRank()
-        {
-            int idx = CardUtil.GetFirstNonJokerCardIdx(Cards, 0, true);
-            if (idx != -1)
+            int idx = CardUtil.GetFirstNonJokerCardIdx(Cards, startIndex, searchForward);
+            if (idx == -1)
+            {
+                Tb.I.GameMaster.LogMsg(ToString() + " only consists of jokers", LogType.Error);
+                return Card.CardRank.JOKER;
+            }
+            if (searchForward)
                 return Cards[idx].Rank - idx;
-            Tb.I.GameMaster.LogMsg(ToString() + " only consists of jokers", LogType.Error);
-            return Card.CardRank.JOKER;
+            else
+                return Cards[idx].Rank + (Cards.Count - 1 - idx);
         }
 
         ///<summary>

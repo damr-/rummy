@@ -8,14 +8,14 @@ namespace rummy
 
     public class StatsLog : MonoBehaviour
     {
-        private static string folderName = "data";
+        private static readonly string folderName = "data";
         private static string path = folderName + "/stats_";
         private GameMaster gameMaster;
 
         private void Start()
         {
-            if (!System.IO.Directory.Exists(folderName))
-                System.IO.Directory.CreateDirectory(folderName);
+            if (!Directory.Exists(folderName))
+                Directory.CreateDirectory(folderName);
 
             path += System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt";
             gameMaster = Tb.I.GameMaster;
