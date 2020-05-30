@@ -52,7 +52,7 @@ namespace rummy
         }
         private GameState gameState = GameState.NONE;
 
-        public class Event_GameOver : UnityEvent<Player> {}
+        public class Event_GameOver : UnityEvent<Player> { }
         public Event_GameOver GameOver = new Event_GameOver();
 
         [SerializeField]
@@ -78,7 +78,7 @@ namespace rummy
 
             Random.InitState(Seed);
             Time.timeScale = GameSpeed;
-            RoundCount = 1;
+            RoundCount = 0;
 
             Tb.I.CardStack.CreateCardStack(CardStackType);
             if (CardStackType != CardStack.CardStackType.CUSTOM)
@@ -101,7 +101,7 @@ namespace rummy
                     isCardBeingDealt = true;
                     CurrentPlayer.DrawCard(true);
                 }
-                else if (CurrentPlayer.playerState == Player.PlayerState.IDLE)
+                else if (CurrentPlayer.State == Player.PlayerState.IDLE)
                 {
                     isCardBeingDealt = false;
                     currentPlayerID = (currentPlayerID + 1) % Players.Count;
@@ -109,12 +109,14 @@ namespace rummy
                     if (currentPlayerID == 0 && CurrentPlayer.PlayerCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
+                        RoundCount = 1;
+                        TryStopSkipping();
                     }
                 }
             }
             else if (gameState == GameState.PLAYING)
             {
-                if (CurrentPlayer.playerState == Player.PlayerState.IDLE)
+                if (CurrentPlayer.State == Player.PlayerState.IDLE)
                 {
                     CurrentPlayer.TurnFinished.AddListener(PlayerFinished);
                     CurrentPlayer.BeginTurn();
@@ -141,13 +143,7 @@ namespace rummy
             if (currentPlayerID == 0)
             {
                 RoundCount++;
-                if (SkipUntilRound > 0 && RoundCount >= SkipUntilRound && !AnimateCardMovement) //only do this once
-                {
-                    AnimateCardMovement = true;
-                    PlayWaitDuration = tmpPlayerWaitDuration;
-                    DrawWaitDuration = tmpDrawWaitDuration;
-                    GameSpeed = DefaultGameSpeed;
-                }
+                TryStopSkipping();
 
                 if (IsGameADraw())
                 {
@@ -159,12 +155,22 @@ namespace rummy
 
             if (Tb.I.CardStack.CardCount == 0)
             {
-                List<Card> discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
+                var discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
                 Tb.I.CardStack.Restock(discardedCards);
             }
 
             drawWaitStartTime = Time.time;
             gameState = GameState.DRAWWAIT;
+        }
+
+        private void TryStopSkipping()
+        {
+            if (SkipUntilRound <= 0 || RoundCount < SkipUntilRound || AnimateCardMovement)
+                return;
+            AnimateCardMovement = true;
+            PlayWaitDuration = tmpPlayerWaitDuration;
+            DrawWaitDuration = tmpDrawWaitDuration;
+            GameSpeed = DefaultGameSpeed;
         }
 
         /// <summary>

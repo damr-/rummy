@@ -129,7 +129,7 @@ namespace rummy.Utility
                 if (newSet.Count > 4)
                     continue;
 
-                if (IsValidSet(newSet))
+                if (Set.IsValidSet(newSet))
                 {
                     if (newSet.Count == 3 || newSet.Count == 4)
                         possibleSets.Add(new Set(newSet));
@@ -206,7 +206,6 @@ namespace rummy.Utility
         /// </summary>
         public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
-            //TODO Check if possibleSets and possibleRuns really don't have to be checked here!
             var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
                 return new List<Run>();
@@ -331,7 +330,6 @@ namespace rummy.Utility
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
-            //TODO Check if possibleSets and possibleRuns really don't have to be checked here!
             var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
                 return new List<Set>();
@@ -409,96 +407,14 @@ namespace rummy.Utility
                             newDuos.Add(new List<Card>() { c1, c2 });
                         else if (logMessage)
                             Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 + " because " +
-                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] +
-                                "/" + Card.SuitSymbols[otherSuits[1]] + " already laid twice each.", LogType.Log);
+                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] + " & " +
+                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[1]] +
+                                " have already been laid down twice each.", LogType.Log);
                     }
                 }
                 allDuos.AddRange(newDuos);
             }
             return allDuos;
-        }
-
-        /// <summary>
-        /// Returns whether the given list of cards could form a valid run
-        /// </summary>
-        public static bool IsValidRun(List<Card> cards)
-        {
-            if (cards.Count < 3)
-                return false;
-
-            //A run can only consist of cards with the same suit (or joker with the matching color)
-            Card representiveCard = cards.GetFirstCard();
-            if (representiveCard == null)
-                return false;
-
-            foreach (var card in cards)
-            {
-                if (!card.IsJoker())
-                {
-                    if (card.Suit != representiveCard.Suit)
-                        return false;
-                }
-                else
-                {
-                    if (card.Color != representiveCard.Color)
-                        return false;
-                }
-            }
-
-            for (int i = 0; i < cards.Count - 1; i++)
-            {
-                //Ace can be the start of a run
-                if (i == 0 && cards[i].Rank == Card.CardRank.ACE)
-                {
-                    //Run is only valid if next card is a TWO or a JOKER
-                    if (cards[i + 1].Rank != Card.CardRank.TWO && !cards[i + 1].IsJoker())
-                        return false;
-                }
-                //otherwise, rank has to increase by one
-                else if (cards[i + 1].Rank != cards[i].Rank + 1 && !cards[i].IsJoker() && !cards[i + 1].IsJoker())
-                    return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Returns whether the given list of cards could form a valid set
-        /// </summary>
-        public static bool IsValidSet(List<Card> cards)
-        {
-            if (cards.Count < 3 || cards.Count > 4)
-                return false;
-
-            //A set can only consist of cards with the same rank and/or a joker
-            if (cards.Any(c => !c.IsJoker() && c.Rank != cards.GetFirstCard().Rank))
-                return false;
-
-            var usedSuits = new List<Card.CardSuit>();
-            for (int i = 0; i < cards.Count; i++)
-            {
-                if (cards[i].IsJoker())
-                    continue; //Skip checking joker for now
-
-                var suit = cards[i].Suit;
-                if (usedSuits.Contains(suit))
-                    return false;
-                usedSuits.Add(suit);
-            }
-
-            //Check joker now if necessary
-            Card joker = cards.FirstOrDefault(c => c.IsJoker());
-            if (joker != null)
-            {
-                if (joker.IsBlack()
-                    && usedSuits.Contains(Card.CardSuit.CLUBS)
-                    && usedSuits.Contains(Card.CardSuit.SPADES))
-                    return false;
-                if (joker.IsRed()
-                    && usedSuits.Contains(Card.CardSuit.HEARTS)
-                    && usedSuits.Contains(Card.CardSuit.DIAMONDS))
-                    return false;
-            }
-            return true;
         }
 
         /// <summary>
@@ -515,6 +431,33 @@ namespace rummy.Utility
                     return i;
             }
             return -1;
+        }
+
+        /// <summary>
+        /// Returns the run/set from the given list of runs/sets which has the lowest value
+        /// </summary>
+        /// <param name="runs">An optional list of runs to check</param>
+        /// <param name="sets">An optional list of sets to check</param>
+        /// <returns></returns>
+        public static Pack GetLowestValue(List<Run> runs, List<Set> sets)
+        {
+            var minValRun = runs.OrderBy(run => run.Value).FirstOrDefault();
+            var minValSet = sets.OrderBy(set => set.Value).FirstOrDefault();
+            if (minValRun != null && minValSet != null)
+            {
+                if (minValRun.Value < minValSet.Value)
+                    minValSet = null;
+                else
+                    minValRun = null;
+            }
+
+            if (minValRun != null)
+                return minValRun;
+            else if (minValSet != null)
+                return minValSet;
+            else
+                throw new RummyException("Could not find the lowest valued set or run!" +
+                    " Maybe both lists are empty?");
         }
     }
 

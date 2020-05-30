@@ -67,7 +67,7 @@ namespace rummy.Cards
 
         private void TEST_CreateJackCardStack()
         {
-            for (int i = 0; i < 2*Card.CardRankCount; i++)
+            for (int i = 0; i < 2 * Card.CardRankCount; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
@@ -78,7 +78,7 @@ namespace rummy.Cards
 
         private void TEST_CreateHeartCardStack()
         {
-            for (int i = 0; i < 2*Card.CardSuitCount; i++)
+            for (int i = 0; i < 2 * Card.CardSuitCount; i++)
             {
                 for (int rank = 1; rank <= Card.CardRankCount; rank++)
                 {
@@ -89,43 +89,16 @@ namespace rummy.Cards
                 }
             }
         }
-        
+
         private void TEST_CreateCustomStack()
         {
-            for(int i = 0; i < 100; i++)
+            for (int i = 0; i < 28; i++)
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.DIAMONDS);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.CLUBS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.DIAMONDS);
-
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
-
-            CreateCard(Card.CardRank.KING, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.CLUBS);
         }
 
         public void CreateCardStack(CardStackType cardServeType)
         {
-            if(stackCreated)
+            if (stackCreated)
             {
                 Tb.I.GameMaster.LogMsg("Tried to create a stack but there already is one!", LogType.Error);
                 return;
@@ -168,19 +141,21 @@ namespace rummy.Cards
             card.SetType(rank, suit);
             Cards.Push(card);
         }
-        
+
         public void ShuffleCardStack()
         {
             Cards = new Stack<Card>(Cards.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
 
         /// <summary>
-        /// Removes the next card from the cardstack and returns it.
+        /// Removes the next card from the cardstack and returns it, if possible.
         /// </summary>
-        /// <returns>The next card which was removed from the stack</returns>
+        /// <returns>The next card which was removed from the stack, null otherwise</returns>
         public Card DrawCard()
         {
-            return Cards.Pop();
+            if (CardCount > 0)
+                return Cards.Pop();
+            throw new RummyException("CardStack is empty!");
         }
 
         /// <summary>
@@ -189,7 +164,7 @@ namespace rummy.Cards
         /// </summary>
         public void Restock(List<Card> cards)
         {
-            foreach(var card in cards)
+            foreach (var card in cards)
             {
                 card.SetVisible(false);
                 card.transform.position = transform.position;
@@ -205,7 +180,7 @@ namespace rummy.Cards
         public void ResetStack()
         {
             stackCreated = false;
-            while(Cards.Count > 0)
+            while (CardCount > 0)
             {
                 var card = Cards.Pop();
                 Destroy(card.gameObject);

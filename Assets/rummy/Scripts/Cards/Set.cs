@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
 using rummy.Utility;
 
@@ -15,7 +14,7 @@ namespace rummy.Cards
         public Set(Card c1, Card c2, Card c3) : this(new List<Card>() { c1, c2, c3 }) { }
         public Set(List<Card> cards)
         {
-            if (!CardUtil.IsValidSet(cards))
+            if (!IsValidSet(cards))
             {
                 string msg = "Invalid set: ";
                 cards.ForEach(card => msg += msg + ", ");
@@ -27,6 +26,46 @@ namespace rummy.Cards
             Value = Cards.Count * Cards.GetFirstCard().Value;
             HasTwoBlackCards = Cards.Count(c => c.IsBlack()) == 2;
             HasTwoRedCards = Cards.Count(c => c.IsRed()) == 2;
+        }
+
+        /// <summary>
+        /// Returns whether the given list of cards could form a valid set
+        /// </summary>
+        public static bool IsValidSet(List<Card> cards)
+        {
+            if (cards.Count < 3 || cards.Count > 4)
+                return false;
+
+            //A set can only consist of cards with the same rank and/or a joker
+            if (cards.Any(c => !c.IsJoker() && c.Rank != cards.GetFirstCard().Rank))
+                return false;
+
+            var usedSuits = new List<Card.CardSuit>();
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (cards[i].IsJoker())
+                    continue; //Skip checking joker for now
+
+                var suit = cards[i].Suit;
+                if (usedSuits.Contains(suit))
+                    return false;
+                usedSuits.Add(suit);
+            }
+
+            //Check joker now if necessary
+            Card joker = cards.FirstOrDefault(c => c.IsJoker());
+            if (joker != null)
+            {
+                if (joker.IsBlack()
+                    && usedSuits.Contains(Card.CardSuit.CLUBS)
+                    && usedSuits.Contains(Card.CardSuit.SPADES))
+                    return false;
+                if (joker.IsRed()
+                    && usedSuits.Contains(Card.CardSuit.HEARTS)
+                    && usedSuits.Contains(Card.CardSuit.DIAMONDS))
+                    return false;
+            }
+            return true;
         }
 
         ///<summary>

@@ -123,7 +123,7 @@ namespace rummy.Cards
                                     if (nonJokerIdx != -1)
                                         rank = cards[nonJokerIdx].Rank - (nonJokerIdx - i);
                                     else
-                                        Tb.I.GameMaster.LogMsg("Rank of joker card could not be figured out! This should never happen!", LogType.Error);
+                                        throw new RummyException("Rank of joker card could not be figured out! This should never happen!");
                                 }
                             }
                         }
@@ -141,8 +141,6 @@ namespace rummy.Cards
             }
             else
             {
-                if (cards.Contains(card))
-                    Tb.I.GameMaster.LogMsg("CardSpot " + gameObject.name + " already contains " + card, LogType.Error);
                 cards.Add(card);
             }
             card.transform.SetParent(transform, true);
@@ -153,9 +151,7 @@ namespace rummy.Cards
 
         public void RemoveCard(Card card)
         {
-            //TODO REMOVE THIS IF, just used for dev now
-            if (!Objects.Remove(card))
-                Debug.LogError(card + " not part of " + gameObject.name);
+            Objects.Remove(card);
             card.transform.localScale = card.transform.localScale / CardScale;
             card.transform.SetParent(null, true);
             UpdatePositions();
@@ -228,7 +224,7 @@ namespace rummy.Cards
                                 if (lowerNonJokerIdx != -1)
                                     actualJokerRank = Objects[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
                                 else
-                                    Tb.I.GameMaster.LogMsg("Rank of joker card could not be figured out! This should never happen!", LogType.Error);
+                                    throw new RummyException("Rank of joker card could not be figured out! This should never happen!");
                             }
 
                             if (actualJokerRank == newCard.Rank)

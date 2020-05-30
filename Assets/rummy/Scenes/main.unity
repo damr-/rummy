@@ -1219,7 +1219,7 @@ PrefabInstance:
     - target: {fileID: 1554910360796275609, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 77
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 1614760140935552719, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
@@ -1489,7 +1489,7 @@ PrefabInstance:
     - target: {fileID: 6693671369617983552, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 27
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 6873127975817566424, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
@@ -1544,7 +1544,7 @@ PrefabInstance:
     - target: {fileID: 8881899960494093267, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 77
+      value: 200
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: be6c50d0e3d5c4a3e9576812d5611d90, type: 3}
@@ -2792,12 +2792,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5edbbb4c1dbd84a1cbe6bd7dd8cb955d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Seed: 0
+  Seed: 116
   GameSpeed: 1
   AnimateCardMovement: 1
   DrawWaitDuration: 0.5
   PlayWaitDuration: 0.5
-  CardsPerPlayer: 13
+  CardsPerPlayer: 6
   EarliestAllowedLaydownRound: 2
   MinimumLaySum: 40
   CardMoveSpeed: 50
@@ -2812,7 +2812,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 485916706}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 337025256}
@@ -3736,7 +3736,7 @@ GameObject:
   - component: {fileID: 660116791}
   - component: {fileID: 660116790}
   m_Layer: 5
-  m_Name: ShowButton
+  m_Name: OptionsButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4427,7 +4427,7 @@ GameObject:
   - component: {fileID: 840678726}
   - component: {fileID: 840678725}
   m_Layer: 5
-  m_Name: ShowButtonCanvas
+  m_Name: OptionsButtonCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6181,7 +6181,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -23.65, y: 0}
+  m_AnchoredPosition: {x: -20.5, y: 0}
   m_SizeDelta: {x: 20, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1399458964

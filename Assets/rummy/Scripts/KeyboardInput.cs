@@ -9,7 +9,6 @@ namespace rummy
     {
         public Button OptionsButton;
         public Button HideButton;
-        private bool optionsHidden = true;
 
         private float firstPressTime = -1f;
         private readonly float detectDuration = 1f;
@@ -18,11 +17,10 @@ namespace rummy
         {
             if (Input.GetKeyDown(KeyCode.O))
             {
-                if (optionsHidden)
+                if (OptionsButton.gameObject.activeInHierarchy)
                     OptionsButton.onClick.Invoke();
                 else
                     HideButton.onClick.Invoke();
-                optionsHidden = !optionsHidden;
             }
 
             if (Input.GetKeyDown(KeyCode.Escape))

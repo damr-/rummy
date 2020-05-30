@@ -112,10 +112,7 @@ namespace rummy.Cards
         public static List<CardSuit> GetOtherTwo(CardSuit s1, CardSuit s2)
         {
             if (s1 == s2)
-            {
-                Tb.I.GameMaster.LogMsg("GetOtherTwo got the same CardSuit twice", LogType.Error);
-                return new List<CardSuit>();
-            }
+                throw new RummyException("GetOtherTwo got the same CardSuit twice");
             var suits = new List<CardSuit>() { CardSuit.HEARTS, CardSuit.DIAMONDS, CardSuit.SPADES, CardSuit.CLUBS };
             suits.Remove(s1);
             suits.Remove(s2);
