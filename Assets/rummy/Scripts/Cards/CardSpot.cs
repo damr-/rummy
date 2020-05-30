@@ -5,11 +5,13 @@ using UnityEngine;
 
 namespace rummy.Cards
 {
-    public class CardSpot : MonoBehaviour
+    public class CardSpot : RadialLayout<Card>
     {
-        public float startAngle;
-        public float cardRadius = 2f;
-        public float cardsAngleSpread = 180f;
+        public override List<Card> Objects { get; protected set; } = new List<Card>();
+        public bool HasCards => Objects.Count > 0;
+
+        [Tooltip("The factor by which cards will be scaled when added to the spot. When removed, the scaling is undone")]
+        public float CardScale = 1.0f;
 
         public enum SpotType
         {
@@ -17,49 +19,43 @@ namespace rummy.Cards
             RUN,
             SET
         }
-
         public SpotType Type;
+
+        protected override void InitValues()
+        {
+            yIncrement = -0.01f;
+        }
+
+        public override void ResetLayout()
+        {
+            Type = SpotType.NONE;
+            base.ResetLayout();
+        }
 
         public int GetValue()
         {
+            int value = 0;
             if (Type == SpotType.RUN)
             {
-                if (CardUtil.IsValidRun(Cards))
-                    return new Run(Cards).Value;
-                else
-                    return 0;
+                try { value = new Run(Objects).Value; }
+                catch (RummyException) { }
             }
             else if (Type == SpotType.SET)
             {
-                if (CardUtil.IsValidSet(Cards))
-                    return new Set(Cards).Value;
-                else
-                {
-                    //When the spot is currently under construction or a joker is being swapped out
-                    //(so there momentarily are 5 cards and the set is invalid)
-                    return 0;
-                }
+                try { value = new Set(Objects).Value; }
+                catch (RummyException) { }
             }
             else
             {
-                int value = 0;
-                foreach (var card in Cards)
-                {
-                    if (card.IsJoker())
-                        value += 20;
-                    else
-                        value += card.Value;
-                }
-                return value;
+                foreach (var card in Objects)
+                    value += card.IsJoker() ? 20 : card.Value;
             }
+            return value;
         }
-
-        public List<Card> Cards { get; private set; } = new List<Card>();
-        public bool HasCards => Cards.Count > 0;
 
         public void AddCard(Card card)
         {
-            var cards = new List<Card>(Cards);
+            var cards = new List<Card>(Objects);
 
             if (Type == SpotType.RUN && cards.Count > 0)
             {
@@ -149,23 +145,20 @@ namespace rummy.Cards
                     Tb.I.GameMaster.LogMsg("CardSpot " + gameObject.name + " already contains " + card, LogType.Error);
                 cards.Add(card);
             }
-            Cards = new List<Card>(cards);
+            card.transform.SetParent(transform, true);
+            card.transform.localScale = card.transform.localScale * CardScale;
+            Objects = new List<Card>(cards);
+            UpdatePositions();
         }
 
-        public void RemoveCard(Card card) => Cards = Cards.Where(c => c != card).ToList();
-
-        private void Update()
+        public void RemoveCard(Card card)
         {
-            if (Cards.Count == 0)
-                return;
-
-            float deltaAngle = cardsAngleSpread / Cards.Count;
-            for (int i = 0; i < Cards.Count; i++)
-            {
-                float x = cardRadius * Mathf.Cos((startAngle + i * deltaAngle) * Mathf.PI / 180f);
-                float z = cardRadius * Mathf.Sin((startAngle + i * deltaAngle) * Mathf.PI / 180f);
-                Cards[i].transform.position = transform.position + new Vector3(x, -0.01f * i, z);
-            }
+            //TODO REMOVE THIS IF, just used for dev now
+            if (!Objects.Remove(card))
+                Debug.LogError(card + " not part of " + gameObject.name);
+            card.transform.localScale = card.transform.localScale / CardScale;
+            card.transform.SetParent(null, true);
+            UpdatePositions();
         }
 
         public bool CanFit(Card newCard, out Card Joker)
@@ -175,13 +168,13 @@ namespace rummy.Cards
             {
                 case SpotType.NONE: return false;
                 case SpotType.SET:
-                    Set set = new Set(Cards);
+                    Set set = new Set(Objects);
                     if (!newCard.IsJoker())
                     {
                         if (newCard.Rank != set.Rank)
                             return false;
 
-                        Card joker = Cards.FirstOrDefault(c => c.IsJoker());
+                        Card joker = Objects.FirstOrDefault(c => c.IsJoker());
                         if (joker != null)
                         {
                             //Allow adding a third card of one color if one of the other two is a joker
@@ -194,16 +187,16 @@ namespace rummy.Cards
                                 Joker = joker;
 
                             //Otherwise, only allow adding a card whose suit is not already there
-                            var nonJokers = Cards.Where(c => !c.IsJoker());
+                            var nonJokers = Objects.Where(c => !c.IsJoker());
                             return nonJokers.All(c => c.Suit != newCard.Suit);
                         }
                         else
-                            return Cards.All(c => c.Suit != newCard.Suit);
+                            return Objects.All(c => c.Suit != newCard.Suit);
                     }
                     else
                     {
                         //Don't allow more than one joker
-                        if (Cards.Any(c => c.IsJoker()))
+                        if (Objects.Any(c => c.IsJoker()))
                             return false;
 
                         if (newCard.IsBlack() && set.HasTwoBlackCards)
@@ -213,27 +206,27 @@ namespace rummy.Cards
                         return true;
                     }
                 default: //SpotType.RUN:
-                    Run run = new Run(Cards);
+                    Run run = new Run(Objects);
                     if (!newCard.IsJoker())
                     {
                         if (newCard.Suit != run.Suit)
                             return false;
 
-                        var jokers = Cards.Where(c => c.IsJoker());
+                        var jokers = Objects.Where(c => c.IsJoker());
                         Card replacedJoker = null;
 
                         foreach (var joker in jokers)
                         {
                             Card.CardRank actualJokerRank = Card.CardRank.JOKER;
-                            int jokerIdx = Cards.IndexOf(joker);
-                            int higherNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, jokerIdx + 1, true);
+                            int jokerIdx = Objects.IndexOf(joker);
+                            int higherNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Objects, jokerIdx + 1, true);
                             if (higherNonJokerIdx != -1)
-                                actualJokerRank = Cards[higherNonJokerIdx].Rank - (higherNonJokerIdx - jokerIdx);
+                                actualJokerRank = Objects[higherNonJokerIdx].Rank - (higherNonJokerIdx - jokerIdx);
                             else
                             {
-                                int lowerNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, jokerIdx - 1, false);
+                                int lowerNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Objects, jokerIdx - 1, false);
                                 if (lowerNonJokerIdx != -1)
-                                    actualJokerRank = Cards[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
+                                    actualJokerRank = Objects[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
                                 else
                                     Tb.I.GameMaster.LogMsg("Rank of joker card could not be figured out! This should never happen!", LogType.Error);
                             }
@@ -260,18 +253,6 @@ namespace rummy.Cards
                         return newCard.Color == run.Color && (run.HighestRank != Card.CardRank.ACE || run.LowestRank != Card.CardRank.ACE);
                     }
             }
-        }
-
-        public void ResetSpot()
-        {
-            while (Cards.Count > 0)
-            {
-                Card c = Cards[0];
-                Cards.RemoveAt(0);
-                Destroy(c.gameObject);
-            }
-            Type = SpotType.NONE;
-            Cards = new List<Card>();
         }
     }
 

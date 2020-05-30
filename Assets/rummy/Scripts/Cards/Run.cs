@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 using rummy.Utility;
 
 namespace rummy.Cards
@@ -17,10 +17,10 @@ namespace rummy.Cards
         {
             if (!CardUtil.IsValidRun(cards))
             {
-                string output = "";
-                cards.ForEach(card => output += card + ", ");
-                Tb.I.GameMaster.LogMsg("The cards in a run are not in order or don't form a run! (" + output.TrimEnd().TrimEnd(',') + ")", LogType.Error);
-                return;
+                string msg = "";
+                cards.ForEach(card => msg += msg + ", ");
+                msg = "Invalid run: " + msg.TrimEnd().TrimEnd(',');
+                throw new RummyException(msg);
             }
 
             Cards = new List<Card>(cards);
@@ -28,18 +28,22 @@ namespace rummy.Cards
             Suit = firstCard.Suit;
             Color = firstCard.Color;
             CalculateValue();
-            HighestRank = CalculateRankExtremum(Cards.Count - 1, false);
-            LowestRank = CalculateRankExtremum(0, true);
+            HighestRank = GetRankExtremum(true);
+            LowestRank = GetRankExtremum(false);
         }
 
-        private Card.CardRank CalculateRankExtremum(int startIndex, bool searchForward)
+        /// <summary>
+        /// Calculates and returns the maximum/minimum Rank in this run, depending on
+        /// </summary>
+        /// <param name="maxRank">Whether to look for the highest rank. If false, the lowest rank is returned</param>
+        /// <returns></returns>
+        private Card.CardRank GetRankExtremum(bool maxRank)
         {
+            int startIndex = maxRank ? Cards.Count - 1 : 0;
+            bool searchForward = !maxRank;
             int idx = CardUtil.GetFirstNonJokerCardIdx(Cards, startIndex, searchForward);
             if (idx == -1)
-            {
-                Tb.I.GameMaster.LogMsg(ToString() + " only consists of jokers", LogType.Error);
-                return Card.CardRank.JOKER;
-            }
+                throw new RummyException(ToString() + " only consists of jokers");
             if (searchForward)
                 return Cards[idx].Rank - idx;
             else

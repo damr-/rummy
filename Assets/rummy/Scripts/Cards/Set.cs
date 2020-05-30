@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
-using UnityEngine;
 using rummy.Utility;
 
 namespace rummy.Cards
 {
+
     public class Set : Pack
     {
         public Card.CardRank Rank { get; private set; }
@@ -16,8 +17,9 @@ namespace rummy.Cards
         {
             if (!CardUtil.IsValidSet(cards))
             {
-                Tb.I.GameMaster.LogMsg("The cards in a set are not all of the same rank or some share the same suit!", LogType.Error);
-                return;
+                string msg = "Invalid set: ";
+                cards.ForEach(card => msg += msg + ", ");
+                throw new RummyException(msg.TrimEnd().TrimEnd(','));
             }
 
             Cards = new List<Card>(cards);

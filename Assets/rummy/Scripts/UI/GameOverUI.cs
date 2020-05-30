@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using rummy.Utility;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace rummy.UI
@@ -32,7 +33,10 @@ namespace rummy.UI
         private void GameOver(Player player)
         {
             gameOverCanvas.SetActive(true);
-            loserCardValue.text = "Loser card value: " + (player == null ? "0" : player.PlayerHandValue.ToString());
+            if (player != null)
+                loserCardValue.text = player.gameObject.name + " won!";
+            else
+                loserCardValue.text = "Draw!";
         }
 
         public void Hide()

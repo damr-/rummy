@@ -1,8 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using rummy.Utility;
 
 namespace rummy.Cards
 {
+    public class RummyException : Exception
+    {
+        public RummyException(string message) : base(AttachPrefix(message)) { }
+        private static string AttachPrefix(string message)
+        {
+            string prefix = "[Seed " + Tb.I.GameMaster.Seed + ", Round " + Tb.I.GameMaster.RoundCount + "] ";
+            return prefix + message;
+        }
+    }
 
     public abstract class Pack
     {

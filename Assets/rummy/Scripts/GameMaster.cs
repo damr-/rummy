@@ -31,7 +31,7 @@ namespace rummy
         public float CardMoveSpeed = 50f;
 
         public int RoundCount { get; private set; }
-        public List<Player> Players = new List<Player>();
+        private List<Player> Players = new List<Player>();
         private Player CurrentPlayer { get { return Players[currentPlayerID]; } }
 
         private bool isCardBeingDealt;
@@ -62,6 +62,9 @@ namespace rummy
 
         private void Start()
         {
+            if (Players.Count == 0)
+                Players = FindObjectsOfType<Player>().ToList();
+
             DefaultGameSpeed = GameSpeed;
             tmpPlayerWaitDuration = PlayWaitDuration;
             tmpDrawWaitDuration = DrawWaitDuration;
@@ -80,9 +83,6 @@ namespace rummy
             Tb.I.CardStack.CreateCardStack(CardStackType);
             if (CardStackType != CardStack.CardStackType.CUSTOM)
                 Tb.I.CardStack.ShuffleCardStack();
-
-            if (Players.Count == 0)
-                Debug.LogError("Missing player references in " + gameObject.name);
 
             gameState = GameState.DEALING;
             currentPlayerID = 0;
@@ -132,7 +132,6 @@ namespace rummy
             CurrentPlayer.TurnFinished.RemoveAllListeners();
             if (CurrentPlayer.PlayerCardCount == 0)
             {
-                currentPlayerID = (currentPlayerID + 1) % Players.Count;
                 GameOver.Invoke(CurrentPlayer);
                 gameState = GameState.NONE;
                 return;
@@ -187,14 +186,14 @@ namespace rummy
 
                 if (setSpots.Any())
                 {
-                    var fullSetsCount = setSpots.Count(spot => spot.Cards.Count == 4);
+                    var fullSetsCount = setSpots.Count(spot => spot.Objects.Count == 4);
                     if (fullSetsCount != setSpots.Count())
                         return false;
                 }
 
                 if (runSpots.Any())
                 {
-                    var fullRunsCount = runSpots.Count(spot => spot.Cards.Count == 14);
+                    var fullRunsCount = runSpots.Count(spot => spot.Objects.Count == 14);
                     if (fullRunsCount != runSpots.Count())
                         return false;
                 }
@@ -249,7 +248,7 @@ namespace rummy
             var cards = new List<Card>();
             var cardSpots = GetAllCardSpots();
             foreach (var spot in cardSpots)
-                cards.AddRange(spot.Cards);
+                cards.AddRange(spot.Objects);
             return cards;
         }
 
