@@ -92,8 +92,16 @@ namespace rummy.Cards
 
         private void TEST_CreateCustomStack()
         {
-            for (int i = 0; i < 28; i++)
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+            CreateCard(Card.CardRank.NINE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
+            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.HEARTS);
         }
 
         public void CreateCardStack(CardStackType cardServeType)
@@ -136,7 +144,7 @@ namespace rummy.Cards
         /// <param name="suit">The <see cref="Card.CardSuit"/> of the new card</param>
         private void CreateCard(Card.CardRank rank, Card.CardSuit suit)
         {
-            GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity);
+            GameObject CardGO = Instantiate(CardPrefab, transform.position, Quaternion.identity, transform);
             Card card = CardGO.GetComponent<Card>();
             card.SetType(rank, suit);
             Cards.Push(card);
@@ -154,7 +162,11 @@ namespace rummy.Cards
         public Card DrawCard()
         {
             if (CardCount > 0)
-                return Cards.Pop();
+            {
+                var card = Cards.Pop();
+                card.transform.SetParent(null, true);
+                return card;
+            }
             throw new RummyException("CardStack is empty!");
         }
 
@@ -168,6 +180,7 @@ namespace rummy.Cards
             {
                 card.SetVisible(false);
                 card.transform.position = transform.position;
+                card.transform.SetParent(transform, true);
                 Cards.Push(card);
             }
             ShuffleCardStack();

@@ -9,8 +9,17 @@ namespace rummy.Cards
         private readonly Stack<Card> Cards = new Stack<Card>();
         public int CardCount => Cards.Count;
 
-        public void AddCard(Card card) => Cards.Push(card);
-        public Card DrawCard() => Cards.Pop();
+        public void AddCard(Card card)
+        {
+            card.transform.SetParent(transform, true);
+            Cards.Push(card);
+        }
+        public Card DrawCard()
+        {
+            var card = Cards.Pop();
+            card.transform.SetParent(null, true);
+            return card;
+        }
         public Card PeekCard() => Cards.Peek();
         public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.0001f * Cards.Count;
 
@@ -27,7 +36,7 @@ namespace rummy.Cards
         {
             List<Card> removedCards = new List<Card>();
             while (Cards.Count > 0)
-                removedCards.Add(Cards.Pop());
+                removedCards.Add(DrawCard());
             return removedCards;
         }
 

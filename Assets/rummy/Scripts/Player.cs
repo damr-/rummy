@@ -114,7 +114,7 @@ namespace rummy
                     {
                         layStage = LayStage.RUNS;
                         if (laydownCards.Runs.Count == 0)
-                            LayingCardsDone();
+                            LayingPacksDone();
                     }
                 }
             }
@@ -373,24 +373,7 @@ namespace rummy
                 return;
             }
 
-            //TODO DONT USE THIS
-            //var eligibleCards = GetCardsWhichAllowHighestComboWhenRemoved(HandCardSpot.Objects);
-            //TODO DONT USE THIS, use GetKeptCard()
-            //(Card, CardCombo) cardAndCombo = GetCardYieldingHighestValueCombo(HandCardSpot.Objects, false);
-            //if (eligibleCards.Count > 0)
-            //{
-            //    // Keep the card with the lowest value out of the possible ones
-            //    keptCard = eligibleCards.OrderBy(c => c.Value).First();
-            //    var optimalHand = new List<Card>(HandCardSpot.Objects);
-            //    optimalHand.Remove(keptCard);
-            //    laydownCards = GetBestCardCombo(optimalHand, true, false, false);
-            //    NewThought.Invoke("Keeping " + keptCard + ", the rest forms best combo " + laydownCards);
-            //    //TODO REMOVE
-            //    //Tb.I.GameMaster.LogMsg("Keeping " + keptCard + ", the rest forms best combo " + laydownCards, LogType.Error);
-            //    return;
-            //}
-
-            // Need to keep the set/run with the lowest value on hand
+            // Keep the set/run with the lowest value
             var result = CardUtil.GetLowestValue(laydownCards.Runs, laydownCards.Sets);
             if (result is Set)
                 laydownCards.Sets.Remove((Set)result);
@@ -523,7 +506,7 @@ namespace rummy
                 layStage == LayStage.RUNS ||
                 (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
             {
-                LayingCardsDone();
+                LayingPacksDone();
             }
             else //Start laying runs otherwise
             {
@@ -551,7 +534,7 @@ namespace rummy
             waitStartTime = Time.time;
         }
 
-        private void LayingCardsDone()
+        private void LayingPacksDone()
         {
             //With only one card left, just end the game
             if (HandCardSpot.Objects.Count == 1)

@@ -54,7 +54,8 @@ namespace rummy.Utility
             foreach (var combo in combos)
             {
                 if (combo.CardCount < handCardCount ||
-                    combo.Sets.Any(set => set.Count > 3) || combo.Runs.Any(run => run.Count > 3))
+                    combo.Sets.Any(set => set.Count > 3) ||
+                    combo.Runs.Any(run => run.Count > 3))
                 {
                     combo.Sort();
                     possibleCombos.Add(combo);

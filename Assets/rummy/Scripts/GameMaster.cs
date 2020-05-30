@@ -63,7 +63,7 @@ namespace rummy
         private void Start()
         {
             if (Players.Count == 0)
-                Players = FindObjectsOfType<Player>().ToList();
+                Players = FindObjectsOfType<Player>().OrderBy(p => p.name[p.name.Length - 1]).ToList();
 
             DefaultGameSpeed = GameSpeed;
             tmpPlayerWaitDuration = PlayWaitDuration;
