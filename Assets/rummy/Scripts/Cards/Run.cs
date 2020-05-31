@@ -17,9 +17,8 @@ namespace rummy.Cards
             if (!IsValidRun(cards))
             {
                 string msg = "";
-                cards.ForEach(card => msg += msg + ", ");
-                msg = "Invalid run: " + msg.TrimEnd().TrimEnd(',');
-                throw new RummyException(msg);
+                cards.ForEach(card => msg += card + ", ");
+                throw new RummyException("Invalid run: " + msg.TrimEnd().TrimEnd(','));
             }
 
             Cards = new List<Card>(cards);
@@ -40,7 +39,7 @@ namespace rummy.Cards
         {
             int startIndex = maxRank ? Cards.Count - 1 : 0;
             bool searchForward = !maxRank;
-            int idx = CardUtil.GetFirstNonJokerCardIdx(Cards, startIndex, searchForward);
+            int idx = Cards.GetFirstCardIndex(startIndex, searchForward);
             if (idx == -1)
                 throw new RummyException(ToString() + " only consists of jokers");
             if (searchForward)
@@ -87,7 +86,7 @@ namespace rummy.Cards
                             value += 1;
                         else //Find the next highest card which is not a joker and calculate the current joker's rank&value
                         {
-                            var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, 1, true);
+                            var nonJokerIdx = Cards.GetFirstCardIndex(1, true);
                             var jokerRank = Cards[nonJokerIdx].Rank - nonJokerIdx;
                             value += Card.CardValues[jokerRank];
                         }
@@ -95,7 +94,7 @@ namespace rummy.Cards
                     else
                     {
                         //Try to find the first non-joker card below the current joker
-                        var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, i - 1, false);
+                        var nonJokerIdx = Cards.GetFirstCardIndex(i - 1, false);
                         if (nonJokerIdx != -1)
                         {
                             Card.CardRank jokerRank = Cards[nonJokerIdx].Rank + (i - nonJokerIdx);
@@ -105,7 +104,7 @@ namespace rummy.Cards
                         }
                         else //No card below was found, search for higher card
                         {
-                            nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Cards, i + 1, true);
+                            nonJokerIdx = Cards.GetFirstCardIndex(i + 1, true);
                             if (nonJokerIdx != -1)
                             {
                                 var jokerRank = Cards[nonJokerIdx].Rank - (nonJokerIdx - i);

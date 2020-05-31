@@ -53,6 +53,19 @@ namespace rummy.Cards
             return value;
         }
 
+        /// <summary>
+        /// Returns whether this CardSpot is full and cannot take any more cards.
+        /// Does not check for Joker cards, but only for the amount of cards!
+        /// </summary>
+        public bool IsFull()
+        {
+            if (Type == SpotType.RUN)
+                return Objects.Count == 14;
+            else if (Type == SpotType.SET)
+                return Objects.Count == 4;
+            return false;
+        }
+
         public void AddCard(Card card)
         {
             var cards = new List<Card>(Objects);
@@ -62,7 +75,7 @@ namespace rummy.Cards
                 int idx = cards.Count; //By default, add the new card at the end
 
                 //Find out the rank of the last card in the run
-                int highestNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, cards.Count - 1, false);
+                int highestNonJokerIdx = cards.GetFirstCardIndex(cards.Count - 1, false);
                 Card.CardRank highestRank = Card.CardRank.JOKER;
                 if (highestNonJokerIdx != -1)
                 {
@@ -103,14 +116,14 @@ namespace rummy.Cards
                                 }
                                 else
                                 {
-                                    var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, 1, true);
+                                    var nonJokerIdx = cards.GetFirstCardIndex(1, true);
                                     rank = cards[nonJokerIdx].Rank - nonJokerIdx;
                                 }
                             }
                             else
                             {
                                 //Try to find the first card below the current joker which isn't one
-                                var nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, i - 1, false);
+                                var nonJokerIdx = cards.GetFirstCardIndex(i - 1, false);
                                 if (nonJokerIdx != -1)
                                 {
                                     rank = cards[nonJokerIdx].Rank + (i - nonJokerIdx);
@@ -119,7 +132,7 @@ namespace rummy.Cards
                                 }
                                 else //No card below was found, search for higher card
                                 {
-                                    nonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(cards, i + 1, true);
+                                    nonJokerIdx = cards.GetFirstCardIndex(i + 1, true);
                                     if (nonJokerIdx != -1)
                                         rank = cards[nonJokerIdx].Rank - (nonJokerIdx - i);
                                     else
@@ -215,12 +228,12 @@ namespace rummy.Cards
                         {
                             Card.CardRank actualJokerRank = Card.CardRank.JOKER;
                             int jokerIdx = Objects.IndexOf(joker);
-                            int higherNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Objects, jokerIdx + 1, true);
+                            int higherNonJokerIdx = Objects.GetFirstCardIndex(jokerIdx + 1, true);
                             if (higherNonJokerIdx != -1)
                                 actualJokerRank = Objects[higherNonJokerIdx].Rank - (higherNonJokerIdx - jokerIdx);
                             else
                             {
-                                int lowerNonJokerIdx = CardUtil.GetFirstNonJokerCardIdx(Objects, jokerIdx - 1, false);
+                                int lowerNonJokerIdx = Objects.GetFirstCardIndex(jokerIdx - 1, false);
                                 if (lowerNonJokerIdx != -1)
                                     actualJokerRank = Objects[lowerNonJokerIdx].Rank + (jokerIdx - lowerNonJokerIdx);
                                 else

@@ -92,16 +92,29 @@ namespace rummy.Cards
 
         private void TEST_CreateCustomStack()
         {
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
-
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
-            CreateCard(Card.CardRank.NINE, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.DIAMONDS);
-            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+
+            for (int i = 0; i < 2; i++)
+            {
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.DIAMONDS);
+
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
+
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.CLUBS);
+
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
+            }
         }
 
         public void CreateCardStack(CardStackType cardServeType)

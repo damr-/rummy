@@ -16,9 +16,9 @@ namespace rummy.Cards
         {
             if (!IsValidSet(cards))
             {
-                string msg = "Invalid set: ";
-                cards.ForEach(card => msg += msg + ", ");
-                throw new RummyException(msg.TrimEnd().TrimEnd(','));
+                string msg = "";
+                cards.ForEach(card => msg += card + ", ");
+                throw new RummyException("Invalid set: " + msg.TrimEnd().TrimEnd(','));
             }
 
             Cards = new List<Card>(cards);

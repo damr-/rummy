@@ -18,6 +18,9 @@ namespace rummy.UI.CardOutput
 
         private void UpdateCombos(List<CardCombo> cardCombos)
         {
+            if (!gameObject.activeInHierarchy)
+                return;
+
             outputView.ClearMessages();
             if (cardCombos.Count == 0)
                 return;
@@ -29,6 +32,8 @@ namespace rummy.UI.CardOutput
                 if (uniqueCombos.All(c => !c.LooksEqual(combo)))
                     uniqueCombos.Add(combo);
             }
+
+            //TODO check if ordering is really necessary here!
             uniqueCombos = uniqueCombos.OrderByDescending(c => c.Value).ToList();
 
             string poss = " possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");

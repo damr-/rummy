@@ -9,11 +9,11 @@ namespace rummy.Utility
     public static class CardUtil
     {
         /// <summary>
-        /// Returns a list of all possible combos which could be laid down, with sets and runs as well as joker
-        /// combinations extracted from the given 'HandCards'
+        /// Returns a sorted (descending, by value) list of all possible combos which could be laid down, with sets and runs as well as joker
+        /// combinations extracted from the given 'HandCards'.
         /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
         ///This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
-        /// <param name="logMessage"> Whether to log when a duo set/run was NOT added because all necessary cards have already been laid down </param>
+        /// <param name="logMessage"> Whether to log when a duo set/run was NOT added because all necessary cards have already been laid down</param>    
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll, bool logMessage)
         {
@@ -26,42 +26,15 @@ namespace rummy.Utility
             var jokerRuns = GetPossibleJokerRuns(HandCards, LaidDownCards, sets, runs, logMessage);
             runs.AddRange(jokerRuns);
 
-            var possibleCombos = GetAllPossibleCombos(sets, runs, HandCards.Count, allowLayingAll);
-            return possibleCombos;
-        }
-
-        /// <summary>
-        /// Get all possible card combinations which could be created from the given sets and runs.
-        /// Each combo's sets and runs are sorted descending by value.
-        /// <param name="handCardCount"> The number of cards on the player's hand </param>
-        /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand.
-        /// This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
-        /// </summary>
-        private static List<CardCombo> GetAllPossibleCombos(List<Set> sets, List<Run> runs, int handCardCount, bool allowLayingAll)
-        {
-            var combos = new List<CardCombo>();
-            GetPossibleSetAndRunCombos(combos, sets, runs, new CardCombo());
-            GetPossibleRunCombos(combos, runs, new CardCombo());
-            combos = combos.Where(ldc => ldc.PackCount > 0).ToList();
-
+            var allCombos = new List<CardCombo>();
+            GetPossibleSetAndRunCombos(allCombos, sets, runs, new CardCombo());
+            GetPossibleRunCombos(allCombos, runs, new CardCombo());
+            allCombos = allCombos.Where(combo => combo.PackCount > 0)
+                                 .OrderByDescending(combo => combo.Value)
+                                 .ToList();
             if (allowLayingAll)
-                return combos;
-
-            //Don't allow combinations which cannot be reduced further but would require the player to lay down all cards
-            //for example don't allow laying down 3 sets of 3, when having 9 cards in hand in total
-            //Having 8 cards in hand, 2 sets of 4 is a valid combination since single cards can be kept on hand
-            var possibleCombos = new List<CardCombo>();
-            foreach (var combo in combos)
-            {
-                if (combo.CardCount < handCardCount ||
-                    combo.Sets.Any(set => set.Count > 3) ||
-                    combo.Runs.Any(run => run.Count > 3))
-                {
-                    combo.Sort();
-                    possibleCombos.Add(combo);
-                }
-            }
-            return possibleCombos;
+                return allCombos;
+            return allCombos.Where(c => c.CardCount < HandCards.Count).ToList();
         }
 
         private static void GetPossibleRunCombos(List<CardCombo> possibleRunCombos, List<Run> runs, CardCombo currentRunCombo)
@@ -130,11 +103,8 @@ namespace rummy.Utility
                 if (newSet.Count > 4)
                     continue;
 
-                if (Set.IsValidSet(newSet))
-                {
-                    if (newSet.Count == 3 || newSet.Count == 4)
-                        possibleSets.Add(new Set(newSet));
-                }
+                if (Set.IsValidSet(newSet) && (newSet.Count == 3 || newSet.Count == 4))
+                    possibleSets.Add(new Set(newSet));
 
                 List<Card> otherCards = availableCards.
                         GetRange(i + 1, availableCards.Count - (i + 1)).
@@ -154,15 +124,29 @@ namespace rummy.Utility
             var playerCardsWithoutJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
             GetPossibleRuns(possibleRuns, playerCardsWithoutJokers, playerCardsWithoutJokers, new List<Card>());
 
+            //TODO what if it is {1 2 3 5 6} ?
+            //var cardsBySuit = playerCardsWithoutJokers.GetCardsBySuit();
+            //foreach (var entry in cardsBySuit)
+            //{
+            //    var cards = entry.Value.OrderBy(c => c.Rank).ToList();
+            //    //TODO break up into individual blocks if a card is missing
+            //    //and discard blocks with length<3
+            //    for (int runLen = 3; runLen <= cards.Count; runLen++)
+            //    {
+            //        for (int i = 0; i <= cards.Count - runLen; i++)
+            //        {
+            //            var newRun = cards.Skip(i).Take(runLen).ToList();
+            //            possibleRuns.Add(new Run(newRun));
+            //        }
+            //    }
+            //}
+
             var runs = new List<Run>();
             foreach (var r in possibleRuns)
                 runs.Add(new Run(r));
             return runs;
         }
 
-        /// <summary>
-        /// <param name="PlayerCardsWithoutJoker"> Must not contain any joker cards!</param>
-        /// </summary>
         private static void GetPossibleRuns(List<List<Card>> possibleRuns, List<Card> PlayerCardsWithoutJoker, List<Card> availableCards, List<Card> currentRun, int minLength = 3, int maxLength = 14)
         {
             foreach (Card card in availableCards)
@@ -181,9 +165,9 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all cards in PlayerCards which have the same suit and are one rank higher than 'card'.
-        /// 'firstInRun': whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING
+        /// Returns all cards in PlayerCards which have the same suit and are one rank higher than 'card'
         /// </summary>
+        /// <param name="firstInRun">Whether 'card' is the first card in a run. Used to determine whether ACE can connect to TWO or to KING</param>
         /// <returns> The card or null if none was found </returns>
         private static List<Card> GetCardOneRankHigher(List<Card> PlayerCards, Card card, bool firstInRun)
         {
@@ -219,26 +203,26 @@ namespace rummy.Utility
 
             foreach (var duo in duoRuns)
             {
-                Card.CardColor runColor = duo.GetFirstCard().Color;
+                Card.CardColor runColor = duo.A.Color;
                 var matchingJokers = jokerCards.Where(j => j.Color == runColor);
                 foreach (var joker in matchingJokers)
                 {
-                    if (duo[1].Rank - duo[0].Rank == 1 || (duo[0].Rank == Card.CardRank.ACE && duo[1].Rank == Card.CardRank.TWO))
+                    if (duo.B.Rank - duo.A.Rank == 1 || (duo.A.Rank == Card.CardRank.ACE && duo.B.Rank == Card.CardRank.TWO))
                     {
-                        if (duo[0].Rank != Card.CardRank.ACE)
+                        if (duo.A.Rank != Card.CardRank.ACE)
                         {
-                            var newRun = new Run(new List<Card>() { joker, duo[0], duo[1] });
+                            var newRun = new Run(new List<Card>() { joker, duo.A, duo.B });
                             possibleJokerRuns.Add(newRun);
                         }
-                        if (duo[1].Rank != Card.CardRank.ACE)
+                        if (duo.B.Rank != Card.CardRank.ACE)
                         {
-                            var newRun = new Run(new List<Card>() { duo[0], duo[1], joker });
+                            var newRun = new Run(new List<Card>() { duo.A, duo.B, joker });
                             possibleJokerRuns.Add(newRun);
                         }
                     }
                     else
                     {
-                        var newRun = new Run(new List<Card>() { duo[0], joker, duo[1] });
+                        var newRun = new Run(new List<Card>() { duo.A, joker, duo.B });
                         possibleJokerRuns.Add(newRun);
                     }
                 }
@@ -253,27 +237,29 @@ namespace rummy.Utility
         /// <param name="LaidDownCards">The cards which have already been laid down by the players. Used to check whether a run is theoretically possible</param>
         /// <param name="logMessage">Whether to log a message when a run is impossible to complete and the cards are therefore not kept on the player's hand.</param>
         /// <returns></returns>
-        public static List<List<Card>> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
+        public static List<Duo> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
         {
-            var duoRuns = new List<List<Card>>();
+            var duoRunList = new List<List<Card>>();
             var playerCardsWithoutJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
-            GetPossibleRuns(duoRuns, playerCardsWithoutJokers, playerCardsWithoutJokers, new List<Card>(), 2, 2);
+            GetPossibleRuns(duoRunList, playerCardsWithoutJokers, playerCardsWithoutJokers, new List<Card>(), 2, 2);
+
+            var duoRuns = new List<Duo>();
+            foreach (var duoRun in duoRunList)
+                duoRuns.Add(new Duo(duoRun[0], duoRun[1]));
 
             // Don't bother keeping duo runs if all possible run combinations were laid down already
-            var tmpRuns = new List<List<Card>>(duoRuns);
+            var tmpRuns = new List<Duo>(duoRuns);
             foreach (var duoRun in tmpRuns)
             {
-                Card c1 = duoRun[0];
-                Card c2 = duoRun[1];
-                Card.CardSuit runSuit = c1.Suit;
+                Card.CardSuit runSuit = duoRun.A.Suit;
 
                 Card.CardRank lowerRank = Card.CardRank.JOKER;
                 int lowerCount = 0;
                 bool anyLowerLeft = true;
-                if (c1.Rank == Card.CardRank.TWO)
+                if (duoRun.A.Rank == Card.CardRank.TWO)
                     lowerRank = Card.CardRank.ACE;
-                else if (c1.Rank > Card.CardRank.TWO)
-                    lowerRank = c1.Rank - 1;
+                else if (duoRun.A.Rank > Card.CardRank.TWO)
+                    lowerRank = duoRun.A.Rank - 1;
                 if (lowerRank != Card.CardRank.JOKER)
                 {
                     lowerCount = LaidDownCards.Count(c => c.Rank == lowerRank && c.Suit == runSuit);
@@ -283,8 +269,8 @@ namespace rummy.Utility
                 Card.CardRank higherRank = Card.CardRank.JOKER;
                 int higherCount = 0;
                 bool anyHigherLeft = true;
-                if (c2.Rank < Card.CardRank.ACE)
-                    higherRank = c2.Rank + 1;
+                if (duoRun.B.Rank < Card.CardRank.ACE)
+                    higherRank = duoRun.B.Rank + 1;
                 if (higherRank != Card.CardRank.JOKER)
                 {
                     higherCount = LaidDownCards.Count(c => c.Rank == higherRank && c.Suit == runSuit);
@@ -296,7 +282,8 @@ namespace rummy.Utility
                     (!anyHigherLeft && !anyLowerLeft))
                 {
                     if (logMessage)
-                        Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 + " because all possible cards were already laid down twice.", LogType.Log);
+                        Tb.I.GameMaster.LogMsg("Not saving " + duoRun.A + duoRun.B +
+                            " because all possible cards were already laid down twice.", LogType.Log);
                     duoRuns.Remove(duoRun);
                 }
             }
@@ -315,7 +302,7 @@ namespace rummy.Utility
                         var middleRank = c1.Rank + 1;
                         var middleSuit = c1.Suit;
                         if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
-                            duoRuns.Add(new List<Card>() { c1, c2 });
+                            duoRuns.Add(new Duo(c1, c2));
                         else if (logMessage)
                             Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 +
                                 " because " + Card.RankLetters[middleRank] + Card.SuitSymbols[middleSuit] +
@@ -327,7 +314,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets which can be created using joker cards excluding cards used in 'possibleSets' and 'possibleRuns'
+        /// Returns all possible sets which can be created using joker cards.
         /// </summary>
         public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards, List<Set> possibleSets, List<Run> possibleRuns, bool logMessage)
         {
@@ -346,7 +333,7 @@ namespace rummy.Utility
             for (int i = 0; i < 2; i++)
             {
                 Card.CardColor color = (Card.CardColor)i;
-                var sameColorDuos = duoSets.Where(duo => duo.All(c => c.Color == color));
+                var sameColorDuos = duoSets.Where(duo => duo.A.Color == color && duo.B.Color == color);
 
                 foreach (var duo in sameColorDuos)
                 {
@@ -354,19 +341,19 @@ namespace rummy.Utility
                     var possibleJokers = jokerCards.Where(j => j.Color != color);
                     foreach (var joker in possibleJokers)
                     {
-                        var newSet = new Set(duo[0], duo[1], joker);
+                        var newSet = new Set(duo.A, duo.B, joker);
                         possibleJokerSets.Add(newSet);
                     }
                 }
             }
 
             // Now finish all red-black duos with all possible joker cards
-            var mixedDuos = duoSets.Where(duo => duo[0].Color != duo[1].Color);
+            var mixedDuos = duoSets.Where(duo => duo.A.Color != duo.B.Color);
             foreach (var duo in mixedDuos)
             {
                 foreach (var jokerCard in jokerCards)
                 {
-                    var newSet = new Set(duo[0], duo[1], jokerCard);
+                    var newSet = new Set(duo.A, duo.B, jokerCard);
                     possibleJokerSets.Add(newSet);
                 }
             }
@@ -377,38 +364,37 @@ namespace rummy.Utility
         /// <summary>
         /// Returns all possible duos (sets of two cards with different suits) from 'PlayerCards'
         /// </summary>
-        /// <param name="PlayerCards">The cards in the player's hand</param>
+        /// <param name="PlayerHandCards">The cards in the player's hand</param>
         /// <param name="LaidDownCards">Cards which have already been laid down by players.
         /// Used to check whether it is unnecessary to keep a certain duo, because the third card has already been laid down twice</param>
         /// <param name="logMessage">Whether to log a message if a duo is not saved because the third card has already been laid down twice</param>
         /// <returns></returns>
-        public static List<List<Card>> GetAllDuoSets(List<Card> PlayerCards, List<Card> LaidDownCards, bool logMessage)
+        public static List<Duo> GetAllDuoSets(List<Card> PlayerHandCards, List<Card> LaidDownCards, bool logMessage)
         {
-            var allDuos = new List<List<Card>>();
-
-            var cardsByRank = PlayerCards.GetCardsByRank()
+            var allDuos = new List<Duo>();
+            var cardsByRank = PlayerHandCards.GetCardsByRank()
                                          .Where(entry => entry.Key != Card.CardRank.JOKER && entry.Value.Count >= 2);
 
-            foreach (var entry in cardsByRank)
+            foreach (var kvp in cardsByRank)
             {
-                var newDuos = new List<List<Card>>();
-                var rank = entry.Key;
-                foreach (Card c1 in entry.Value)
+                var rank = kvp.Key;
+                var cards = kvp.Value;
+
+                var newDuos = new List<Duo>();
+                foreach (Card c1 in cards)
                 {
-                    for (int j = entry.Value.IndexOf(c1); j < entry.Value.Count; j++)
+                    for (int j = cards.IndexOf(c1); j < cards.Count; j++)
                     {
-                        Card c2 = entry.Value[j];
+                        Card c2 = cards[j];
                         if (c1.Suit == c2.Suit)
                             continue;
                         var otherSuits = Card.GetOtherTwo(c1.Suit, c2.Suit);
-                        int count1 = LaidDownCards.Count(c => c.Rank == rank && c.Suit == otherSuits[0]);
-                        int count2 = LaidDownCards.Count(c => c.Rank == rank && c.Suit == otherSuits[1]);
-
-                        if (count1 + count2 < 4)
-                            newDuos.Add(new List<Card>() { c1, c2 });
+                        int count = LaidDownCards.Count(c => c.Rank == rank && otherSuits.Contains(c.Suit));
+                        if (count < 4)
+                            newDuos.Add(new Duo(c1, c2));
                         else if (logMessage)
                             Tb.I.GameMaster.LogMsg("Not saving " + c1 + c2 + " because " +
-                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] + " & " +
+                                Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] + " and " +
                                 Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[1]] +
                                 " have already been laid down twice each.", LogType.Log);
                     }
@@ -416,22 +402,6 @@ namespace rummy.Utility
                 allDuos.AddRange(newDuos);
             }
             return allDuos;
-        }
-
-        /// <summary>
-        /// Returns the index of the first card which is not a joker, starting the search at startIndex and searching in the desired direction.
-        /// Returns -1 if none was found.
-        /// </summary>
-        public static int GetFirstNonJokerCardIdx(List<Card> cards, int startIndex, bool searchForward)
-        {
-            int increment = searchForward ? +1 : -1;
-
-            for (int i = startIndex; i < cards.Count && i >= 0; i += increment)
-            {
-                if (!cards[i].IsJoker())
-                    return i;
-            }
-            return -1;
         }
 
         /// <summary>

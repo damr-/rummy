@@ -13,6 +13,9 @@ namespace rummy.UI.CardOutput
 
         private void UpdateSingles(List<Single> Singles)
         {
+            if (!gameObject.activeInHierarchy)
+                return;
+
             outputView.ClearMessages();
             if (Singles.Count == 0)
                 return;

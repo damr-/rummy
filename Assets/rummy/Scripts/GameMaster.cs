@@ -36,6 +36,7 @@ namespace rummy
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
+        private bool skippingDone;
 
         /// <summary>
         /// FOR DEV PURPOSES ONLY! Disable card movement animation and set the wait durations to 0 until the given round starts. '0' means no round is skipped
@@ -62,6 +63,9 @@ namespace rummy
 
         private void Start()
         {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = 60;
+
             if (Players.Count == 0)
                 Players = FindObjectsOfType<Player>().OrderBy(p => p.name[p.name.Length - 1]).ToList();
 
@@ -70,6 +74,7 @@ namespace rummy
             tmpDrawWaitDuration = DrawWaitDuration;
             if (SkipUntilRound > 0)
             {
+                skippingDone = false;
                 AnimateCardMovement = false;
                 PlayWaitDuration = 0f;
                 DrawWaitDuration = 0f;
@@ -106,7 +111,7 @@ namespace rummy
                     isCardBeingDealt = false;
                     currentPlayerID = (currentPlayerID + 1) % Players.Count;
 
-                    if (currentPlayerID == 0 && CurrentPlayer.PlayerCardCount == CardsPerPlayer)
+                    if (currentPlayerID == 0 && CurrentPlayer.HandCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
                         RoundCount = 1;
@@ -132,7 +137,7 @@ namespace rummy
         private void PlayerFinished()
         {
             CurrentPlayer.TurnFinished.RemoveAllListeners();
-            if (CurrentPlayer.PlayerCardCount == 0)
+            if (CurrentPlayer.HandCardCount == 0)
             {
                 GameOver.Invoke(CurrentPlayer);
                 gameState = GameState.NONE;
@@ -165,8 +170,9 @@ namespace rummy
 
         private void TryStopSkipping()
         {
-            if (SkipUntilRound <= 0 || RoundCount < SkipUntilRound || AnimateCardMovement)
+            if (skippingDone || SkipUntilRound <= 0 || RoundCount < SkipUntilRound)
                 return;
+            skippingDone = true;
             AnimateCardMovement = true;
             PlayWaitDuration = tmpPlayerWaitDuration;
             DrawWaitDuration = tmpDrawWaitDuration;
@@ -174,35 +180,28 @@ namespace rummy
         }
 
         /// <summary>
+        /// Returns whether all players in the game have fewer than 'count' cards on their hands each.
+        /// </summary>
+        /// <param name="count">The number of cards which is checked against</param>
+        /// <returns>True if all players have less than 'count' cards on their hands each, false otherwise.</returns>
+        public bool AllPlayersHaveFewerCardsThan(int count)
+        {
+            return Players.All(p => p.HandCardCount < count);
+        }
+
+        /// <summary>
         /// Returns whether the current game is a draw and cannot be won by any player
         /// </summary>
         private bool IsGameADraw()
         {
-            if (Players.Any(p => p.PlayerCardCount > 2))
+            if (!AllPlayersHaveFewerCardsThan(3))
                 return false;
 
             foreach (var p in Players)
             {
                 var cardSpots = p.GetPlayerCardSpots();
-                var setSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.SET);
-                var runSpots = cardSpots.Where(spot => spot.Type == CardSpot.SpotType.RUN);
-
-                if (!setSpots.Any() && !runSpots.Any())
+                if (cardSpots.Any(spot => !spot.IsFull()))
                     return false;
-
-                if (setSpots.Any())
-                {
-                    var fullSetsCount = setSpots.Count(spot => spot.Objects.Count == 4);
-                    if (fullSetsCount != setSpots.Count())
-                        return false;
-                }
-
-                if (runSpots.Any())
-                {
-                    var fullRunsCount = runSpots.Count(spot => spot.Objects.Count == 14);
-                    if (fullRunsCount != runSpots.Count())
-                        return false;
-                }
             }
             return true;
         }

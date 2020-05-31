@@ -63,7 +63,7 @@ namespace rummy.UI
                 case Value.PlayerLaidCardsSum:
                     return Player.GetLaidCardsSum().ToString();
                 case Value.PlayerHandCardCount:
-                    return Player.PlayerCardCount.ToString();
+                    return Player.HandCardCount.ToString();
                 case Value.CardStackCardCount:
                     return CardStack.CardCount.ToString();
                 default: //case Value.DiscardStackCardCount:

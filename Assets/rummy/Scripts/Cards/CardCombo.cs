@@ -25,7 +25,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Sorts the combo's sets and runs DESCENDING according to their value
+        /// Sorts the combo's sets and runs by their value, in descending order
         /// </summary>
         public void Sort()
         {

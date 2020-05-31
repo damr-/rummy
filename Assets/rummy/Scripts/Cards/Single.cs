@@ -18,6 +18,11 @@
             CardSpot = cardSpot;
             Joker = joker;
         }
+
+        public override string ToString()
+        {
+            return Card.ToString() + " (" + CardSpot + ")";
+        }
     }
 
 }

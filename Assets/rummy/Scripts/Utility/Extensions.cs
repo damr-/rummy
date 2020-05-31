@@ -21,7 +21,24 @@ namespace rummy.Utility
             }
             return cardsByRank;
         }
-        
+
+        /// <summary>
+        /// Returns the given list of cards as a dictionary. Keys are CardSuits, Values are all the cards in 'cards' with that suit.
+        /// </summary>
+        public static IDictionary<Card.CardSuit, List<Card>> GetCardsBySuit(this List<Card> cards)
+        {
+            var cardsBySuit = new Dictionary<Card.CardSuit, List<Card>>();
+            for (int i = 0; i < cards.Count; i++)
+            {
+                Card card = cards[i];
+                if (cardsBySuit.ContainsKey(card.Suit))
+                    cardsBySuit[card.Suit].Add(card);
+                else
+                    cardsBySuit.Add(card.Suit, new List<Card> { card });
+            }
+            return cardsBySuit;
+        }
+
         /// <summary>
         /// Returns whether the list intersects the other list of cards (whether the two lists have at least one card in common)
         /// </summary>
@@ -39,17 +56,29 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the first card of the given list of cards which is not a joker, null otherwise
+        /// Returns the first card of the given list of cards which is not a joker
         /// </summary>
+        /// <returns>The found card or null otherwise</returns>
         public static Card GetFirstCard(this List<Card> cards)
         {
-            foreach(var card in cards)
+            int idx = GetFirstCardIndex(cards, 0, true);
+            return idx > -1 ? cards[idx] : null;
+        }
+
+        /// <summary>
+        /// Returns the index of the first card which is not a joker, starting the search at startIndex and searching in the desired direction
+        /// </summary>
+        /// <returns>The index of the first non-joker card or -1 if none was found</returns>
+        public static int GetFirstCardIndex(this List<Card> cards, int startIndex = 0, bool searchForward = true)
+        {
+            int increment = searchForward ? +1 : -1;
+            for (int i = startIndex; i < cards.Count && i >= 0; i += increment)
             {
-                if(!card.IsJoker())
-                    return card;
+                if (!cards[i].IsJoker())
+                    return i;
             }
-            return null;
+            return -1;
         }
     }
-    
+
 }

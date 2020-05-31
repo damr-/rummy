@@ -27,8 +27,7 @@ namespace rummy
 
         #region PlayerCardSpot
         private CardSpot HandCardSpot;
-        public int PlayerCardCount { get { return HandCardSpot.Objects.Count; } }
-        public int PlayerHandValue { get { return HandCardSpot.GetValue(); } }
+        public int HandCardCount { get { return HandCardSpot.Objects.Count; } }
 
         private CardSpotsNode PlayerCardSpotsNode;
         private CardSpot currentCardSpot;
@@ -37,8 +36,12 @@ namespace rummy
         #endregion
 
         #region CardSets
+        /// <summary>The card sets and runs which are going to be laid down</summary>
         private CardCombo laydownCards = new CardCombo();
+
+        /// <summary>The single cards which are going to be laid down</summary>
         private List<Single> singleLayDownCards = new List<Single>();
+
         private int currentCardPackIdx = 0, currentCardIdx = 0;
         private Card returningJoker;
         private bool isCardBeingLaidDown, isJokerBeingReturned;
@@ -70,12 +73,6 @@ namespace rummy
         public class Event_NewThought : UnityEvent<string> { }
         public Event_NewThought NewThought = new Event_NewThought();
         #endregion
-
-        private void AddCard(Card card)
-        {
-            HandCardSpot.AddCard(card);
-            card.SetVisible(true);
-        }
 
         public void ResetPlayer()
         {
@@ -178,7 +175,7 @@ namespace rummy
             if (!isServingCard && HasLaidDown)
             {
                 // Check if we want to draw from discard stack
-                // Note that every player always makes sure not to discard a card which can be added to an already laid-down card pack.
+                // Note that players will never discard a card which can be added to an already laid-down card pack.
                 // Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Objects) { discardedCard };
@@ -194,24 +191,21 @@ namespace rummy
                 }
             }
 
-
             Card card;
             if (takeFromDiscardStack)
                 card = Tb.I.DiscardStack.DrawCard();
             else
                 card = Tb.I.CardStack.DrawCard();
 
-            if (card != null)
-            {
-                card.MoveFinished.AddListener(c => DrawCardFinished(c, isServingCard));
-                card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
-            }
+            card.MoveFinished.AddListener(c => DrawCardFinished(c, isServingCard));
+            card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
         }
 
         private void DrawCardFinished(Card card, bool isServingCard)
         {
             card.MoveFinished.RemoveAllListeners();
-            AddCard(card);
+            HandCardSpot.AddCard(card);
+            card.SetVisible(true);
             if (isServingCard)
             {
                 State = PlayerState.IDLE;
@@ -237,33 +231,35 @@ namespace rummy
         }
 
         /// <summary>
-        /// Returns the card combo with the highest possible value from the given 'HandCards' or an empty combo.
+        /// Returns the card combo with the highest possible value from the given 'HandCards'.
         /// </summary>
         /// <param name="HandCards">The cards in the player's hand</param>
-        /// <param name="allowLayingAll">Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
-        /// This is usually not useful, unless hypothetical hands are examined, where one card was removed before</param>
-        /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for output</param>
-        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT kept on hand because all necessary cards have already been laid down</param>
+        /// <param name="allowLayingAll">Whether combos are allowed which would require the player to lay down all cards from his 'HandCards'</param>
+        /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for UI output</param>
+        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT kept on hand because the missing cards can never be obtained</param>
         /// <returns>The combo with the highest value or an empty one, if none was found</returns>
         private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos)
         {
-            List<CardCombo> possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), allowLayingAll, broadcastNonDuos);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), allowLayingAll, broadcastNonDuos);
             if (broadcastPossibleCombos)
-            {
                 PossibleCardCombosChanged.Invoke(possibleCombos);
+            if (possibleCombos.Any())
+            {
+                possibleCombos[0].Sort();
+                return possibleCombos[0];
             }
-            possibleCombos = possibleCombos.OrderByDescending(c => c.Value).ToList();
-            return possibleCombos.Count == 0 ? new CardCombo() : possibleCombos[0];
+            return new CardCombo();
         }
 
+        /// <summary>
+        /// Updates the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
+        /// </summary>
         private void UpdateSingleLaydownCards()
         {
             singleLayDownCards = new List<Single>();
-            bool canFitCard = false;
-            var reservedSpots = new List<KeyValuePair<CardSpot, List<Card>>>();
 
-            //Check all cards which will not be laid down anyway as part of a set or a run
-            List<Card> availableCards = new List<Card>(HandCardSpot.Objects);
+            //Don't check cards part of sets or runs
+            var availableCards = new List<Card>(HandCardSpot.Objects);
             foreach (var set in laydownCards.Sets)
                 availableCards = availableCards.Except(set.Cards).ToList();
             foreach (var run in laydownCards.Runs)
@@ -275,31 +271,28 @@ namespace rummy
             //At first, do not allow jokers to be laid down as singles
             availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
 
-            //Find single cards which fit with already lying cards
+            bool canFitCard = false;
             do
             {
                 var cardSpots = Tb.I.GameMaster.GetAllCardSpots();
-
                 canFitCard = false;
                 foreach (CardSpot cardSpot in cardSpots)
                 {
-                    foreach (Card card in availableCards)
+                    for (int i = availableCards.Count - 1; i >= 0; i--)
                     {
-                        //If the card is already used elsewhere, skip
-                        if (singleLayDownCards.Any(kvp => kvp.Card == card))
-                            continue;
+                        Card availableCard = availableCards[i];
 
-                        if (!cardSpot.CanFit(card, out Card Joker))
+                        if (!cardSpot.CanFit(availableCard, out Card joker))
                             continue;
 
                         //Find all single cards which are already gonna be added to the cardspot in question
-                        var plannedMoves = singleLayDownCards.Where(kvp => kvp.CardSpot == cardSpot).ToList();
+                        var plannedMoves = singleLayDownCards.Where(single => single.CardSpot == cardSpot);
                         bool alreadyPlanned = false;
-                        foreach (var entry in plannedMoves)
+                        foreach (var move in plannedMoves)
                         {
                             //If a card with the same rank and suit is already planned to be added to cardspot
                             //the current card cannot be added anymore
-                            if (entry.Card.Suit == card.Suit && entry.Card.Rank == card.Rank)
+                            if (move.Card.Suit == availableCard.Suit && move.Card.Rank == availableCard.Rank)
                             {
                                 alreadyPlanned = true;
                                 break;
@@ -308,27 +301,20 @@ namespace rummy
                         if (alreadyPlanned)
                             continue;
 
-                        var newEntry = new Single(card, cardSpot, Joker);
+                        var newEntry = new Single(availableCard, cardSpot, joker);
                         singleLayDownCards.Add(newEntry);
+                        availableCards.RemoveAt(i);
                         canFitCard = true;
                     }
                 }
 
-                //DO allow laying down jokers if no match can be found 
-                //but all but one card remaining are jokers
-                if (!canFitCard && !allowedJokers && jokerCards.Count() > 0)
+                //Allow laying down single jokers if no other single card can be found 
+                //and all but one card remaining are jokers
+                if (!canFitCard && !allowedJokers && jokerCards.Count() > 0 && availableCards.Count == 1)
                 {
-                    List<Card> singles = new List<Card>();
-                    foreach (var single in singleLayDownCards)
-                        singles.Add(single.Card);
-
-                    //Only one card remains (besides jokers)? - Allow laying jokers to try and win the game
-                    if (availableCards.Except(singles).Count() == 1)
-                    {
-                        availableCards.AddRange(jokerCards);
-                        canFitCard = true;
-                        allowedJokers = true;
-                    }
+                    availableCards.AddRange(jokerCards);
+                    allowedJokers = true;
+                    canFitCard = true; // Loop once more
                 }
             } while (canFitCard);
 
@@ -344,11 +330,12 @@ namespace rummy
             // Keep any single card on hand
             if (singleLayDownCards.Count > 0)
             {
-                Single keptSingle = singleLayDownCards[0];
-                singleLayDownCards.RemoveAt(0);
+                Single keptSingle = singleLayDownCards.FirstOrDefault(c => c.Joker == null);
+                if (keptSingle == null)
+                    keptSingle = singleLayDownCards[0];
+                singleLayDownCards.Remove(keptSingle);
                 NewThought.Invoke("Keeping single " + keptSingle);
-                //TODO REMOVE
-                Tb.I.GameMaster.LogMsg("Keeping single " + keptSingle, LogType.Error);
+                //TODO Seed 482 Round 9 for this to happen
                 return;
             }
 
@@ -543,7 +530,7 @@ namespace rummy
                 return;
             }
 
-            //Check if there are any (more) singles to lay down
+            //Check if there are any (more) single cards to lay down
             UpdateSingleLaydownCards();
 
             if (singleLayDownCards.Count == HandCardSpot.Objects.Count)
@@ -561,8 +548,7 @@ namespace rummy
         private void DiscardUnusableCard()
         {
             State = PlayerState.DISCARDING;
-
-            List<Card> possibleDiscards = new List<Card>(HandCardSpot.Objects);
+            var possibleDiscards = new List<Card>(HandCardSpot.Objects);
 
             //Keep possible runs/sets/singles on hand for laying down later
             if (!HasLaidDown)
@@ -572,7 +558,7 @@ namespace rummy
             var jokerCards = possibleDiscards.Where(c => c.IsJoker());
             possibleDiscards = possibleDiscards.Except(jokerCards).ToList();
 
-            //Check for duo sets&runs and exclude them from discarding, if possible.
+            //Check for duo sets&runs and keep them on hand, if possible.
             //Only check if there are more than 3 cards on the player's hand, because
             //keeping a duo and discarding the third card makes no sense.
             if (possibleDiscards.Count > 3)
@@ -581,28 +567,28 @@ namespace rummy
                 var duos = CardUtil.GetAllDuoSets(HandCardSpot.Objects, laidDownCards, !HasLaidDown);     // Only broadcast not keeping duos when 
                 duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Objects, laidDownCards, !HasLaidDown)); // it hasn't been done already after drawing
 
-                var eligibleDuos = new List<List<Card>>();
+                var eligibleDuos = new List<Duo>();
                 foreach (var duo in duos)
                 {
-                    if (possibleDiscards.Contains(duo[0]) && possibleDiscards.Contains(duo[1]))
-                        eligibleDuos.Add(new List<Card> { duo[0], duo[1] });
+                    if (possibleDiscards.Contains(duo.A) && possibleDiscards.Contains(duo.B))
+                        eligibleDuos.Add(duo);
                 }
-                duos = eligibleDuos.OrderByDescending(duo => duo[0].Value + duo[1].Value).ToList();
+                duos = eligibleDuos.OrderByDescending(duo => duo.A.Value + duo.B.Value).ToList();
 
-                var keptDuos = new List<List<Card>>();
+                var keptDuos = new List<Duo>();
                 foreach (var duo in duos)
                 {
-                    if (possibleDiscards.Except(duo).Count() >= 1)
+                    if (possibleDiscards.Except(duo.GetList()).Count() >= 1)
                     {
-                        possibleDiscards.Remove(duo[0]);
-                        possibleDiscards.Remove(duo[1]);
+                        possibleDiscards.Remove(duo.A);
+                        possibleDiscards.Remove(duo.B);
                         keptDuos.Add(duo);
                     }
                 }
                 if (keptDuos.Any())
                 {
                     string msg = "";
-                    keptDuos.ForEach(duo => msg += duo[0].ToString() + duo[1] + ", ");
+                    keptDuos.ForEach(duo => msg += duo.ToString() + ", ");
                     NewThought.Invoke("Duo" + (keptDuos.Count > 1 ? "s " : " ") + msg.TrimEnd().TrimEnd(','));
                 }
             }
@@ -625,6 +611,7 @@ namespace rummy
         /// </summary>
         private List<Card> KeepUsableCards(List<Card> possibleDiscards)
         {
+            //TODO Seed 482 is nice to test this
             List<Card> newPossibleDiscards = new List<Card>(possibleDiscards);
             var sets = CardUtil.GetPossibleSets(HandCardSpot.Objects);
             var runs = CardUtil.GetPossibleRuns(HandCardSpot.Objects);
@@ -676,7 +663,7 @@ namespace rummy
                         var bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
                         newPossibleDiscards.Add(bestCard);
                         NewThought.Invoke("Discard " + bestCard);
-                        //TODO REMOVE
+                        //TODO TEST & THEN REMOVE
                         //Tb.I.GameMaster.LogMsg("Discard " + bestCard, LogType.Error);
                     }
                     else //No card was found. Allow discarding the cards of the set/run with the lowest value
@@ -684,7 +671,7 @@ namespace rummy
                         var result = CardUtil.GetLowestValue(runs, sets);
                         newPossibleDiscards.AddRange(result.Cards);
                         NewThought.Invoke("Allow discarding all cards of " + result);
-                        //TODO REMOVE
+                        //TODO TEST & THEN REMOVE
                         //Tb.I.GameMaster.LogMsg("Allow discarding all cards of " + result, LogType.Error);
                     }
                 }
@@ -709,9 +696,9 @@ namespace rummy
 
                 if (singleCards.Any())
                 {
-                    string msg = "Keeping singles ";
+                    string msg = "";
                     singleCards.ForEach(s => msg += s + ", ");
-                    NewThought.Invoke(msg.TrimEnd().TrimEnd(','));
+                    NewThought.Invoke("Keeping singles " + msg.TrimEnd().TrimEnd(','));
                 }
             }
             return newPossibleDiscards;
