@@ -21,19 +21,17 @@ namespace rummy.UI.CardOutput
                 return;
 
             outputView.PrintMessage(new ScrollView.Message(Singles.Count + " possibilit" + (Singles.Count == 1 ? "y:" : "ies:")));
-            foreach(var c in Singles)
+            foreach(var single in Singles)
             {
                 int cardValue;
-                if(c.Card.IsJoker())
+                if(single.Card.IsJoker())
                 {
                     //TODO: Find out the joker value (not really necessary though?)
                     cardValue = 0;
                 }
                 else
-                {
-                    cardValue = c.Card.Value;
-                }
-                string msg = "" + c.Card + ": " + c.CardSpot.gameObject.name + " (" + cardValue + ")" + (c.Joker != null ? " (SWAP)" : "");
+                    cardValue = single.Card.Value;
+                string msg = "" + single + "->" + single.CardSpot + " (" + cardValue + ")" + (single.Joker != null ? " (SWAP)" : "");
                 outputView.PrintMessage(new ScrollView.Message(msg));
             }
         }

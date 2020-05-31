@@ -5,6 +5,7 @@
     {
         public Card Card { get; private set; }
         public CardSpot CardSpot { get; private set; }
+        public override string ToString() => Card.ToString();
 
         ///<summary>
         /// The joker which will be replaced by this single card
@@ -17,11 +18,6 @@
             Card = card;
             CardSpot = cardSpot;
             Joker = joker;
-        }
-
-        public override string ToString()
-        {
-            return Card.ToString() + " (" + CardSpot + ")";
         }
     }
 

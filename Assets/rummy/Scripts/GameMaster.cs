@@ -180,21 +180,11 @@ namespace rummy
         }
 
         /// <summary>
-        /// Returns whether all players in the game have fewer than 'count' cards on their hands each.
-        /// </summary>
-        /// <param name="count">The number of cards which is checked against</param>
-        /// <returns>True if all players have less than 'count' cards on their hands each, false otherwise.</returns>
-        public bool AllPlayersHaveFewerCardsThan(int count)
-        {
-            return Players.All(p => p.HandCardCount < count);
-        }
-
-        /// <summary>
         /// Returns whether the current game is a draw and cannot be won by any player
         /// </summary>
         private bool IsGameADraw()
         {
-            if (!AllPlayersHaveFewerCardsThan(3))
+            if (Players.Any(p => p.HandCardCount >= 3))
                 return false;
 
             foreach (var p in Players)

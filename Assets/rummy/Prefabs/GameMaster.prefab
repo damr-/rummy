@@ -7086,7 +7086,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Seed 10000
+  m_Text: Seed 0
 --- !u!114 &665067359925721806
 MonoBehaviour:
   m_ObjectHideFlags: 0

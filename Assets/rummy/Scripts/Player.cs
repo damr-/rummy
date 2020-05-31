@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using rummy.Cards;
 using rummy.Utility;
-using Single = rummy.Cards.Single;
 
 namespace rummy
 {
@@ -97,7 +96,9 @@ namespace rummy
             {
                 State = PlayerState.PLAYING;
                 if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !HasLaidDown)
-                    DiscardUnusableCard();
+                {
+                    DiscardCard();
+                }
                 else
                 {
                     State = PlayerState.LAYING;
@@ -111,7 +112,7 @@ namespace rummy
                     {
                         layStage = LayStage.RUNS;
                         if (laydownCards.Runs.Count == 0)
-                            LayingPacksDone();
+                            LayingCardsDone();
                     }
                 }
             }
@@ -162,6 +163,26 @@ namespace rummy
             }
         }
 
+        private void ReturnJokerMoveFinished(Card joker)
+        {
+            returningJoker.MoveFinished.RemoveAllListeners();
+            isJokerBeingReturned = false;
+            HandCardSpot.AddCard(joker);
+            returningJoker = null;
+
+            //All possible runs/sets/singles have to be calculated again with that newly returned joker
+            laydownCards = GetBestCardCombo(HandCardSpot.Objects, true);
+            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            PossibleSinglesChanged.Invoke(singleLayDownCards);
+
+            if (laydownCards.CardCount == HandCardCount)
+                KeepOneSingleCard();
+
+            //Proceed with waiting
+            State = PlayerState.WAITING;
+            waitStartTime = Time.time;
+        }
+
         public void BeginTurn()
         {
             NewThought.Invoke("<CLEAR>");
@@ -179,10 +200,10 @@ namespace rummy
                 // Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.PeekCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Objects) { discardedCard };
-                var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false, false, false);
+                var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false);
                 int hypotheticalValue = hypotheticalBestCombo.Value;
 
-                int currentValue = GetBestCardCombo(HandCardSpot.Objects, false, false, false).Value;
+                int currentValue = GetBestCardCombo(HandCardSpot.Objects, false).Value;
 
                 if (hypotheticalValue > currentValue)
                 {
@@ -212,8 +233,9 @@ namespace rummy
                 return;
             }
 
-            laydownCards = GetBestCardCombo(HandCardSpot.Objects, false, true, true);
-            UpdateSingleLaydownCards();
+            laydownCards = GetBestCardCombo(HandCardSpot.Objects, true);
+            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            PossibleSinglesChanged.Invoke(singleLayDownCards);
 
             if (Tb.I.GameMaster.RoundCount >= Tb.I.GameMaster.EarliestAllowedLaydownRound)
             {
@@ -222,8 +244,8 @@ namespace rummy
                     HasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
                 //At least one card must remain when laying down
-                if (HasLaidDown && laydownCards.CardCount == HandCardSpot.Objects.Count)
-                    KeepOneCard();
+                if (HasLaidDown && laydownCards.CardCount == HandCardCount)
+                    KeepOneSingleCard();
             }
 
             State = PlayerState.WAITING;
@@ -234,211 +256,27 @@ namespace rummy
         /// Returns the card combo with the highest possible value from the given 'HandCards'.
         /// </summary>
         /// <param name="HandCards">The cards in the player's hand</param>
-        /// <param name="allowLayingAll">Whether combos are allowed which would require the player to lay down all cards from his 'HandCards'</param>
         /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for UI output</param>
-        /// <param name="broadcastNonDuos">Whether to broadcast when a duo set/run was NOT kept on hand because the missing cards can never be obtained</param>
         /// <returns>The combo with the highest value or an empty one, if none was found</returns>
-        private CardCombo GetBestCardCombo(List<Card> HandCards, bool allowLayingAll, bool broadcastPossibleCombos, bool broadcastNonDuos)
+        private CardCombo GetBestCardCombo(List<Card> HandCards, bool broadcastPossibleCombos)
         {
-            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), allowLayingAll, broadcastNonDuos);
+            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), false);
             if (broadcastPossibleCombos)
                 PossibleCardCombosChanged.Invoke(possibleCombos);
-            if (possibleCombos.Any())
-            {
-                possibleCombos[0].Sort();
-                return possibleCombos[0];
-            }
-            return new CardCombo();
+            return possibleCombos.Any() ? possibleCombos[0] : new CardCombo();
         }
 
         /// <summary>
-        /// Updates the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
+        /// Chooses one card in <see cref="singleLayDownCards"/> which is kept on hand.
+        /// Prioritizes cards who do not replace a joker
         /// </summary>
-        private void UpdateSingleLaydownCards()
+        private void KeepOneSingleCard()
         {
-            singleLayDownCards = new List<Single>();
-
-            //Don't check cards part of sets or runs
-            var availableCards = new List<Card>(HandCardSpot.Objects);
-            foreach (var set in laydownCards.Sets)
-                availableCards = availableCards.Except(set.Cards).ToList();
-            foreach (var run in laydownCards.Runs)
-                availableCards = availableCards.Except(run.Cards).ToList();
-
-            var jokerCards = availableCards.Where(c => c.IsJoker());
-            bool allowedJokers = false;
-
-            //At first, do not allow jokers to be laid down as singles
-            availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
-
-            bool canFitCard = false;
-            do
-            {
-                var cardSpots = Tb.I.GameMaster.GetAllCardSpots();
-                canFitCard = false;
-                foreach (CardSpot cardSpot in cardSpots)
-                {
-                    for (int i = availableCards.Count - 1; i >= 0; i--)
-                    {
-                        Card availableCard = availableCards[i];
-
-                        if (!cardSpot.CanFit(availableCard, out Card joker))
-                            continue;
-
-                        //Find all single cards which are already gonna be added to the cardspot in question
-                        var plannedMoves = singleLayDownCards.Where(single => single.CardSpot == cardSpot);
-                        bool alreadyPlanned = false;
-                        foreach (var move in plannedMoves)
-                        {
-                            //If a card with the same rank and suit is already planned to be added to cardspot
-                            //the current card cannot be added anymore
-                            if (move.Card.Suit == availableCard.Suit && move.Card.Rank == availableCard.Rank)
-                            {
-                                alreadyPlanned = true;
-                                break;
-                            }
-                        }
-                        if (alreadyPlanned)
-                            continue;
-
-                        var newEntry = new Single(availableCard, cardSpot, joker);
-                        singleLayDownCards.Add(newEntry);
-                        availableCards.RemoveAt(i);
-                        canFitCard = true;
-                    }
-                }
-
-                //Allow laying down single jokers if no other single card can be found 
-                //and all but one card remaining are jokers
-                if (!canFitCard && !allowedJokers && jokerCards.Count() > 0 && availableCards.Count == 1)
-                {
-                    availableCards.AddRange(jokerCards);
-                    allowedJokers = true;
-                    canFitCard = true; // Loop once more
-                }
-            } while (canFitCard);
-
-            PossibleSinglesChanged.Invoke(singleLayDownCards);
-        }
-
-        /// <summary>
-        /// Figures out a way to keep at least one card in the player's hand.
-        /// This is needed in the case that the player wants to lay down every single card they have left in their hand.
-        /// </summary>
-        private void KeepOneCard()
-        {
-            // Keep any single card on hand
-            if (singleLayDownCards.Count > 0)
-            {
-                Single keptSingle = singleLayDownCards.FirstOrDefault(c => c.Joker == null);
-                if (keptSingle == null)
-                    keptSingle = singleLayDownCards[0];
-                singleLayDownCards.Remove(keptSingle);
-                NewThought.Invoke("Keeping single " + keptSingle);
-                //TODO Seed 482 Round 9 for this to happen
-                return;
-            }
-
-            // Keep any card of a set/run with more than 3 cards
-            Card keptCard = null;
-            Set set = laydownCards.Sets.Where(s => s.Count == 4).FirstOrDefault();
-            Run run = laydownCards.Runs.Where(r => r.Count > 3).FirstOrDefault();
-            if (set != null)
-            {
-                keptCard = set.Cards.GetFirstCard();
-                set.Cards.Remove(keptCard);
-            }
-            else if (run != null)
-            {
-                keptCard = run.Cards.GetFirstCard();
-                run.Cards.Remove(keptCard);
-            }
-            if (keptCard != null)
-            {
-                string chosenPack = (set != null) ? set.ToString() : run.ToString();
-                NewThought.Invoke("Keeping " + keptCard + " and laying down " + chosenPack + " without it.");
-                return;
-            }
-
-            // Keep the set/run with the lowest value
-            var result = CardUtil.GetLowestValue(laydownCards.Runs, laydownCards.Sets);
-            if (result is Set)
-                laydownCards.Sets.Remove((Set)result);
-            else
-                laydownCards.Runs.Remove((Run)result);
-            NewThought.Invoke("Keeping " + result);
-            //TODO REMOVE
-            Tb.I.GameMaster.LogMsg("Keeping " + result, LogType.Error);
-        }
-
-        /// <summary>
-        /// Returns the card with the highest/lowest value which will lead to the highest possible CardCombo
-        /// when the card is excluded from building combos from 'PlayerCardHands'. Also returns the resulting combo.
-        /// </summary>
-        /// <param name="PlayerHandCards">A list of the current cards on the player's hand</param>
-        /// <param name="highestValue">Whether to look for the highest value card. If false, looking for the lowest value card</param>
-        /// <returns>A tuple containing the found Card and CardCombo</returns>
-        /// TODO REMOVE(?)
-        private (Card, CardCombo) GetCardYieldingHighestValueCombo(List<Card> PlayerHandCards, bool highestValue)
-        {
-            int maxValueCombo = 0;
-            CardCombo bestCombo = new CardCombo();
-            Card cardToRemove = null;
-
-            foreach (Card card in PlayerHandCards)
-            {
-                var hypotheticalHandCards = new List<Card>(PlayerHandCards);
-                hypotheticalHandCards.Remove(card);
-                var hypotheticalCombo = GetBestCardCombo(hypotheticalHandCards, true, false, false);
-                int hypotheticalValue = hypotheticalCombo.Value;
-
-                if (hypotheticalValue == 0)
-                    continue;
-
-                if (hypotheticalValue > maxValueCombo)
-                {
-                    maxValueCombo = hypotheticalValue;
-                    cardToRemove = card;
-                    bestCombo = hypotheticalCombo;
-                }
-                else if (hypotheticalValue == maxValueCombo)
-                {
-                    if (!(highestValue ^ (card.Value > cardToRemove.Value)))
-                    {
-                        cardToRemove = card;
-                        bestCombo = hypotheticalCombo;
-                    }
-                }
-            }
-            return (cardToRemove, bestCombo);
-        }
-
-        /// <summary>
-        /// Returns the cards which would lead to the highest possible hand card combo when excluded from building combos
-        /// TODO: REMOVE(!?)
-        /// </summary>
-        private List<Card> GetCardsWhichAllowHighestComboWhenRemoved(List<Card> PlayerHandCards)
-        {
-            int maxValueCombo = 0;
-            var eligibleCards = new List<Card>();
-            foreach (Card card in PlayerHandCards)
-            {
-                var hypotheticalHandCards = new List<Card>(PlayerHandCards);
-                hypotheticalHandCards.Remove(card);
-                int hypotheticalValue = GetBestCardCombo(hypotheticalHandCards, true, false, false).Value;
-
-                if (hypotheticalValue == 0)
-                    continue;
-
-                if (hypotheticalValue > maxValueCombo)
-                {
-                    maxValueCombo = hypotheticalValue;
-                    eligibleCards = new List<Card>() { card };
-                }
-                else if (hypotheticalValue == maxValueCombo)
-                    eligibleCards.Add(card);
-            }
-            return eligibleCards;
+            Single keptSingle = singleLayDownCards.FirstOrDefault(c => c.Joker == null);
+            if (keptSingle == null)
+                keptSingle = singleLayDownCards[0];
+            singleLayDownCards.Remove(keptSingle);
+            NewThought.Invoke("Keeping single " + keptSingle);
         }
 
         private void LayDownCardMoveFinished(Card card)
@@ -488,53 +326,34 @@ namespace rummy
             if (currentCardPackIdx < cardPackCount)
                 return;
 
-            //All packs have been laid down
-            if (layStage == LayStage.SINGLES ||
-                layStage == LayStage.RUNS ||
+            //All packs or singles have been laid down
+            if (layStage == LayStage.RUNS || layStage == LayStage.SINGLES ||
                 (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
             {
-                LayingPacksDone();
+                LayingCardsDone();
             }
-            else //Start laying runs otherwise
+            else //LayStage.SETS -> Start laying runs
             {
                 currentCardPackIdx = 0;
                 layStage = LayStage.RUNS;
             }
         }
 
-        private void ReturnJokerMoveFinished(Card joker)
-        {
-            returningJoker.MoveFinished.RemoveAllListeners();
-            isJokerBeingReturned = false;
-            HandCardSpot.AddCard(joker);
-            returningJoker = null;
-
-            //All possible runs/sets/singles have to be calculated again with that newly returned joker
-            laydownCards = GetBestCardCombo(HandCardSpot.Objects, false, true, false);
-            UpdateSingleLaydownCards();
-
-            if (laydownCards.CardCount == HandCardSpot.Objects.Count)
-                KeepOneCard();
-
-            //Proceed with waiting
-            State = PlayerState.WAITING;
-            waitStartTime = Time.time;
-        }
-
-        private void LayingPacksDone()
+        private void LayingCardsDone()
         {
             //With only one card left, just end the game
-            if (HandCardSpot.Objects.Count == 1)
+            if (HandCardCount == 1)
             {
-                DiscardUnusableCard();
+                DiscardCard();
                 return;
             }
 
             //Check if there are any (more) single cards to lay down
-            UpdateSingleLaydownCards();
+            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            PossibleSinglesChanged.Invoke(singleLayDownCards);
 
-            if (singleLayDownCards.Count == HandCardSpot.Objects.Count)
-                KeepOneCard();
+            if (singleLayDownCards.Count == HandCardCount)
+                KeepOneSingleCard();
 
             if (singleLayDownCards.Count > 0)
             {
@@ -542,166 +361,17 @@ namespace rummy
                 layStage = LayStage.SINGLES;
             }
             else
-                DiscardUnusableCard();
+                DiscardCard();
         }
 
-        private void DiscardUnusableCard()
+        private void DiscardCard()
         {
+            var thoughts = new List<string>();
+            Card card = PlayerUtil.GetCardToDiscard(HandCardSpot.Objects, singleLayDownCards, HasLaidDown, out thoughts);
             State = PlayerState.DISCARDING;
-            var possibleDiscards = new List<Card>(HandCardSpot.Objects);
-
-            //Keep possible runs/sets/singles on hand for laying down later
-            if (!HasLaidDown)
-                possibleDiscards = KeepUsableCards(possibleDiscards);
-
-            //At first, don't allow discarding joker cards
-            var jokerCards = possibleDiscards.Where(c => c.IsJoker());
-            possibleDiscards = possibleDiscards.Except(jokerCards).ToList();
-
-            //Check for duo sets&runs and keep them on hand, if possible.
-            //Only check if there are more than 3 cards on the player's hand, because
-            //keeping a duo and discarding the third card makes no sense.
-            if (possibleDiscards.Count > 3)
-            {
-                var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-                var duos = CardUtil.GetAllDuoSets(HandCardSpot.Objects, laidDownCards, !HasLaidDown);     // Only broadcast not keeping duos when 
-                duos.AddRange(CardUtil.GetAllDuoRuns(HandCardSpot.Objects, laidDownCards, !HasLaidDown)); // it hasn't been done already after drawing
-
-                var eligibleDuos = new List<Duo>();
-                foreach (var duo in duos)
-                {
-                    if (possibleDiscards.Contains(duo.A) && possibleDiscards.Contains(duo.B))
-                        eligibleDuos.Add(duo);
-                }
-                duos = eligibleDuos.OrderByDescending(duo => duo.A.Value + duo.B.Value).ToList();
-
-                var keptDuos = new List<Duo>();
-                foreach (var duo in duos)
-                {
-                    if (possibleDiscards.Except(duo.GetList()).Count() >= 1)
-                    {
-                        possibleDiscards.Remove(duo.A);
-                        possibleDiscards.Remove(duo.B);
-                        keptDuos.Add(duo);
-                    }
-                }
-                if (keptDuos.Any())
-                {
-                    string msg = "";
-                    keptDuos.ForEach(duo => msg += duo.ToString() + ", ");
-                    NewThought.Invoke("Duo" + (keptDuos.Count > 1 ? "s " : " ") + msg.TrimEnd().TrimEnd(','));
-                }
-            }
-
-            //If all the remaining cards are joker cards, allow discarding them
-            if (possibleDiscards.Count == 0)
-                possibleDiscards.AddRange(jokerCards);
-
-            //Discard the card with the highest value
-            Card card = possibleDiscards.OrderByDescending(c => c.Value).FirstOrDefault();
-
             HandCardSpot.RemoveCard(card);
             card.MoveFinished.AddListener(DiscardCardMoveFinished);
             card.MoveCard(Tb.I.DiscardStack.GetNextCardPos(), Tb.I.GameMaster.AnimateCardMovement);
-        }
-
-        /// <summary>
-        /// Removes all the cards from 'possibleDiscards' which are part of a finished set/run 
-        /// or which are going to be laid down as single card later.
-        /// </summary>
-        private List<Card> KeepUsableCards(List<Card> possibleDiscards)
-        {
-            //TODO Seed 482 is nice to test this
-            List<Card> newPossibleDiscards = new List<Card>(possibleDiscards);
-            var sets = CardUtil.GetPossibleSets(HandCardSpot.Objects);
-            var runs = CardUtil.GetPossibleRuns(HandCardSpot.Objects);
-            var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-            var jokerSets = CardUtil.GetPossibleJokerSets(HandCardSpot.Objects, laidDownCards, sets, runs, false);
-            var jokerRuns = CardUtil.GetPossibleJokerRuns(HandCardSpot.Objects, laidDownCards, sets, runs, false);
-            foreach (var run in runs)
-                newPossibleDiscards = newPossibleDiscards.Except(run.Cards).ToList();
-            foreach (var set in sets)
-                newPossibleDiscards = newPossibleDiscards.Except(set.Cards).ToList();
-            foreach (var jokerSet in jokerSets)
-                newPossibleDiscards = newPossibleDiscards.Except(jokerSet.Cards).ToList();
-            foreach (var jokerRun in jokerRuns)
-                newPossibleDiscards = newPossibleDiscards.Except(jokerRun.Cards).ToList();
-
-            // If the hand only consists of possible sets&runs, try to discard the card 
-            // with the highest value which does also not destroy the currently best card combo
-            if (newPossibleDiscards.Count == 0)
-            {
-                NewThought.Invoke("Cannot keep all cards for later.");
-                int maxValue = GetBestCardCombo(HandCardSpot.Objects, false, false, false).Value;
-                List<Card> eligibleCards = new List<Card>();
-                foreach (Card possibleCard in HandCardSpot.Objects)
-                {
-                    var hypotheticalHandCards = new List<Card>(HandCardSpot.Objects);
-                    hypotheticalHandCards.Remove(possibleCard);
-                    if (GetBestCardCombo(hypotheticalHandCards, true, false, false).Value == maxValue)
-                        eligibleCards.Add(possibleCard);
-                }
-
-                //Discard the card with the highest value out of the possible ones
-                if (eligibleCards.Count > 0)
-                {
-                    Card bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
-                    newPossibleDiscards.Add(bestCard);
-                    NewThought.Invoke("Discarding " + bestCard + " without destroying the highest valued combo");
-                }
-                else //No card can be removed without destroying the currently best card combo
-                {
-                    //Find out which discarded cards allow for the highest combo of the remaining cards
-                    //TODO DONT USE THIS
-                    eligibleCards = GetCardsWhichAllowHighestComboWhenRemoved(HandCardSpot.Objects);
-                    //TODO USE THIS
-                    //Card card = GetCardYieldingHighestValueCombo(PlayerHandCards, true).Item1;
-
-                    if (eligibleCards.Count > 0)
-                    {
-                        //Discard the card with the highest value
-                        var bestCard = eligibleCards.OrderByDescending(c => c.Value).First();
-                        newPossibleDiscards.Add(bestCard);
-                        NewThought.Invoke("Discard " + bestCard);
-                        //TODO TEST & THEN REMOVE
-                        //Tb.I.GameMaster.LogMsg("Discard " + bestCard, LogType.Error);
-                    }
-                    else //No card was found. Allow discarding the cards of the set/run with the lowest value
-                    {
-                        var result = CardUtil.GetLowestValue(runs, sets);
-                        newPossibleDiscards.AddRange(result.Cards);
-                        NewThought.Invoke("Allow discarding all cards of " + result);
-                        //TODO TEST & THEN REMOVE
-                        //Tb.I.GameMaster.LogMsg("Allow discarding all cards of " + result, LogType.Error);
-                    }
-                }
-            }
-
-            //If we have the freedom to choose, keep cards which can serve as singles later
-            if (newPossibleDiscards.Count > 1)
-            {
-                var singleCards = new List<Card>();
-                foreach (var entry in singleLayDownCards)
-                    singleCards.Add(entry.Card);
-
-                newPossibleDiscards = newPossibleDiscards.Except(singleCards).ToList();
-
-                //If saving all single cards is not possible, discard the one with the highest value
-                if (newPossibleDiscards.Count == 0)
-                {
-                    var keptSingle = singleCards.OrderByDescending(c => c.Value).FirstOrDefault();
-                    newPossibleDiscards.Add(keptSingle);
-                    singleCards.Remove(keptSingle);
-                }
-
-                if (singleCards.Any())
-                {
-                    string msg = "";
-                    singleCards.ForEach(s => msg += s + ", ");
-                    NewThought.Invoke("Keeping singles " + msg.TrimEnd().TrimEnd(','));
-                }
-            }
-            return newPossibleDiscards;
         }
 
         private void DiscardCardMoveFinished(Card card)
@@ -710,9 +380,9 @@ namespace rummy
             Tb.I.DiscardStack.AddCard(card);
 
             //Refresh the list of possible card combos and singles for the UI
-            var possibleCombos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false, false);
-            PossibleCardCombosChanged.Invoke(possibleCombos);
-            UpdateSingleLaydownCards();
+            GetBestCardCombo(HandCardSpot.Objects, true);
+            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            PossibleSinglesChanged.Invoke(singleLayDownCards);
 
             TurnFinished.Invoke();
             State = PlayerState.IDLE;

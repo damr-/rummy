@@ -9,6 +9,7 @@ namespace rummy.Cards
     {
         public override List<Card> Objects { get; protected set; } = new List<Card>();
         public bool HasCards => Objects.Count > 0;
+        public override string ToString() => gameObject.name;
 
         [Tooltip("The factor by which cards will be scaled when added to the spot. When removed, the scaling is undone")]
         public float CardScale = 1.0f;

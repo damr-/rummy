@@ -33,9 +33,6 @@ namespace rummy.UI.CardOutput
                     uniqueCombos.Add(combo);
             }
 
-            //TODO check if ordering is really necessary here!
-            uniqueCombos = uniqueCombos.OrderByDescending(c => c.Value).ToList();
-
             string poss = " possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
             string var = " variant" + (cardCombos.Count == 1 ? "" : "s");
             string header = uniqueCombos.Count + poss + " [" + cardCombos.Count + var + "]:";

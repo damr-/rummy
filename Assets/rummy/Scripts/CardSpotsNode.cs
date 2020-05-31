@@ -20,6 +20,7 @@ namespace rummy
         public CardSpot AddCardSpot()
         {
             GameObject cardSpotGO = Instantiate(CardSpotPrefab, transform.position, Quaternion.identity, transform);
+            cardSpotGO.name = transform.parent.name + "-CardSpot" + (Objects.Count + 1);
             CardSpot cardSpot = cardSpotGO.GetComponent<CardSpot>();
             cardSpot.startAngle = spotStartAngle;
             cardSpot.radius = spotRadius;

@@ -92,29 +92,35 @@ namespace rummy.Cards
 
         private void TEST_CreateCustomStack()
         {
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 4; i++)
             {
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.DIAMONDS);
-
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
-
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.CLUBS);
-
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
             }
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
         }
 
         public void CreateCardStack(CardStackType cardServeType)
