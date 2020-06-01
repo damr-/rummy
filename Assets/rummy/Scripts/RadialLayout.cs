@@ -31,16 +31,6 @@ namespace rummy
                 Objects[i].transform.position = transform.position + new Vector3(x, i * yIncrement + yOffset, z);
             }
         }
-
-        public virtual void ResetLayout()
-        {
-            while (Objects.Count > 0)
-            {
-                T obj = Objects[0];
-                Objects.RemoveAt(0);
-                Destroy(obj.gameObject);
-            }
-        }
     }
 
 }

@@ -79,6 +79,19 @@ namespace rummy.Utility
             }
             return -1;
         }
+
+        /// <summary>
+        /// Returns each .ToString() of a list of MonoBehaviours concatenated to string and prefixed with 'title'
+        /// The passed list type T has to implement .ToString() !
+        /// </summary>
+        /// <param name="list">The list of MonoBehaviours</param>
+        /// <param name="title">The title of a single monobehaviour. An 's' will be appended if list.Count > 0</param>
+        public static string GetListMsg<T>(this List<T> list, string title)
+        {
+            string msg = "";
+            list.ForEach(duo => msg += duo.ToString() + ", ");
+            return title + (list.Count > 1 ? "s " : " ") + msg.TrimEnd().TrimEnd(',');
+        }
     }
 
 }

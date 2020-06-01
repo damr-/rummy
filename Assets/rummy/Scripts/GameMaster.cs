@@ -85,9 +85,8 @@ namespace rummy
             Time.timeScale = GameSpeed;
             RoundCount = 0;
 
-            Tb.I.CardStack.CreateCardStack(CardStackType);
-            if (CardStackType != CardStack.CardStackType.CUSTOM)
-                Tb.I.CardStack.ShuffleCardStack();
+            if (!Tb.I.CardStack.cardStackCreated)
+                Tb.I.CardStack.CreateCardStack(CardStackType);
 
             gameState = GameState.DEALING;
             currentPlayerID = 0;
@@ -190,7 +189,7 @@ namespace rummy
             foreach (var p in Players)
             {
                 var cardSpots = p.GetPlayerCardSpots();
-                if (cardSpots.Any(spot => !spot.IsFull()))
+                if (cardSpots.Any(spot => !spot.IsFull(true)))
                     return false;
             }
             return true;
@@ -205,9 +204,12 @@ namespace rummy
                 PlayWaitDuration = tmpPlayerWaitDuration;
             }
 
-            Tb.I.CardStack.ResetStack();
-            Tb.I.DiscardStack.ResetStack();
-            Players.ForEach(p => p.ResetPlayer());
+            var cards = new List<Card>();
+            cards.AddRange(Tb.I.DiscardStack.RemoveCards());
+            foreach(var player in Players)
+                cards.AddRange(player.ResetPlayer());
+
+            Tb.I.CardStack.Restock(cards);
             Start();
         }
 

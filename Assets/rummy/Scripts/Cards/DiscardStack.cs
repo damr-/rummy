@@ -23,6 +23,10 @@ namespace rummy.Cards
         public Card PeekCard() => Cards.Peek();
         public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.0001f * Cards.Count;
 
+        /// <summary>
+        /// Removes and returns all cards but the latest
+        /// </summary>
+        /// <returns>A list of all cards, except the one which was discarded last</returns>
         public List<Card> RecycleDiscardedCards()
         {
             Card lastDiscarded = Cards.Pop();
@@ -32,23 +36,12 @@ namespace rummy.Cards
             return cards;
         }
 
-        private List<Card> RemoveCards()
+        public List<Card> RemoveCards()
         {
             List<Card> removedCards = new List<Card>();
             while (Cards.Count > 0)
                 removedCards.Add(DrawCard());
             return removedCards;
-        }
-
-        public void ResetStack()
-        {
-            var cards = RemoveCards();
-            while (cards.Count > 0)
-            {
-                Card c = cards[0];
-                cards.RemoveAt(0);
-                Destroy(c.gameObject);
-            }
         }
     }
 

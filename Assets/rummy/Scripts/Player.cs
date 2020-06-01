@@ -73,15 +73,18 @@ namespace rummy
         public Event_NewThought NewThought = new Event_NewThought();
         #endregion
 
-        public void ResetPlayer()
+        public List<Card> ResetPlayer()
         {
             HasLaidDown = false;
             State = PlayerState.IDLE;
-            PlayerCardSpotsNode.ResetLayout();
-            HandCardSpot.ResetLayout();
             PossibleCardCombosChanged.Invoke(new List<CardCombo>());
             PossibleSinglesChanged.Invoke(new List<Single>());
             NewThought.Invoke("<CLEAR>");
+
+            var cards = new List<Card>();
+            cards.AddRange(PlayerCardSpotsNode.ResetNode());
+            cards.AddRange(HandCardSpot.ResetSpot());
+            return cards;
         }
 
         private void Start()
@@ -368,6 +371,8 @@ namespace rummy
         {
             var thoughts = new List<string>();
             Card card = PlayerUtil.GetCardToDiscard(HandCardSpot.Objects, singleLayDownCards, HasLaidDown, out thoughts);
+            thoughts.ForEach(t => NewThought.Invoke(t));
+
             State = PlayerState.DISCARDING;
             HandCardSpot.RemoveCard(card);
             card.MoveFinished.AddListener(DiscardCardMoveFinished);
@@ -381,7 +386,7 @@ namespace rummy
 
             //Refresh the list of possible card combos and singles for the UI
             GetBestCardCombo(HandCardSpot.Objects, true);
-            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards, true);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
             TurnFinished.Invoke();

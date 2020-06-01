@@ -33,16 +33,26 @@ namespace rummy
             return cardSpot;
         }
 
-        public override void ResetLayout()
+        public List<Card> ResetNode()
         {
-            Objects.ForEach(spot => spot.ResetLayout());
-            base.ResetLayout();
+            var cards = new List<Card>();
+            foreach (var cardSpot in Objects)
+                cards.AddRange(cardSpot.ResetSpot());
+
+            while (Objects.Count > 0)
+            {
+                CardSpot obj = Objects[0];
+                Objects.RemoveAt(0);
+                Destroy(obj.gameObject);
+            }
+            return cards;
         }
 
         protected override void InitValues()
         {
             yOffset = -1;
         }
+
     }
 
 }

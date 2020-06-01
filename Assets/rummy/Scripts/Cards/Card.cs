@@ -71,6 +71,7 @@ namespace rummy.Cards
 
         public static readonly IDictionary<CardRank, string> RankLetters = new Dictionary<CardRank, string>
         {
+            { CardRank.JOKER,   "?"},
             { CardRank.TWO,     "2" },
             { CardRank.THREE,   "3" },
             { CardRank.FOUR,    "4" },
@@ -83,8 +84,7 @@ namespace rummy.Cards
             { CardRank.JACK,    "J" },
             { CardRank.QUEEN,   "Q" },
             { CardRank.KING,    "K" },
-            { CardRank.ACE,     "A" },
-            { CardRank.JOKER,   "?"}
+            { CardRank.ACE,     "A" }
         };
 
         public static readonly IDictionary<CardSuit, char> SuitSymbols = new Dictionary<CardSuit, char>

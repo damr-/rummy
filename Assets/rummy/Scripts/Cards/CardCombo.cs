@@ -33,6 +33,16 @@ namespace rummy.Cards
             Runs = Runs.OrderByDescending(run => run.Value).ToList();
         }
 
+        public List<Card> GetCards()
+        {
+            var cards = new List<Card>();
+            foreach (var set in Sets)
+                cards.AddRange(set.Cards);
+            foreach(var run in Runs)
+                cards.AddRange(run.Cards);
+            return cards;
+        }
+
         public override string ToString()
         {
             string output = "";

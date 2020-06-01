@@ -12,7 +12,7 @@ namespace rummy.Cards
 
         private Stack<Card> Cards = new Stack<Card>();
         public int CardCount => Cards.Count;
-        private bool stackCreated;
+        public bool cardStackCreated = false;
 
         public enum CardStackType
         {
@@ -23,17 +23,18 @@ namespace rummy.Cards
             CUSTOM = 4
         }
 
+        /// <summary>
+        /// Spawn two regular decks of cards with one red and one black joker each
+        /// </summary>
         private void CreateCardStack()
         {
-            //Spawn two decks of cards
             for (int i = 0; i < 2; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
                     for (int rank = 1; rank <= Card.CardRankCount; rank++)
                     {
-                        //If card is joker, only spawn if suit is 1 or 3, 
-                        //so we only have one red and one black joker
+                        //Spawn one red and one black joker per deck
                         if ((Card.CardRank)rank == Card.CardRank.JOKER && suit % 2 != 1)
                             continue;
                         CreateCard((Card.CardRank)rank, (Card.CardSuit)suit);
@@ -42,16 +43,17 @@ namespace rummy.Cards
             }
         }
 
+        /// <summary>
+        /// Spawn two decks of cards without Jokers
+        /// </summary>
         private void CreateCardStackNoJoker()
         {
-            //Spawn two decks of cards
             for (int i = 0; i < 2; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
                     for (int rank = 1; rank <= Card.CardRankCount; rank++)
                     {
-                        //No Joker cards
                         if ((Card.CardRank)rank == Card.CardRank.JOKER)
                             continue;
                         CreateCard((Card.CardRank)rank, (Card.CardSuit)suit);
@@ -61,8 +63,6 @@ namespace rummy.Cards
 
             foreach (Card card in Cards)
                 card.SetVisible(false);
-
-            stackCreated = true;
         }
 
         private void TEST_CreateJackCardStack()
@@ -99,37 +99,35 @@ namespace rummy.Cards
             }
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.ACE, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.JOKER, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
-
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
-
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
         }
 
         public void CreateCardStack(CardStackType cardServeType)
         {
-            if (stackCreated)
-            {
-                Tb.I.GameMaster.LogMsg("Tried to create a stack but there already is one!", LogType.Error);
-                return;
-            }
+            if (cardStackCreated)
+                throw new RummyException("Tried to create a stack but there already is one!");
 
             switch (cardServeType)
             {
@@ -150,9 +148,12 @@ namespace rummy.Cards
                     break;
             }
 
+            if (cardServeType != CardStackType.CUSTOM)
+                ShuffleCardStack();
+
             foreach (Card card in Cards)
                 card.SetVisible(false);
-            stackCreated = true;
+            cardStackCreated = true;
         }
 
         /// <summary>
@@ -169,7 +170,7 @@ namespace rummy.Cards
             Cards.Push(card);
         }
 
-        public void ShuffleCardStack()
+        private void ShuffleCardStack()
         {
             Cards = new Stack<Card>(Cards.OrderBy(x => Random.Range(0, int.MaxValue)));
         }
@@ -180,18 +181,17 @@ namespace rummy.Cards
         /// <returns>The next card which was removed from the stack, null otherwise</returns>
         public Card DrawCard()
         {
-            if (CardCount > 0)
-            {
-                var card = Cards.Pop();
-                card.transform.SetParent(null, true);
-                return card;
-            }
-            throw new RummyException("CardStack is empty!");
+            if (CardCount == 0)
+                throw new RummyException("CardStack is empty!");
+            var card = Cards.Pop();
+            card.transform.SetParent(null, true);
+            return card;
         }
 
         /// <summary>
         /// Adds the given list of cards to the card stack and shuffles it.
         /// Usually the card stack is restocked with the cards from the discard stack
+        /// or all cards from the game when it is over
         /// </summary>
         public void Restock(List<Card> cards)
         {
@@ -203,20 +203,6 @@ namespace rummy.Cards
                 Cards.Push(card);
             }
             ShuffleCardStack();
-        }
-
-        /// <summary>
-        /// Destroys all cards and sets <see cref="stackCreated"/> to false so that
-        /// a new stack can be created.
-        /// </summary>
-        public void ResetStack()
-        {
-            stackCreated = false;
-            while (CardCount > 0)
-            {
-                var card = Cards.Pop();
-                Destroy(card.gameObject);
-            }
         }
     }
 

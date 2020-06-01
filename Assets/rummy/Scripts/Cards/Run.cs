@@ -12,6 +12,7 @@ namespace rummy.Cards
         public Card.CardRank HighestRank { get; private set; }
         public Card.CardRank LowestRank { get; private set; }
 
+        public Run(Card c1, Card c2, Card c3) : this(new List<Card>() { c1, c2, c3 }) { }
         public Run(List<Card> cards)
         {
             if (!IsValidRun(cards))
@@ -78,44 +79,29 @@ namespace rummy.Cards
                 var rank = Cards[i].Rank;
                 if (rank == Card.CardRank.JOKER)
                 {
-                    if (i == 0)
+                    if (i == 0 && Cards.Count == 1)
                     {
-                        if (Cards.Count == 1) //The joker is the first and only card in the run, abort.
-                            break;
-                        if (Cards[1].Rank == Card.CardRank.TWO) //JOKER is ACE, ACE counts 1 in ACE-2-3
-                            value += 1;
-                        else //Find the next highest card which is not a joker and calculate the current joker's rank&value
-                        {
-                            var nonJokerIdx = Cards.GetFirstCardIndex(1, true);
-                            var jokerRank = Cards[nonJokerIdx].Rank - nonJokerIdx;
-                            value += Card.CardValues[jokerRank];
-                        }
+                        //The joker is the first and only card in the run, abort.
+                        break;
+                    }
+
+                    var jokerRank = CardUtil.GetJokerRank(Cards, i);
+
+                    // If the next card is a TWO: RANK(2-1)=Rank(1)=JOKER
+                    if (jokerRank == Card.CardRank.JOKER)
+                    {
+                        //JOKER is ACE, ACE counts 1 in ACE-2-3
+                        value += 1;
                     }
                     else
                     {
-                        //Try to find the first non-joker card below the current joker
-                        var nonJokerIdx = Cards.GetFirstCardIndex(i - 1, false);
-                        if (nonJokerIdx != -1)
-                        {
-                            Card.CardRank jokerRank = Cards[nonJokerIdx].Rank + (i - nonJokerIdx);
-                            if (Cards[nonJokerIdx].Rank == Card.CardRank.ACE) // <=> nonJokerIdx is 0 <=> Cards[0].Rank is 1
-                                jokerRank = (Card.CardRank)(i + 1);
-                            value += Card.CardValues[jokerRank];
-                        }
-                        else //No card below was found, search for higher card
-                        {
-                            nonJokerIdx = Cards.GetFirstCardIndex(i + 1, true);
-                            if (nonJokerIdx != -1)
-                            {
-                                var jokerRank = Cards[nonJokerIdx].Rank - (nonJokerIdx - i);
-                                value += Card.CardValues[jokerRank];
-                            }
-                        }
+                        value += Card.CardValues[jokerRank];
                     }
                 }
                 else if (rank == Card.CardRank.ACE && i == 0)
                 {
-                    value += 1; //ACE counts 1 in ACE-2-3
+                    //ACE counts 1 in ACE-2-3
+                    value += 1;
                 }
                 else
                 {
