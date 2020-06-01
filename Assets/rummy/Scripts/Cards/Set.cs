@@ -57,7 +57,7 @@ namespace rummy.Cards
             if (jokers.Count > 2)
                 return false;
 
-            foreach(var joker in jokers)
+            foreach (var joker in jokers)
             {
                 if (joker.IsBlack()
                     && usedSuits.Contains(Card.CardSuit.CLUBS)
@@ -90,6 +90,31 @@ namespace rummy.Cards
                 if (o1.ElementAt(i).Suit != o2.ElementAt(i).Suit)
                     return false;
             }
+            return true;
+        }
+
+        public bool CanFit(Card card, out Card Joker)
+        {
+            Joker = null;
+
+            if (card.IsJoker() && Cards.Count < 4)
+            {
+                if (card.IsBlack() && HasTwoBlackCards)
+                    return false;
+                if (card.IsRed() && HasTwoRedCards)
+                    return false;
+                return true;
+            }
+
+            var nonJokers = Cards.Where(c => !c.IsJoker()).ToList();
+            if (card.Rank != Rank || nonJokers.Count == 4 || nonJokers.Any(c => c.Suit == card.Suit))
+                return false;
+
+            var jokers = Cards.Where(c => c.IsJoker());
+            if (nonJokers.Count == 3) //0 or 1 Joker
+                Joker = jokers.FirstOrDefault();
+            else // 2 non-Joker, 1 or 2 Joker
+                Joker = jokers.FirstOrDefault(j => j.Color == card.Color);
             return true;
         }
     }

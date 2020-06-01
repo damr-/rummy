@@ -60,7 +60,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether this CardSpot is full and cannot take any more cards.
+        /// Returns whether this CardSpot is full and cannot take any more cards
         /// </summary>
         public bool IsFull(bool includeJokers)
         {
@@ -70,7 +70,7 @@ namespace rummy.Cards
             int count = Objects.Count(c => !c.IsJoker() || includeJokers);
             if (Type == SpotType.RUN)
                 return count == 14;
-            //else Type is SpotType.SET
+            //else SpotType.SET
             return count == 4;
         }
 
@@ -156,81 +156,11 @@ namespace rummy.Cards
         public bool CanFit(Card newCard, out Card Joker)
         {
             Joker = null;
-            if (Type == SpotType.NONE) return false;
+            if (Type == SpotType.NONE)
+                return false;
             if (Type == SpotType.SET)
-            {
-                if (IsFull(false))
-                    return false;
-
-                Set set = new Set(Objects);
-                if (!newCard.IsJoker())
-                {
-                    if (newCard.Rank != set.Rank)
-                        return false;
-
-                    Card joker = Objects.FirstOrDefault(c => c.IsJoker());
-                    if (joker != null)
-                    {
-                        //Allow adding a third card of one color if one of the other two is a joker
-                        if (set.HasTwoBlackCards && joker.IsRed() && newCard.IsBlack())
-                            return false;
-                        if (set.HasTwoRedCards && joker.IsBlack() && newCard.IsRed())
-                            return false;
-
-                        if (joker.Color == newCard.Color)
-                            Joker = joker;
-
-                        //Otherwise, only allow adding a card whose suit is not already there
-                        var nonJokers = Objects.Where(c => !c.IsJoker());
-                        return nonJokers.All(c => c.Suit != newCard.Suit);
-                    }
-                    else
-                        return Objects.All(c => c.Suit != newCard.Suit);
-                }
-                else
-                {
-                    if (newCard.IsBlack() && set.HasTwoBlackCards)
-                        return false;
-                    if (newCard.IsRed() && set.HasTwoRedCards)
-                        return false;
-                    return true;
-                }
-            }
-
-            // Type == SpotType.RUN
-            Run run = new Run(Objects);
-            if (!newCard.IsJoker())
-            {
-                if (newCard.Suit != run.Suit || IsFull(false))
-                    return false;
-
-                // Check whether the new card replaces a joker
-                var jokers = Objects.Where(c => c.IsJoker());
-                Card replacedJoker = null;
-                foreach (var joker in jokers)
-                {
-                    Card.CardRank jokerRank = CardUtil.GetJokerRank(Objects, Objects.IndexOf(joker));
-                    if (jokerRank == newCard.Rank)
-                    {
-                        replacedJoker = joker;
-                        break;
-                    }
-                }
-
-                if (replacedJoker != null)
-                {
-                    Joker = replacedJoker;
-                    return true;
-                }
-
-                return (newCard.Rank == run.HighestRank + 1 && run.HighestRank != Card.CardRank.ACE) ||
-                        (newCard.Rank == run.LowestRank - 1 && run.LowestRank != Card.CardRank.ACE) ||
-                        (newCard.Rank == Card.CardRank.ACE && run.LowestRank == Card.CardRank.TWO);
-            }
-            else
-            {
-                return newCard.Color == run.Color && (run.HighestRank != Card.CardRank.ACE || run.LowestRank != Card.CardRank.ACE);
-            }
+                return new Set(Objects).CanFit(newCard, out Joker);
+            return new Run(Objects).CanFit(newCard, out Joker);
         }
     }
 

@@ -155,6 +155,34 @@ namespace rummy.Cards
             return true;
         }
 
+        public bool CanFit(Card card, out Card Joker)
+        {
+            Joker = null;
+
+            if (card.IsJoker())
+                return card.Color == Color && Cards.Count < 14;
+
+            var jokers = Cards.Where(c => c.IsJoker());
+
+            if (card.Suit != Suit || (Cards.Count == 14 && !jokers.Any())) //TODO NOT DONE
+                return false;
+
+            // Check whether the new card replaces a joker
+            foreach (var joker in jokers)
+            {
+                var jokerRank = CardUtil.GetJokerRank(Cards, Cards.IndexOf(joker));
+                if (jokerRank == card.Rank)
+                {
+                    Joker = joker;
+                    return true;
+                }
+            }
+
+            return (HighestRank != Card.CardRank.ACE && card.Rank == HighestRank + 1) ||
+                    (LowestRank != Card.CardRank.ACE && card.Rank == LowestRank - 1) ||
+                    (LowestRank == Card.CardRank.TWO && card.Rank == Card.CardRank.ACE);
+        }
+
     }
 
 }

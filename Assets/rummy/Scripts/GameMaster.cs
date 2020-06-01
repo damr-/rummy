@@ -66,9 +66,15 @@ namespace rummy
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
 
-            if (Players.Count == 0)
-                Players = FindObjectsOfType<Player>().OrderBy(p => p.name[p.name.Length - 1]).ToList();
+            Players = FindObjectsOfType<Player>().OrderBy(p => p.name[p.name.Length - 1]).ToList();
 
+            Random.InitState(Seed);
+            Tb.I.CardStack.CreateCardStack(CardStackType);
+            StartGame();
+        }
+
+        private void StartGame()
+        {
             DefaultGameSpeed = GameSpeed;
             tmpPlayerWaitDuration = PlayWaitDuration;
             tmpDrawWaitDuration = DrawWaitDuration;
@@ -81,15 +87,36 @@ namespace rummy
                 GameSpeed = 4;
             }
 
-            Random.InitState(Seed);
             Time.timeScale = GameSpeed;
             RoundCount = 0;
 
-            if (!Tb.I.CardStack.cardStackCreated)
-                Tb.I.CardStack.CreateCardStack(CardStackType);
-
             gameState = GameState.DEALING;
             currentPlayerID = 0;
+        }
+
+        public void NextGame()
+        {
+            Seed += 1;
+            RestartGame();
+        }
+
+        public void RestartGame()
+        {
+            if (SkipUntilRound > 0)
+            {
+                GameSpeed = DefaultGameSpeed;
+                DrawWaitDuration = tmpDrawWaitDuration;
+                PlayWaitDuration = tmpPlayerWaitDuration;
+            }
+
+            var cards = new List<Card>();
+            cards.AddRange(Tb.I.DiscardStack.RemoveCards());
+            foreach (var p in Players)
+                cards.AddRange(p.ResetPlayer());
+
+            Random.InitState(Seed);
+            Tb.I.CardStack.Restock(cards);
+            StartGame();
         }
 
         private void Update()
@@ -193,30 +220,6 @@ namespace rummy
                     return false;
             }
             return true;
-        }
-
-        public void RestartGame()
-        {
-            if (SkipUntilRound > 0)
-            {
-                GameSpeed = DefaultGameSpeed;
-                DrawWaitDuration = tmpDrawWaitDuration;
-                PlayWaitDuration = tmpPlayerWaitDuration;
-            }
-
-            var cards = new List<Card>();
-            cards.AddRange(Tb.I.DiscardStack.RemoveCards());
-            foreach(var player in Players)
-                cards.AddRange(player.ResetPlayer());
-
-            Tb.I.CardStack.Restock(cards);
-            Start();
-        }
-
-        public void NextGame()
-        {
-            Seed += 1;
-            RestartGame();
         }
 
         public void TogglePause()
