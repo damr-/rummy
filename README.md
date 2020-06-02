@@ -5,7 +5,7 @@ A Unity application which plays the famous game 'Rummy' against itself.
 
 [Download (Windows)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_Windows.zip) (outdated)
 
-[Download (Mac OS)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_MacOS.app.zip) (outdated)
+[Download (Mac OS)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_MacOS.app.zip)
 
 ## Rules
 - 2 players (AI), each starts with 13 cards in their hand.
