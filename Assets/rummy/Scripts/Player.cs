@@ -236,18 +236,52 @@ namespace rummy
                 return;
             }
 
-            laydownCards = GetBestCardCombo(HandCardSpot.Objects, true);
+            laydownCards = GetBestCardCombo(HandCardSpot.Objects, true); //TODO [*]
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
             if (Tb.I.GameMaster.RoundCount >= Tb.I.GameMaster.EarliestAllowedLaydownRound)
             {
+                var usedJokers = false;
+
                 //If the player has not laid down card packs yet, check if their sum would be enough to do so
                 if (!HasLaidDown)
+                {
                     HasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
+                    var jokers = HandCardSpot.Objects.Where(c => c.IsJoker()).ToList();
+                    if (!HasLaidDown && jokers.Count() > 0) //Try to reach MinimumLaySum by appending jokers to any possible cardcombo
+                    {//TODO Alternatively, allow finding Sets&Runs WITH jokers (at [*], line 239) as long as the player hasn't laid down card packs
+                        var combos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false);
+
+                        for (int i = 0; i < combos.Count; i++) //Try all combos
+                        {
+                            var backup = new CardCombo(combos[i]);
+                            var jokersInUse = combos[i].GetCards().Where(c => c.IsJoker()).ToList();
+                            var availableJokers = jokers.Except(jokersInUse).ToList();
+                            if (!availableJokers.Any())
+                                continue;
+                            HasLaidDown = combos[i].TryAddJoker(availableJokers);
+                            if (!HasLaidDown || combos[i].CardCount == HandCardCount)
+                            {
+                                combos[i] = new CardCombo(backup);
+                                HasLaidDown = false;
+                            }
+                            else
+                            {
+                                usedJokers = true;
+                                laydownCards = new CardCombo(combos[i]);
+                                NewThought.Invoke("Can reach " + Tb.I.GameMaster.MinimumLaySum + " using jokers: " + laydownCards);
+                                break;
+                            }
+                        }
+                        if(usedJokers && !HasLaidDown)
+                            NewThought.Invoke("Cannot reach " + Tb.I.GameMaster.MinimumLaySum + " using jokers");
+                    }
+                }
+
                 //At least one card must remain when laying down
-                if (HasLaidDown && laydownCards.CardCount == HandCardCount)
+                if (!usedJokers && HasLaidDown && laydownCards.CardCount == HandCardCount)
                     KeepOneSingleCard();
             }
 

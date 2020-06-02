@@ -183,6 +183,21 @@ namespace rummy.Cards
                     (LowestRank == Card.CardRank.TWO && card.Rank == Card.CardRank.ACE);
         }
 
+        /// <summary>
+        /// Returns the possible values a joker could have when added to the start/end of this run
+        /// </summary>
+        /// <returns>A tuple with the possible values for start and end. If a value is 0, a joker cannot be added there</returns>
+        public (int,int) JokerValue()
+        {
+            int i1 = 0;
+            if (LowestRank != Card.CardRank.ACE)
+                i1 = (LowestRank == Card.CardRank.TWO) ? 1 : (int)(LowestRank - 1);
+            int i2 = 0;
+            if (HighestRank!= Card.CardRank.ACE)
+                i2 = (int)(HighestRank + 1);
+            return (i1, i2);
+        }
+
     }
 
 }

@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using System;
+using rummy.Utility;
 
 namespace rummy.Cards
 {
@@ -38,7 +40,7 @@ namespace rummy.Cards
             var cards = new List<Card>();
             foreach (var set in Sets)
                 cards.AddRange(set.Cards);
-            foreach(var run in Runs)
+            foreach (var run in Runs)
                 cards.AddRange(run.Cards);
             return cards;
         }
@@ -80,6 +82,67 @@ namespace rummy.Cards
                     return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Returns whether adding any of the passed jokers will increase the CardCombo's value to or above <see cref="GameMaster.MinimumLaySum"/>.
+        /// If successful, the jokers are added to the CardCombo.
+        /// </summary>
+        public bool TryAddJoker(List<Card> jokers)
+        {
+            var availableJokers = new List<Card>(jokers);
+
+            for (int i = 0; i < Sets.Count; i++)
+            {
+                if (Sets[i].Cards.Count == 4)
+                    continue;
+
+                for (int j = availableJokers.Count - 1; j >= 0; j--)
+                {
+                    Card joker = availableJokers[j];
+                    if (!Sets[i].CanFit(joker, out _))
+                        continue;
+                    var cards = Sets[i].Cards;
+                    cards.Add(joker);
+                    Sets[i] = new Set(cards);
+                    //Tb.I.GameMaster.LogMsg("Add " + joker + " to set: " + Sets[i] + ". Value: " + Value, UnityEngine.LogType.Log);
+
+                    if (Value >= Tb.I.GameMaster.MinimumLaySum)
+                        return true;
+
+                    availableJokers.RemoveAt(j);
+                    break;
+                }
+            }
+
+
+            for (int i = 0; i < Runs.Count; i++)
+            {
+                for (int j = availableJokers.Count - 1; j >= 0; j--)
+                {
+                    Card joker = availableJokers[j];
+                    if (!Runs[i].CanFit(joker, out _))
+                        continue;
+                    (int,int) jokerVal = Runs[i].JokerValue();
+                    if (jokerVal.Item1 == 0 && jokerVal.Item2 == 0)
+                        continue;
+
+                    var cards = Runs[i].Cards;
+                    if (jokerVal.Item2 > 0) //Try higher position first (=higher value)
+                        cards.Add(joker);
+                    else if (jokerVal.Item1 > 0)
+                        cards.Insert(0, joker);
+                    Runs[i] = new Run(cards);
+                    //Tb.I.GameMaster.LogMsg("Add " + joker + " to run: " + Runs[i] + ". Value: " + Value, UnityEngine.LogType.Log);
+
+                    if (Value >= Tb.I.GameMaster.MinimumLaySum)
+                        return true;
+
+                    availableJokers.RemoveAt(j);
+                    break;
+                }
+            }
+            return false;
         }
     }
 

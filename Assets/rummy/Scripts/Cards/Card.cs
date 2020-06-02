@@ -95,10 +95,10 @@ namespace rummy.Cards
             { CardSuit.CLUBS,    'c' },
             { CardSuit.SPADES,   's' }
 #else
-            { CardSuit.HEARTS,  '♥' },
-            { CardSuit.DIAMOND, '♦' },
-            { CardSuit.CLUBS,   '♣' },
-            { CardSuit.SPADES,  '♠' }
+            { CardSuit.HEARTS,   '♥' },
+            { CardSuit.DIAMONDS, '♦' },
+            { CardSuit.CLUBS,    '♣' },
+            { CardSuit.SPADES,   '♠' }
 #endif
         };
 
@@ -163,7 +163,6 @@ namespace rummy.Cards
 
         public UnityEvent TypeChanged = new UnityEvent();
 
-        public string GetFileString() => Rank + "_" + Suit;
         public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
 
         public void SetVisible(bool visible)

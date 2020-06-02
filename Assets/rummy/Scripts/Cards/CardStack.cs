@@ -182,17 +182,18 @@ namespace rummy.Cards
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.JOKER, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.KING, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.TWO, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
         }
 
         /// <summary>

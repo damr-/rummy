@@ -30,27 +30,38 @@ namespace rummy.Cards
         public Material Material;
         private readonly Material[] localMaterials = new Material[1];
 
-        private Card GetCard()
+        private Card Card
         {
-            if (_c == null)
-                _c = GetComponent<Card>();
-            return _c;
+            get
+            {
+                if (_c == null)
+                    _c = GetComponent<Card>();
+                return _c;
+            }
         }
         private Card _c = null;
 
-        private MeshRenderer GetMeshRenderer()
+        private MeshRenderer MeshRenderer
         {
-            if (_mr == null)
-                _mr = GetComponent<MeshRenderer>();
-            return _mr;
+            get
+            {
+                if (_mr == null)
+                    _mr = GetComponent<MeshRenderer>();
+                return _mr;
+            }
         }
         private MeshRenderer _mr;
 
         public void UpdateTexture()
         {
-            string fileString = GetCard().GetFileString();
+            string fileString = GetFileString(Card);
             localMaterials[0] = new Material(Material) { mainTexture = GetCardTextures()[fileString] };
-            GetMeshRenderer().materials = localMaterials;
+            MeshRenderer.materials = localMaterials;
+        }
+
+        private string GetFileString(Card card)
+        {
+            return card.Rank + "_" + card.Suit;
         }
     }
 

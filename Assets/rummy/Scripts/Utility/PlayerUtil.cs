@@ -177,7 +177,8 @@ namespace rummy.Utility
                         foreach (var move in plannedMoves)
                         {
                             //Don't add the current card if another is already planned for that place
-                            if (move.Card.Suit == availableCard.Suit && move.Card.Rank == availableCard.Rank)
+                            if (((availableCard.IsJoker() || move.Card.IsJoker()) && move.Card.Color == availableCard.Color) ||
+                                (move.Card.Suit == availableCard.Suit && move.Card.Rank == availableCard.Rank))
                             {
                                 alreadyPlanned = true;
                                 break;

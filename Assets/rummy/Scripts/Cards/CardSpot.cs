@@ -76,12 +76,15 @@ namespace rummy.Cards
 
         public void AddCard(Card card)
         {
+            if (Objects.Contains(card))
+                throw new RummyException("CardSpot " + gameObject.name + " already contains " + card);
+
             var cards = new List<Card>(Objects);
 
             //By default, add the new card at the end
             int idx = cards.Count;
 
-            //If the run is empty or only contains joker cards, add the new card at the end
+            //If the run is empty or only contains joker cards, also add the new card at the end
             //otherwise
             if (Type == SpotType.RUN && cards.Count(c => !c.IsJoker()) > 0)
             {
@@ -94,8 +97,8 @@ namespace rummy.Cards
 
                 // If adding ACE after King is not possible, add ACE at beginning
                 if (card.Rank == Card.CardRank.ACE &&
-                    highestRank != Card.CardRank.KING &&
-                    highestNonJokerRank != Card.CardRank.KING)
+                    (highestRank < Card.CardRank.KING ||
+                    (highestRank == Card.CardRank.ACE && !cards.Last().IsJoker())))
                 {
                     idx = 0;
                 }
