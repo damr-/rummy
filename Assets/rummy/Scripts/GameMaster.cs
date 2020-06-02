@@ -58,8 +58,6 @@ namespace rummy
 
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
-        [SerializeField]
-        private KeyCode PauseKey = KeyCode.P;
 
         private void Start()
         {
@@ -121,8 +119,6 @@ namespace rummy
 
         private void Update()
         {
-            if (Input.GetKeyDown(PauseKey))
-                TogglePause();
             Time.timeScale = GameSpeed;
 
             if (gameState == GameState.DEALING)
