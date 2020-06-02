@@ -8,7 +8,7 @@ A Unity application which plays the famous game 'Rummy' against itself.
 [Download (Mac OS)](https://github.com/damr-/rummy/raw/master/Builds/Rummy_MacOS.app.zip) (outdated)
 
 ## Rules
-- 2+ players (AI), each starts with 13 cards in their hand.
+- 2 players (AI), each starts with 13 cards in their hand.
 - At the beginning of their turn, the player draws a card. To end the turn, the player discards one card.
 - The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are laid down, except one, which is then discarded to finish the game. The sum of the losing player's hand cards is taken as a measure for how badly they lost.
 
