@@ -123,8 +123,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44c72d2182036412193b8aa44c032e1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startAngle: 0
+  startAngle: 180
   radius: 2
   angleSpread: 180
+  decrementAngle: 1
   CardScale: 0.5
   Type: 0

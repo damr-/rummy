@@ -47,6 +47,7 @@ MonoBehaviour:
   startAngle: 0
   radius: 4
   angleSpread: 180
+  decrementAngle: 0
   CardScale: 1
   Type: 0
 --- !u!1 &1026081579024202515
@@ -89,7 +90,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 350, y: 50}
+  m_SizeDelta: {x: 350, y: 70}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &3089484843561660404
 MonoBehaviour:
@@ -890,8 +891,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 350, y: 100}
+  m_AnchoredPosition: {x: 0, y: 120}
+  m_SizeDelta: {x: 350, y: 80}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &9006366245585043130
 MonoBehaviour:
@@ -1119,7 +1120,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 50}
+  m_AnchoredPosition: {x: 0, y: 70}
   m_SizeDelta: {x: 350, y: 50}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &178916119586156259
@@ -1338,8 +1339,8 @@ RectTransform:
   m_Father: {fileID: 8569673858810961914}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.16666667}
+  m_AnchorMin: {x: 0, y: 0.033333335}
+  m_AnchorMax: {x: 1, y: 0.26666668}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1638,8 +1639,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5736272892735302975}
   m_HandleRect: {fileID: 2768082343147355982}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 0.33333334
+  m_Value: 0.09090909
+  m_Size: 0.26666668
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2004,7 +2005,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 250}
+  m_AnchoredPosition: {x: 0, y: 220}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &6534042084293794430
@@ -2224,8 +2225,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7578806080307101037}
   m_HandleRect: {fileID: 4816748650932867022}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 0.16666667
+  m_Value: 0.04347826
+  m_Size: 0.23333333
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2521,7 +2522,7 @@ RectTransform:
   m_Father: {fileID: 284134504839576329}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 0.06666667}
   m_AnchorMax: {x: 1, y: 0.33333334}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
@@ -2609,10 +2610,11 @@ MonoBehaviour:
   startAngle: 0
   radius: 8
   angleSpread: 180
+  decrementAngle: 0
   CardSpotPrefab: {fileID: 6361658429361687218, guid: 9133b941f36f6463ba0df50f00585ad7,
     type: 3}
   degreesPerSpot: 40
-  spotStartAngle: 0
+  spotStartAngle: 180
   spotRadius: 1
   spotAngleSpread: 180
 --- !u!1 &9008195497925259066

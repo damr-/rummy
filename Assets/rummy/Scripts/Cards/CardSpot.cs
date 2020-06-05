@@ -24,7 +24,7 @@ namespace rummy.Cards
 
         protected override void InitValues()
         {
-            yIncrement = -0.01f;
+            yIncrement = -0.01f * (decrementAngle ? -1 : 1);
         }
 
         public List<Card> ResetSpot()
@@ -70,7 +70,7 @@ namespace rummy.Cards
             int count = Objects.Count(c => !c.IsJoker() || includeJokers);
             if (Type == SpotType.RUN)
                 return count == 14;
-            //else SpotType.SET
+            // else SpotType.SET
             return count == 4;
         }
 
@@ -81,14 +81,14 @@ namespace rummy.Cards
 
             var cards = new List<Card>(Objects);
 
-            //By default, add the new card at the end
+            // By default, add the new card at the end
             int idx = cards.Count;
 
-            //If the run is empty or only contains joker cards, also add the new card at the end
-            //otherwise
+            // If the run is empty or only contains joker cards, also add the new card at the end
+            // otherwise
             if (Type == SpotType.RUN && cards.Count(c => !c.IsJoker()) > 0)
             {
-                //Find out the rank of the last card in the run
+                // Find out the rank of the last card in the run
                 int highestNonJokerIdx = cards.GetFirstCardIndex(cards.Count - 1, false);
                 var highestNonJokerRank = cards[highestNonJokerIdx].Rank;
                 var highestRank = highestNonJokerRank + (cards.Count - 1 - highestNonJokerIdx);
@@ -102,30 +102,30 @@ namespace rummy.Cards
                 {
                     idx = 0;
                 }
-                else if (card.IsJoker()) //Joker will be added at the end, if possible
+                else if (card.IsJoker()) // Joker will be added at the end, if possible
                 {
                     if (highestRank == Card.CardRank.ACE)
                         idx = 0;
                     else
                         idx = cards.Count;
                 }
-                else //Any other case, the card will be sorted by rank
+                else // Any other case, the card will be sorted by rank
                 {
                     for (int i = 0; i < cards.Count; i++)
                     {
                         var rank = cards[i].Rank;
-                        if (cards[i].IsJoker()) //Figure out the rank of the card which the joker is replacing
+                        if (cards[i].IsJoker()) // Figure out the rank of the card which the joker is replacing
                         {
                             if (i == 0 && cards.Count == 1)
                             {
-                                //Joker is the only card in the run and the next card comes after the joker
+                                // Joker is the only card in the run and the next card comes after the joker
                                 idx = 1;
                                 break;
                             }
                             rank = CardUtil.GetJokerRank(cards, i);
                         }
                         else if (i == 0 && rank == Card.CardRank.ACE)
-                            rank = (Card.CardRank)1; //Although it's not actually a Joker
+                            rank = (Card.CardRank)1; // Although it's not actually a Joker
 
                         if (rank > card.Rank)
                         {

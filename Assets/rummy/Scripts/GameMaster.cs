@@ -31,6 +31,8 @@ namespace rummy
         public float CardMoveSpeed = 50f;
 
         public int RoundCount { get; private set; }
+        /// <summary> Returns whether laying down cards in the current round is allowed </summary>
+        public bool LayingAllowed() => RoundCount >= EarliestAllowedLaydownRound;
         private List<Player> Players = new List<Player>();
         private Player CurrentPlayer { get { return Players[currentPlayerID]; } }
 

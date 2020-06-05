@@ -36,23 +36,23 @@ namespace rummy.Cards
             if (cards.Count < 3 || cards.Count > 4)
                 return false;
 
-            //A set can only consist of cards with the same rank and jokers
+            // A set can only consist of cards with the same rank and jokers
             if (cards.Any(c => !c.IsJoker() && c.Rank != cards.GetFirstCard().Rank))
                 return false;
 
-            //Only one card per suit is allowed
+            // Only one card per suit is allowed
             var usedSuits = new List<Card.CardSuit>();
             for (int i = 0; i < cards.Count; i++)
             {
                 if (cards[i].IsJoker())
-                    continue; //Skip checking joker for now
+                    continue; // Skip checking joker for now
 
                 if (usedSuits.Contains(cards[i].Suit))
                     return false;
                 usedSuits.Add(cards[i].Suit);
             }
 
-            //Check joker now
+            // Check joker now
             List<Card> jokers = cards.Where(c => c.IsJoker()).ToList();
             if (jokers.Count > 2)
                 return false;

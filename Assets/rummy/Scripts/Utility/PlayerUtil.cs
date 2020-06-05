@@ -11,31 +11,46 @@ namespace rummy.Utility
         /// Returns the optimal card in 'PlayerHandCards' to discard.
         /// There will always be a valid card returned, no need for null checks
         /// </summary>
-        public static Card GetCardToDiscard(List<Card> PlayerHandCards, CardCombo layDownCards, List<Single> singleLayDownCards, bool HasLaidDown, out List<string> thoughts)
+        public static Card GetCardToDiscard(List<Card> PlayerHandCards, List<Single> singleLayDownCards, bool HasLaidDown, ref List<string> thoughts)
         {
-            thoughts = new List<string>();
             var possibleDiscards = new List<Card>(PlayerHandCards);
 
-            //Try to keep the best combo and known singles on hand for laying down later
+            // Try to keep the best combo and known singles on hand for laying down later
             if (!HasLaidDown)
-                possibleDiscards = KeepUsableCards(PlayerHandCards, layDownCards, singleLayDownCards, out thoughts);
+                possibleDiscards = KeepUsableCards(PlayerHandCards, singleLayDownCards, ref thoughts);
 
-            //Don't allow discarding joker cards unless they're all that's left
+            // Don't allow discarding joker cards unless they're all that's left
             var jokerCards = possibleDiscards.Where(c => c.IsJoker());
             if (possibleDiscards.Count == jokerCards.Count())
                 return jokerCards.First();
 
             possibleDiscards = possibleDiscards.Except(jokerCards).ToList();
 
-            //Check for duo sets&runs in the remaining cards
-            //and keep them on hand, if possible (only for >3 cards, because
-            //keeping a duo and discarding the third card makes no sense)
+            // Check for duo sets&runs in the remaining cards
+            // and keep them on hand, if possible (only for >3 cards, because
+            // keeping a duo and discarding the third card makes no sense)
             if (possibleDiscards.Count > 3)
             {
                 var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-                var duos = CardUtil.GetAllDuoSets(possibleDiscards, laidDownCards);
+                var allDuos = CardUtil.GetAllDuoSets(possibleDiscards, laidDownCards, ref thoughts);
+                allDuos.AddRange(CardUtil.GetAllDuoRuns(possibleDiscards, laidDownCards, ref thoughts));
 
-                duos.AddRange(CardUtil.GetAllDuoRuns(possibleDiscards, laidDownCards));
+                // Only save unique duos
+                var duos = new List<Duo>();
+                for (int i = 0; i < allDuos.Count; i++)
+                {
+                    var canAdd = true;
+                    foreach(var duo in duos)
+                    {
+                        if (Duo.AreHalfDuplicates(allDuos[i], duo))
+                        {
+                            canAdd = false;
+                            break;
+                        }
+                    }
+                    if(canAdd)
+                        duos.Add(allDuos[i]);
+                }
 
                 // Keep high value duos if the player has yet to lay down any cards
                 duos = (HasLaidDown ? duos.OrderBy(duo => duo.Value()) : duos.OrderByDescending(duo => duo.Value())).ToList();
@@ -53,12 +68,13 @@ namespace rummy.Utility
                     else
                         notKeptDuos.Add(duo);
                 }
-                if (notKeptDuos.Any())
-                    thoughts.Add(notKeptDuos.GetListMsg("Cannot keep duo"));
                 if (keptDuos.Any())
                     thoughts.Add(keptDuos.GetListMsg("Keep duo"));
+                if (notKeptDuos.Any())
+                    thoughts.Add(notKeptDuos.GetListMsg("Cannot keep duo"));
             }
-            //Discard the card with the highest value
+
+            // Discard the card with the highest value
             return possibleDiscards.OrderByDescending(c => c.Value).First();
         }
 
@@ -66,15 +82,16 @@ namespace rummy.Utility
         /// Returns a list of cards in 'PlayerHandCards' which can be discarded.
         /// It always contains 1 or more cards.
         /// </summary>
-        public static List<Card> KeepUsableCards(List<Card> PlayerHandCards, CardCombo layDownCards, List<Single> singleLayDownCards, out List<string> thoughts)
+        public static List<Card> KeepUsableCards(List<Card> PlayerHandCards, List<Single> singleLayDownCards, ref List<string> thoughts)
         {
-            thoughts = new List<string>();
-
             var possibleDiscards = new List<Card>(PlayerHandCards);
-            var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
 
-            // Don't discard the cards of the best combo
-            possibleDiscards = possibleDiscards.Except(layDownCards.GetCards()).ToList();
+            // Don't discard unique, finished card combos
+            var combos = CardUtil.GetAllUniqueCombos(PlayerHandCards, Tb.I.GameMaster.GetAllCardSpotCards());
+            foreach (var combo in combos)
+                possibleDiscards = possibleDiscards.Except(combo.GetCards()).ToList();
+            if(combos.Any())
+                thoughts.Add(combos.GetListMsg("Keep combo"));
 
             if (possibleDiscards.Count == 0)
             {
@@ -147,13 +164,13 @@ namespace rummy.Utility
 
             var availableCards = new List<Card>(PlayerHandCards);
 
-            //Don't check cards part of sets or runs
+            // Don't check cards part of sets or runs
             availableCards = availableCards.Except(laydownCards.GetCards()).ToList();
 
             var jokerCards = availableCards.Where(c => c.IsJoker());
             bool allowedJokers = false;
 
-            //At first, do not allow jokers to be laid down as singles
+            // At first, do not allow jokers to be laid down as singles
             availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
 
             bool canFitCard = false;
@@ -169,12 +186,12 @@ namespace rummy.Utility
                         if (!cardSpot.CanFit(availableCard, out Card joker))
                             continue;
 
-                        //Find all single cards which are already gonna be added to the cardspot in question
+                        // Find all single cards which are already gonna be added to the cardspot in question
                         var plannedMoves = singleLayDownCards.Where(single => single.CardSpot == cardSpot);
                         bool alreadyPlanned = false;
                         foreach (var move in plannedMoves)
                         {
-                            //Don't add the current card if another is already planned for that place
+                            // Don't add the current card if another is already planned for that place
                             if (((availableCard.IsJoker() || move.Card.IsJoker()) && move.Card.Color == availableCard.Color) ||
                                 (move.Card.Suit == availableCard.Suit && move.Card.Rank == availableCard.Rank))
                             {
@@ -192,8 +209,8 @@ namespace rummy.Utility
                     }
                 }
 
-                //Allow laying down single jokers if no other single card can be found
-                //less than 3 normal cards remain and the turn has not yet ended
+                // Allow laying down single jokers if no other single card can be found
+                // less than 3 normal cards remain and the turn has not yet ended
                 if (!canFitCard && !allowedJokers && jokerCards.Count() > 0 && availableCards.Count < 3 && !turnEnded)
                 {
                     availableCards.AddRange(jokerCards);

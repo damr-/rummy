@@ -98,7 +98,7 @@ namespace rummy
             if (State == PlayerState.WAITING && Time.time - waitStartTime > Tb.I.GameMaster.PlayWaitDuration)
             {
                 State = PlayerState.PLAYING;
-                if (Tb.I.GameMaster.RoundCount < Tb.I.GameMaster.EarliestAllowedLaydownRound || !HasLaidDown)
+                if (!Tb.I.GameMaster.LayingAllowed() || !HasLaidDown)
                 {
                     DiscardCard();
                 }
@@ -145,7 +145,7 @@ namespace rummy
                     case LayStage.RUNS:
                         card = laydownCards.Runs[currentCardPackIdx].Cards[currentCardIdx];
                         break;
-                    default: //LayStage.SINGLES
+                    default: // LayStage.SINGLES
                         card = singleLayDownCards[currentCardIdx].Card;
                         break;
                 }
@@ -222,45 +222,44 @@ namespace rummy
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
-            if (Tb.I.GameMaster.RoundCount >= Tb.I.GameMaster.EarliestAllowedLaydownRound)
+            if (Tb.I.GameMaster.LayingAllowed())
             {
                 var usedJokers = false;
 
-                //If the player has not laid down card packs yet, check if their sum would be enough to do so
+                // If the player has not laid down card packs yet, check if their sum would be enough to do so
                 if (!HasLaidDown)
                 {
                     HasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
 
+                    /// Try to reach <see cref="GameMaster.MinimumLaySum"/> by appending jokers to any possible cardcombo
                     var jokers = HandCardSpot.Objects.Where(c => c.IsJoker()).ToList();
-                    if (!HasLaidDown && jokers.Count() > 0) //Try to reach MinimumLaySum by appending jokers to any possible cardcombo
+                    if (!HasLaidDown && jokers.Count() > 0)
                     {
                         for (int i = 0; i < combos.Count; i++)
                         {
-                            var backup = new CardCombo(combos[i]);
-                            var jokersInUse = combos[i].GetCards().Where(c => c.IsJoker()).ToList();
+                            var combo = new CardCombo(combos[i]);
+                            var jokersInUse = combo.GetCards().Where(c => c.IsJoker()).ToList();
                             var remainingJokers = jokers.Except(jokersInUse).ToList();
                             if (!remainingJokers.Any())
                                 continue;
-                            HasLaidDown = combos[i].TryAddJoker(remainingJokers);
-                            if (!HasLaidDown || combos[i].CardCount == HandCardCount)
-                            {
-                                combos[i] = new CardCombo(backup);
-                                HasLaidDown = false;
-                            }
-                            else
+                            var canLayCombo = combo.TryAddJoker(remainingJokers);
+                            if (canLayCombo && combo.CardCount < HandCardCount)
                             {
                                 usedJokers = true;
-                                laydownCards = new CardCombo(combos[i]);
-                                NewThought.Invoke("Can reach " + Tb.I.GameMaster.MinimumLaySum + " using jokers: " + laydownCards);
+                                laydownCards = combo;
+                                combos.Insert(0, combo);
+                                PossibleCardCombosChanged.Invoke(combos);
+                                NewThought.Invoke("Use jokers to lay down");
+                                HasLaidDown = true;
                                 break;
                             }
                         }
-                        if(usedJokers && !HasLaidDown)
+                        if(!HasLaidDown)
                             NewThought.Invoke("Cannot reach " + Tb.I.GameMaster.MinimumLaySum + " using jokers");
                     }
                 }
 
-                //At least one card must remain when laying down
+                // At least one card must remain when laying down
                 if (!usedJokers && HasLaidDown && laydownCards.CardCount == HandCardCount)
                     KeepOneSingleCard();
             }
@@ -273,12 +272,12 @@ namespace rummy
         /// Returns the card combo with the highest possible value from the given 'HandCards'.
         /// </summary>
         /// <param name="HandCards">The cards in the player's hand</param>
-        /// <param name="broadcastPossibleCombos">Whether to broadcast all possible combos for UI output</param>
+        /// <param name="broadcastCombos">Whether to broadcast all possible combos for UI output</param>
         /// <returns>The combo with the highest value or an empty one, if none was found</returns>
-        private CardCombo GetBestCardCombo(List<Card> HandCards, bool broadcastPossibleCombos)
+        private CardCombo GetBestCardCombo(List<Card> HandCards, bool broadcastCombos)
         {
             var possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), false);
-            if (broadcastPossibleCombos)
+            if (broadcastCombos)
                 PossibleCardCombosChanged.Invoke(possibleCombos);
             return possibleCombos.Any() ? possibleCombos[0] : new CardCombo();
         }
@@ -293,7 +292,7 @@ namespace rummy
             if (keptSingle == null)
                 keptSingle = singleLayDownCards[0];
             singleLayDownCards.Remove(keptSingle);
-            NewThought.Invoke("Keeping single " + keptSingle);
+            NewThought.Invoke("Keep single " + keptSingle);
         }
 
         private void LayDownCardMoveFinished(Card card)
@@ -313,7 +312,7 @@ namespace rummy
                     cardCount = laydownCards.Runs[currentCardPackIdx].Count;
                     cardPackCount = laydownCards.Runs.Count;
                     break;
-                default: //LayStage.SINGLES
+                default: // LayStage.SINGLES
                     cardCount = singleLayDownCards.Count;
                     cardPackCount = 1;
 
@@ -335,21 +334,21 @@ namespace rummy
                 return;
             }
 
-            //All cards of the current pack have been laid down
+            // All cards of the current pack have been laid down
             currentCardIdx = 0;
             currentCardPackIdx++;
-            currentCardSpot = null;  //Find a new spot for the next pack
+            currentCardSpot = null;  // Find a new spot for the next pack
 
             if (currentCardPackIdx < cardPackCount)
                 return;
 
-            //All packs or singles have been laid down
+            // All packs or singles have been laid down
             if (layStage == LayStage.RUNS || layStage == LayStage.SINGLES ||
                 (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
             {
                 LayingCardsDone();
             }
-            else //LayStage.SETS -> Start laying runs
+            else // LayStage.SETS -> Start laying runs
             {
                 currentCardPackIdx = 0;
                 layStage = LayStage.RUNS;
@@ -363,7 +362,7 @@ namespace rummy
             HandCardSpot.AddCard(joker);
             returningJoker = null;
 
-            //All possible runs/sets/singles have to be calculated again with that newly returned joker
+            // All possible runs/sets/singles have to be calculated again with that newly returned joker
             laydownCards = GetBestCardCombo(HandCardSpot.Objects, true);
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
@@ -371,21 +370,21 @@ namespace rummy
             if (laydownCards.CardCount == HandCardCount)
                 KeepOneSingleCard();
 
-            //Proceed with waiting
+            // Proceed with waiting
             State = PlayerState.WAITING;
             waitStartTime = Time.time;
         }
 
         private void LayingCardsDone()
         {
-            //With only one card left, just end the game
+            // With only one card left, just end the game
             if (HandCardCount == 1)
             {
                 DiscardCard();
                 return;
             }
 
-            //Check if there are any (more) single cards to lay down
+            // Check if there are any (more) single cards to lay down
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
@@ -404,7 +403,7 @@ namespace rummy
         private void DiscardCard()
         {
             var thoughts = new List<string>();
-            Card card = PlayerUtil.GetCardToDiscard(HandCardSpot.Objects, laydownCards, singleLayDownCards, HasLaidDown, out thoughts);
+            Card card = PlayerUtil.GetCardToDiscard(HandCardSpot.Objects, singleLayDownCards, HasLaidDown, ref thoughts);
             thoughts.ForEach(t => NewThought.Invoke(t));
 
             State = PlayerState.DISCARDING;
@@ -418,7 +417,7 @@ namespace rummy
             card.MoveFinished.RemoveAllListeners();
             Tb.I.DiscardStack.AddCard(card);
 
-            //Refresh the list of possible card combos and singles for the UI
+            // Refresh the list of possible card combos and singles for the UI
             GetBestCardCombo(HandCardSpot.Objects, true);
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards, true);
             PossibleSinglesChanged.Invoke(singleLayDownCards);

@@ -90,7 +90,7 @@ namespace rummy.Cards
             var c = Card.CardSuit.CLUBS;
             var d = Card.CardSuit.DIAMONDS;
 
-            //One red and one black joker per deck
+            // One red and one black joker per deck
             if (!cardStackCreated)
             {
                 CreateCard(j, c);
@@ -163,37 +163,38 @@ namespace rummy.Cards
 
         private void CreateCustomStack()
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 10; i++)
             {
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
             }
-
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.HEARTS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.ACE, Card.CardSuit.SPADES);
 
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.JOKER, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.SIX, Card.CardSuit.CLUBS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.JOKER, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.CLUBS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TWO, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.CLUBS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
         }
 
         /// <summary>

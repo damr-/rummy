@@ -66,7 +66,7 @@ namespace rummy.UI
                     return Player.HandCardCount.ToString();
                 case Value.CardStackCardCount:
                     return CardStack.CardCount.ToString();
-                default: //case Value.DiscardStackCardCount:
+                default: // case Value.DiscardStackCardCount:
                     return DiscardStack.CardCount.ToString();
             }
         }

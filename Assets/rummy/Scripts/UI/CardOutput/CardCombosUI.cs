@@ -25,7 +25,7 @@ namespace rummy.UI.CardOutput
             if (cardCombos.Count == 0)
                 return;
 
-            //Do not display duplicate possibilities
+            // Do not display duplicate possibilities
             List<CardCombo> uniqueCombos = new List<CardCombo>();
             foreach (CardCombo combo in cardCombos)
             {

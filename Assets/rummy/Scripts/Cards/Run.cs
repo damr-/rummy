@@ -49,10 +49,10 @@ namespace rummy.Cards
                 return Cards[idx].Rank + (Cards.Count - 1 - idx);
         }
 
-        ///<summary>
-        ///Returns whether the cards of the other run LOOK the same as the cards in this
-        ///meaning that they are not checked for object-equality but only for same rank 
-        ///</summary>
+        /// <summary>
+        /// Returns whether the cards of the other run LOOK the same as the cards in this
+        /// meaning that they are not checked for object-equality but only for same rank 
+        /// </summary>
         public bool LooksEqual(Run other)
         {
             if (Count != other.Count)
@@ -81,7 +81,7 @@ namespace rummy.Cards
                 {
                     if (i == 0 && Cards.Count == 1)
                     {
-                        //The joker is the first and only card in the run, abort.
+                        // The joker is the first and only card in the run, abort.
                         break;
                     }
 
@@ -90,7 +90,7 @@ namespace rummy.Cards
                     // If the next card is a TWO: RANK(2-1)=Rank(1)=JOKER
                     if (jokerRank == Card.CardRank.JOKER)
                     {
-                        //JOKER is ACE, ACE counts 1 in ACE-2-3
+                        // JOKER is ACE, ACE counts 1 in ACE-2-3
                         value += 1;
                     }
                     else
@@ -100,7 +100,7 @@ namespace rummy.Cards
                 }
                 else if (rank == Card.CardRank.ACE && i == 0)
                 {
-                    //ACE counts 1 in ACE-2-3
+                    // ACE counts 1 in ACE-2-3
                     value += 1;
                 }
                 else
@@ -120,7 +120,7 @@ namespace rummy.Cards
             if (cards.Count < 3)
                 return false;
 
-            //A run can only consist of cards with the same suit (or joker with the matching color)
+            // A run can only consist of cards with the same suit (or joker with the matching color)
             Card representiveCard = cards.GetFirstCard();
             if (representiveCard == null)
                 return false;
@@ -141,14 +141,14 @@ namespace rummy.Cards
 
             for (int i = 0; i < cards.Count - 1; i++)
             {
-                //Ace can be the start of a run
+                // Ace can be the start of a run
                 if (i == 0 && cards[i].Rank == Card.CardRank.ACE)
                 {
-                    //Run is only valid if next card is a TWO or a JOKER
+                    // Run is only valid if next card is a TWO or a JOKER
                     if (cards[i + 1].Rank != Card.CardRank.TWO && !cards[i + 1].IsJoker())
                         return false;
                 }
-                //otherwise, rank has to increase by one
+                // otherwise, rank has to increase by one
                 else if (cards[i + 1].Rank != cards[i].Rank + 1 && !cards[i].IsJoker() && !cards[i + 1].IsJoker())
                     return false;
             }
@@ -164,7 +164,7 @@ namespace rummy.Cards
 
             var jokers = Cards.Where(c => c.IsJoker());
 
-            if (card.Suit != Suit || (Cards.Count == 14 && !jokers.Any())) //TODO NOT DONE
+            if (card.Suit != Suit || (Cards.Count == 14 && !jokers.Any()))
                 return false;
 
             // Check whether the new card replaces a joker

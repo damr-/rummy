@@ -143,8 +143,8 @@ namespace rummy.Cards
             {
                 if (Rank == CardRank.JOKER)
                 {
-                    //Most of the time, joker values are calculated directly since it depends on the context
-                    //Here, joker on hand is worth 0 so it will always be discarded last
+                    // Most of the time, joker values are calculated directly since it depends on the context
+                    // Here, joker on hand is worth 0 so it will always be discarded last
                     return 0;
                 }
                 return CardValues[Rank];
@@ -154,6 +154,7 @@ namespace rummy.Cards
         public bool IsBlack() => Color == CardColor.BLACK;
         public bool IsRed() => Color == CardColor.RED;
         public bool IsJoker() => Rank == CardRank.JOKER;
+        public bool LooksLike(Card other) => Suit == other.Suit && Rank == other.Rank;
 
         private bool isMoving;
         private Vector3 targetPos;
@@ -195,6 +196,6 @@ namespace rummy.Cards
             else
                 transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);
         }
-
     }
+
 }

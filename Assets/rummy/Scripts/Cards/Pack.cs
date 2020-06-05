@@ -18,7 +18,10 @@ namespace rummy.Cards
                 output += card + " ";
             return output.TrimEnd();
         }
-        
+
+        /// <summary>
+        /// Returns whether this card pack intersects the other (whether the two have at least one card in common)
+        /// </summary>
         public bool Intersects(Pack other) => Cards.Intersects(other.Cards);
 
         public bool Equal(Pack other)

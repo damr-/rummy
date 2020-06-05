@@ -22,8 +22,12 @@ namespace rummy.Cards
         public CardCombo(CardCombo other) : this(other.Sets, other.Runs) { }
         public CardCombo(List<Set> sets, List<Run> runs)
         {
-            Sets = new List<Set>(sets);
-            Runs = new List<Run>(runs);
+            Sets = new List<Set>();
+            foreach (var set in sets)
+                Sets.Add(new Set(set.Cards));
+            Runs = new List<Run>();
+            foreach (var run in runs)
+                Runs.Add(new Run(run.Cards));
         }
 
         /// <summary>
@@ -44,6 +48,12 @@ namespace rummy.Cards
                 cards.AddRange(run.Cards);
             return cards;
         }
+
+        /// <summary>
+        /// Returns whether this card combo intersects the other
+        /// (whether the sets and runs of the two combos have at least one card in common)
+        /// </summary>
+        public bool Intersects(CardCombo other) => GetCards().Intersects(other.GetCards());
 
         public override string ToString()
         {
@@ -105,7 +115,7 @@ namespace rummy.Cards
                     var cards = Sets[i].Cards;
                     cards.Add(joker);
                     Sets[i] = new Set(cards);
-                    //Tb.I.GameMaster.LogMsg("Add " + joker + " to set: " + Sets[i] + ". Value: " + Value, UnityEngine.LogType.Log);
+                    // Tb.I.GameMaster.LogMsg("Add " + joker + " to set: " + Sets[i] + ". Value: " + Value, UnityEngine.LogType.Log);
 
                     if (Value >= Tb.I.GameMaster.MinimumLaySum)
                         return true;
@@ -114,7 +124,6 @@ namespace rummy.Cards
                     break;
                 }
             }
-
 
             for (int i = 0; i < Runs.Count; i++)
             {
@@ -128,12 +137,12 @@ namespace rummy.Cards
                         continue;
 
                     var cards = Runs[i].Cards;
-                    if (jokerVal.Item2 > 0) //Try higher position first (=higher value)
+                    if (jokerVal.Item2 > 0) // Try higher position first (=higher value)
                         cards.Add(joker);
                     else if (jokerVal.Item1 > 0)
                         cards.Insert(0, joker);
                     Runs[i] = new Run(cards);
-                    //Tb.I.GameMaster.LogMsg("Add " + joker + " to run: " + Runs[i] + ". Value: " + Value, UnityEngine.LogType.Log);
+                    // Tb.I.GameMaster.LogMsg("Add " + joker + " to run: " + Runs[i] + ". Value: " + Value, UnityEngine.LogType.Log);
 
                     if (Value >= Tb.I.GameMaster.MinimumLaySum)
                         return true;

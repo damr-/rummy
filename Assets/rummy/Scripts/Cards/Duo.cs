@@ -21,6 +21,19 @@ namespace rummy.Cards
             return A.ToString() + B.ToString();
         }
 
+        /// <summary>
+        /// Returns whether both duos contain one identical card
+        /// and the other two cards look alike but are not the same
+        /// </summary>
+        public static bool AreHalfDuplicates(Duo d1, Duo d2)
+        {
+            if (d1.A == d2.A && d1.B == d2.B)
+                return false;
+            if (d1.A.LooksLike(d2.A) && d1.B == d2.B ||
+                d1.B.LooksLike(d2.B) && d1.A == d2.A)
+                return true;
+            return false;
+        }
     }
 
 }
