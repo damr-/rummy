@@ -10,7 +10,7 @@ namespace rummy
         public float radius = 3f;
         public float angleSpread = 180f;
 
-        public bool decrementAngle = false;
+        public bool leftToRight = false;
         protected float yIncrement = 0;
         protected float yOffset = 0;
 
@@ -24,14 +24,19 @@ namespace rummy
             if (Objects.Count == 0)
                 return;
 
-            float deltaAngle = angleSpread / Objects.Count;
+            float deltaAngle = GetDeltaAngle();
             for (int i = 0; i < Objects.Count; i++)
             {
-                var angle = startAngle + i * deltaAngle * (decrementAngle ? -1 : 1);
+                var angle = startAngle + i * deltaAngle * (leftToRight ? -1 : 1);
                 float x = radius * Mathf.Cos(angle * Mathf.PI / 180f);
                 float z = radius * Mathf.Sin(angle * Mathf.PI / 180f);
                 Objects[i].transform.position = transform.position + new Vector3(x, i * yIncrement + yOffset, z);
             }
+        }
+
+        protected virtual float GetDeltaAngle()
+        {
+            return angleSpread / Objects.Count;
         }
     }
 

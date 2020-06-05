@@ -15,9 +15,7 @@ namespace rummy.Cards
             RED = 1
         }
 
-        /// <summary>
-        /// The number of different card ranks in the game
-        /// </summary>
+        /// <summary> The number of different card ranks in the game </summary>
         public static readonly int CardRankCount = 14;
 
         public enum CardRank
@@ -38,9 +36,7 @@ namespace rummy.Cards
             ACE = 14
         }
 
-        /// <summary>
-        /// The number of different card suits in the game
-        /// </summary>
+        /// <summary> The number of different card suits in the game </summary>
         public static readonly int CardSuitCount = 4;
 
         public enum CardSuit

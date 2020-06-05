@@ -250,7 +250,7 @@ namespace rummy
             return cards;
         }
 
-        public void LogMsg(string message, LogType type)
+        public void Log(string message, LogType type)
         {
             string prefix = "[Seed " + Seed + ", Round " + RoundCount + "] ";
             switch (type)

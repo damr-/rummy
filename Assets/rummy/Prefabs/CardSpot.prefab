@@ -126,6 +126,6 @@ MonoBehaviour:
   startAngle: 180
   radius: 2
   angleSpread: 180
-  decrementAngle: 1
+  leftToRight: 1
   CardScale: 0.5
   Type: 0

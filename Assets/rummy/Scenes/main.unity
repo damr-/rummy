@@ -1232,7 +1232,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CardPrefab: {fileID: 3651395446447094408, guid: b629b8c2c35c14c4da4c5c8277af04c5,
     type: 3}
-  cardStackCreated: 0
+  CardDeckCount: 2
 --- !u!224 &1605447165 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 665067359653310325, guid: c9e90079e49a847dcb8749bb39f07cad,
@@ -1583,6 +1583,11 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1359064152131244019, guid: be6c50d0e3d5c4a3e9576812d5611d90,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1554910360796275609, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1597,6 +1602,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1699965912696960743, guid: be6c50d0e3d5c4a3e9576812d5611d90,
+        type: 3}
+      propertyPath: startAngle
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 1726704912104506666, guid: be6c50d0e3d5c4a3e9576812d5611d90,
         type: 3}
@@ -2555,7 +2565,7 @@ PrefabInstance:
     - target: {fileID: 665067359005479442, guid: c9e90079e49a847dcb8749bb39f07cad,
         type: 3}
       propertyPath: Seed
-      value: 1604
+      value: 1848
       objectReference: {fileID: 0}
     - target: {fileID: 665067359005479443, guid: c9e90079e49a847dcb8749bb39f07cad,
         type: 3}

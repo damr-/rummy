@@ -15,10 +15,10 @@ namespace rummy.Utility
             var allCombos = GetAllPossibleCombos(HandCards, LaidDownCards, false);
             var uniqueCombos = new List<CardCombo>();
 
-            foreach(var combo in allCombos)
+            foreach (var combo in allCombos)
             {
                 var isUnique = true;
-                foreach(var uCombo in uniqueCombos)
+                foreach (var uCombo in uniqueCombos)
                 {
                     if (combo.Intersects(uCombo))
                     {
@@ -41,8 +41,21 @@ namespace rummy.Utility
         /// </summary>
         public static List<CardCombo> GetAllPossibleCombos(List<Card> HandCards, List<Card> LaidDownCards, bool allowLayingAll)
         {
-            var sets = GetPossibleSets(HandCards);
-            var runs = GetPossibleRuns(HandCards);
+            //var jokerCards = HandCards.Where(c => !c.IsJoker());
+            var nonJokerCards = HandCards.Where(c => !c.IsJoker());
+
+            var sets = new List<Set>();
+            var cardsByRank = nonJokerCards.GetCardsByRank().ToList();
+            foreach (var rank in cardsByRank)
+                sets.AddRange(GetPossibleSets(rank.Value, new List<Card>()));
+
+            var runs = new List<Run>();
+            var cardsBySuit = nonJokerCards.GetCardsBySuit();
+            foreach (var entry in cardsBySuit)
+            {
+                var newRuns = GetPossibleRuns(entry.Value, new List<Card>()).Select(r => new Run(r));
+                runs.AddRange(newRuns);
+            }
 
             var jokerSets = GetPossibleJokerSets(HandCards, LaidDownCards);
             sets.AddRange(jokerSets);
@@ -51,39 +64,90 @@ namespace rummy.Utility
             runs.AddRange(jokerRuns);
 
             var allCombos = new List<CardCombo>();
-            GetPossibleSetAndRunCombos(allCombos, sets, runs, new CardCombo());
-            GetPossibleRunCombos(allCombos, runs, new CardCombo());
+            allCombos.AddRange(GetPossibleSetAndRunCombos(sets, runs, new CardCombo()));
+            allCombos.AddRange(GetPossibleRunCombos(runs, new CardCombo()));
             allCombos = allCombos.Where(combo => combo.PackCount > 0)
                                  .OrderByDescending(combo => combo.Value)
+                                 .ThenBy(combo => combo.PackCount)
                                  .ToList();
             if (allowLayingAll)
                 return allCombos;
             return allCombos.Where(c => c.CardCount < HandCards.Count).ToList();
         }
 
-        private static void GetPossibleRunCombos(List<CardCombo> possibleRunCombos, List<Run> runs, CardCombo currentRunCombo)
+        /// <summary>
+        /// Returns all possible sets (consisting of 3 or 4 cards)
+        /// which can be combined from 'availableCards' and the current set 'currentSet' 
+        /// </summary>
+        private static List<Set> GetPossibleSets(List<Card> availableCards, List<Card> currentSet)
         {
-            for (int i = 0; i < runs.Count; i++)
+            var possibleSets = new List<Set>();
+            for (int i = 0; i < availableCards.Count; i++)
             {
-                var currentCombo = new CardCombo(currentRunCombo);
-                currentCombo.AddRun(runs[i]);
+                Card card = availableCards[i];
+                var newSet = new List<Card>(currentSet) { card };
 
-                // This fixed run alone is also a possibility
-                possibleRunCombos.Add(currentCombo);
+                if (Set.IsValidSet(newSet))
+                    possibleSets.Add(new Set(newSet));
 
-                List<Run> otherRuns = runs.GetRange(i + 1, runs.Count - (i + 1)).Where(run => !run.Intersects(runs[i])).ToList();
-                if (otherRuns.Count > 0)
-                    GetPossibleRunCombos(possibleRunCombos, otherRuns, currentCombo);
+                if (newSet.Count == 4)
+                    continue;
+
+                var otherCards = availableCards.Skip(i + 1).Where(c => c.Suit != card.Suit).ToList();
+                if (otherCards.Count > 0)
+                    possibleSets.AddRange(GetPossibleSets(otherCards, newSet));
             }
+            return possibleSets;
         }
 
         /// <summary>
-        /// Calculates all possible combinations of card packs that could be laid down.
-        /// Stores the result in the passed List of LaydownCards 'possibleCombos'
-        /// <param name="possibleCombos"> The list which will contain all possible combinations in the end</param>
+        /// Returns all possible runs of 'minLength' <= length <= 'maxLength'
+        /// which can be created from in 'availableCards' and the current run 'currentRun'
         /// </summary>
-        private static void GetPossibleSetAndRunCombos(List<CardCombo> possibleCombos, List<Set> sets, List<Run> runs, CardCombo currentCombo)
+        /// <param name="availableCards">A list of cards with the same suit</param>
+        private static List<List<Card>> GetPossibleRuns(List<Card> availableCards, List<Card> currentRun, int minLength = 3, int maxLength = 14)
         {
+            var possibleRuns = new List<List<Card>>();
+            var nextRank = Card.CardRank.TWO;
+            if (currentRun.Count > 0)
+            {
+                var lastRank = currentRun[currentRun.Count - 1].Rank;
+                if (lastRank != Card.CardRank.ACE)
+                    nextRank = lastRank + 1;
+            }
+
+            foreach (Card card in availableCards)
+            {
+                // Only start runs when there's (minLength-1) more higher CardRanks or if it's an ACE
+                if (currentRun.Count == 0 && card.Rank != Card.CardRank.ACE && (int)card.Rank + (minLength - 1) > (int)Card.CardRank.ACE)
+                    continue;
+
+                if (currentRun.Count > 0 && card.Rank != nextRank)
+                    continue;
+
+                var newRun = new List<Card>(currentRun) { card };
+                if (newRun.Count >= minLength && newRun.Count <= maxLength)
+                    possibleRuns.Add(newRun);
+
+                if (newRun.Count == maxLength)
+                    continue;
+
+                var currentRank = card.Rank;
+                if (currentRun.Count == 0 && currentRank == Card.CardRank.ACE)
+                    currentRank = (Card.CardRank)1;
+
+                var higherCards = availableCards.Where(c => c.Rank > currentRank).ToList();
+                possibleRuns.AddRange(GetPossibleRuns(higherCards, newRun, minLength, maxLength));
+            }
+            return possibleRuns;
+        }
+
+        /// <summary>
+        /// Returns all possible combinations of sets and runs which can be found in the given lists of sets and runs
+        /// </summary>
+        private static List<CardCombo> GetPossibleSetAndRunCombos(List<Set> sets, List<Run> runs, CardCombo currentCombo)
+        {
+            var possibleCombos = new List<CardCombo>();
             for (int i = 0; i < sets.Count; i++)
             {
                 var combo = new CardCombo(currentCombo);
@@ -94,106 +158,42 @@ namespace rummy.Utility
 
                 // Get all runs which are possible with the current set
                 List<Run> possibleRuns = runs.Where(run => !run.Intersects(sets[i])).ToList();
-                GetPossibleRunCombos(possibleCombos, possibleRuns, combo);
+                possibleCombos.AddRange(GetPossibleRunCombos(possibleRuns, combo));
 
                 // Only sets which don't intersect the current one are possible combinations
-                List<Set> otherSets = sets.GetRange(i + 1, sets.Count - i - 1).Where(set => !set.Intersects(sets[i])).ToList();
+                List<Set> otherSets = sets.Skip(i + 1).Where(set => !set.Intersects(sets[i])).ToList();
                 if (otherSets.Count > 0)
-                    GetPossibleSetAndRunCombos(possibleCombos, otherSets, possibleRuns, combo);
+                    possibleCombos.AddRange(GetPossibleSetAndRunCombos(otherSets, possibleRuns, combo));
             }
+            return possibleCombos;
         }
 
         /// <summary>
-        /// Returns all possible sets found in 'PlayerCards' which consist of 3 or 4 cards
+        /// Returns all possible combinations of runs which can be found in the given list of runs
         /// </summary>
-        public static List<Set> GetPossibleSets(List<Card> PlayerCards)
+        private static List<CardCombo> GetPossibleRunCombos(List<Run> runs, CardCombo currentRunCombo)
         {
-            var possibleSets = new List<Set>();
-            var cardsByRank = PlayerCards.GetCardsByRank().Where(rank => rank.Key != Card.CardRank.JOKER);
-            foreach (var rank in cardsByRank)
-                GetPossibleSets(possibleSets, rank.Value, new List<Card>());
-            return possibleSets;
-        }
-
-        private static void GetPossibleSets(List<Set> possibleSets, List<Card> availableCards, List<Card> currentSet)
-        {
-            for (int i = 0; i < availableCards.Count; i++)
+            var possibleRunCombos = new List<CardCombo>();
+            for (int i = 0; i < runs.Count; i++)
             {
-                Card card = availableCards[i];
-                var newSet = new List<Card>(currentSet) { card };
+                var currentCombo = new CardCombo(currentRunCombo);
+                currentCombo.AddRun(runs[i]);
 
-                if (newSet.Count > 4)
-                    continue;
+                // This fixed run alone is also a possibility
+                possibleRunCombos.Add(currentCombo);
 
-                if (Set.IsValidSet(newSet) && (newSet.Count == 3 || newSet.Count == 4))
-                    possibleSets.Add(new Set(newSet));
-
-                List<Card> otherCards = availableCards.
-                        GetRange(i + 1, availableCards.Count - (i + 1)).
-                        Where(c => c.Suit != card.Suit).
-                        ToList();
-                GetPossibleSets(possibleSets, otherCards, newSet);
+                List<Run> otherRuns = runs.Skip(i + 1).Where(run => !run.Intersects(runs[i])).ToList();
+                if (otherRuns.Count > 0)
+                    possibleRunCombos.AddRange(GetPossibleRunCombos(otherRuns, currentCombo));
             }
-        }
-
-        /// <summary>
-        /// Returns all possible runs of length >= 3 which can be found in 'PlayerCards'
-        /// </summary>
-        public static List<Run> GetPossibleRuns(List<Card> PlayerCards)
-        {
-            var possibleRuns = new List<List<Card>>();
-            var cardsBySuit = PlayerCards.Where(c => !c.IsJoker())
-                                          .ToList()
-                                          .GetCardsBySuit();
-
-            foreach (var entry in cardsBySuit)
-                GetPossibleRuns(possibleRuns, entry.Value, entry.Value, new List<Card>());
-            return possibleRuns.Select(r => new Run(r)).ToList();
-        }
-
-        private static void GetPossibleRuns(List<List<Card>> possibleRuns, List<Card> sameSuitCards, List<Card> availableCards, List<Card> currentRun, int minLength = 3, int maxLength = 14)
-        {
-            foreach (Card card in availableCards)
-            {
-                // A card cannot start a run if there's less than minLength higher ranks, unless it's an ACE
-                if (currentRun.Count == 0 && card.Rank != Card.CardRank.ACE && (int)card.Rank + (minLength - 1) > (int)Card.CardRank.ACE)
-                    continue;
-
-                var newRun = new List<Card>(currentRun) { card };
-                if (newRun.Count >= minLength && newRun.Count <= maxLength)
-                    possibleRuns.Add(newRun);
-
-                List<Card> higherCards = GetOneRankHigherCards(sameSuitCards, newRun[newRun.Count - 1], newRun.Count == 1);
-                GetPossibleRuns(possibleRuns, sameSuitCards, higherCards, newRun, minLength, maxLength);
-            }
-        }
-
-        /// <summary>
-        /// Returns all cards in 'cards' which are one rank higher than 'card'
-        /// </summary>
-        /// <param name="firstInRun">Whether 'card' is the first card in a run</param>
-        /// <returns> The cards or an empty list if none were found </returns>
-        private static List<Card> GetOneRankHigherCards(List<Card> cards, Card card, bool firstInRun)
-        {
-            List<Card> foundCards = new List<Card>();
-            foreach (Card otherCard in cards)
-            {
-                if (otherCard == card || foundCards.Contains(otherCard))
-                    continue;
-                // Allow going from ACE to TWO but only if ACE is the first card in the run
-                if (firstInRun && card.Rank == Card.CardRank.ACE && otherCard.Rank == Card.CardRank.TWO)
-                    foundCards.Add(otherCard);
-                else if (otherCard.Rank == card.Rank + 1)
-                    foundCards.Add(otherCard);
-            }
-            return foundCards;
+            return possibleRunCombos;
         }
 
         /// <summary>
         /// Looks for duos which could form complete 3-card-runs using a joker and
         /// returns all possible combinations using the available joker cards
         /// </summary>
-        public static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards)
+        private static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
             var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
@@ -201,7 +201,7 @@ namespace rummy.Utility
 
             var thoughts = new List<string>();
             var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, ref thoughts);
-            if (!duoRuns.Any())
+            if (duoRuns.Count == 0)
                 return new List<Run>();
 
             var possibleJokerRuns = new List<Run>();
@@ -234,71 +234,70 @@ namespace rummy.Utility
         /// <returns></returns>
         public static List<Duo> GetAllDuoRuns(List<Card> PlayerCards, List<Card> LaidDownCards, ref List<string> thoughts)
         {
-            var duoRunList = new List<List<Card>>();
-            var playerCardsNoJokers = PlayerCards.Where(c => !c.IsJoker()).ToList();
-            var cardsBySuit = playerCardsNoJokers.GetCardsBySuit();
-            foreach (var entry in cardsBySuit)
-                GetPossibleRuns(duoRunList, entry.Value, entry.Value, new List<Card>(), 2, 2);
-
             var duoRuns = new List<Duo>();
-            foreach (var duoRun in duoRunList)
-                duoRuns.Add(new Duo(duoRun[0], duoRun[1]));
+            var cardsBySuit = PlayerCards.Where(c => !c.IsJoker()).GetCardsBySuit();
+
+            foreach (var entry in cardsBySuit)
+            {
+                var newDuos = GetPossibleRuns(entry.Value, new List<Card>(), 2, 2).Select(r => new Duo(r[0], r[1]));
+                duoRuns.AddRange(newDuos);
+            }
 
             // Don't keep duo runs if all possible run combinations were laid down already
             var tmpRuns = new List<Duo>(duoRuns);
             foreach (var duoRun in tmpRuns)
             {
                 var lowerRank = Card.CardRank.JOKER;
-                int lowerCount = 0;
-                bool allLowerLaid = false;
+                bool allLowerLaid = true;
                 if (duoRun.A.Rank == Card.CardRank.TWO)
                     lowerRank = Card.CardRank.ACE;
-                else if (duoRun.A.Rank > Card.CardRank.TWO)
+                else if (duoRun.A.Rank < Card.CardRank.ACE)
                     lowerRank = duoRun.A.Rank - 1;
                 if (lowerRank != Card.CardRank.JOKER)
                 {
-                    lowerCount = LaidDownCards.Count(c => c.Rank == lowerRank && c.Suit == duoRun.A.Suit);
-                    allLowerLaid = lowerCount == 2;
+                    var lowerCount = LaidDownCards.Count(c => c.Rank == lowerRank && c.Suit == duoRun.A.Suit);
+                    allLowerLaid = lowerCount == Tb.I.CardStack.CardDeckCount;
                 }
 
                 var higherRank = Card.CardRank.JOKER;
-                int higherCount = 0;
-                bool allHigherLaid = false;
+                bool allHigherLaid = true;
                 if (duoRun.B.Rank < Card.CardRank.ACE)
                     higherRank = duoRun.B.Rank + 1;
                 if (higherRank != Card.CardRank.JOKER)
                 {
-                    higherCount = LaidDownCards.Count(c => c.Rank == higherRank && c.Suit == duoRun.A.Suit);
-                    allHigherLaid = higherCount == 2;
+                    var higherCount = LaidDownCards.Count(c => c.Rank == higherRank && c.Suit == duoRun.A.Suit);
+                    allHigherLaid = higherCount == Tb.I.CardStack.CardDeckCount;
                 }
 
-                if ((allLowerLaid && higherRank == Card.CardRank.JOKER) ||
-                    (allHigherLaid && lowerRank == Card.CardRank.JOKER) ||
-                    (allHigherLaid && allLowerLaid))
+                if (allHigherLaid && allLowerLaid)
                 {
-                    thoughts.Add("Don't keep " + duoRun.A + duoRun.B + ": all cards for runs already laid down twice");
+                    string cards = "";
+                    if (lowerRank != Card.CardRank.JOKER)
+                        cards += Card.RankLetters[lowerRank] + Card.SuitSymbols[duoRun.A.Suit] + ",";
+                    if (higherRank != Card.CardRank.JOKER)
+                        cards += Card.RankLetters[higherRank] + Card.SuitSymbols[duoRun.A.Suit];
+                    thoughts.Add("Don't keep " + duoRun.A + duoRun.B + ": " + cards.TrimEnd(',') + " already laid down twice");
                     duoRuns.Remove(duoRun);
                 }
             }
 
-            // Find duos with the card in the middle missing
-            foreach (Card c1 in playerCardsNoJokers)
+            // Find duos with the card in the middle missing (looping through all cards keeps c1<c2)
+            foreach (var entry in cardsBySuit)
             {
-                foreach (Card c2 in playerCardsNoJokers)
+                foreach (Card c1 in entry.Value)
                 {
-                    if (c1 == c2 || c1.Suit != c2.Suit || c1.Rank == c2.Rank)
-                        continue;
-
-                    if ((c1.Rank == Card.CardRank.ACE && c2.Rank == Card.CardRank.THREE) ||
-                        (c1.Rank == c2.Rank - 2))
+                    foreach (Card c2 in entry.Value)
                     {
-                        var middleRank = c1.Rank + 1;
-                        var middleSuit = c1.Suit;
-                        if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == middleSuit) < 2)
+                        if (c2.Rank - c1.Rank != 2 &&
+                            (c1.Rank != Card.CardRank.ACE || c2.Rank != Card.CardRank.THREE))
+                            continue;
+
+                        var middleRank = c2.Rank - 1;
+                        if (LaidDownCards.Count(c => c.Rank == middleRank && c.Suit == entry.Key) < Tb.I.CardStack.CardDeckCount)
                             duoRuns.Add(new Duo(c1, c2));
                         else
                             thoughts.Add("Don't keep " + c1 + c2 + ": " + Card.RankLetters[middleRank] +
-                                Card.SuitSymbols[middleSuit] + " already laid down twice");
+                                Card.SuitSymbols[c1.Suit] + " already laid down twice");
                     }
                 }
             }
@@ -308,7 +307,7 @@ namespace rummy.Utility
         /// <summary>
         /// Returns all possible sets which can be created using joker cards.
         /// </summary>
-        public static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards)
+        private static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
             var jokerCards = PlayerCards.Where(c => c.IsJoker());
             if (!jokerCards.Any())
@@ -316,7 +315,7 @@ namespace rummy.Utility
 
             var thoughts = new List<string>();
             var duoSets = GetAllDuoSets(PlayerCards, LaidDownCards, ref thoughts);
-            if (!duoSets.Any())
+            if (duoSets.Count == 0)
                 return new List<Set>();
 
             var possibleJokerSets = new List<Set>();
@@ -358,7 +357,7 @@ namespace rummy.Utility
         /// </summary>
         /// <param name="PlayerHandCards">The cards in the player's hand</param>
         /// <param name="LaidDownCards">Cards which have already been laid down by players.
-        /// Used to check whether it is unnecessary to keep a certain duo, because the third card has already been laid down twice</param>
+        /// Used to check if it is unnecessary to keep a certain duo, because the needed cards have already been laid down</param>
         /// <returns></returns>
         public static List<Duo> GetAllDuoSets(List<Card> PlayerHandCards, List<Card> LaidDownCards, ref List<string> thoughts)
         {
@@ -383,45 +382,20 @@ namespace rummy.Utility
                         var otherSuits = Card.GetOtherTwo(c1.Suit, c2.Suit);
                         int count = LaidDownCards.Count(c => c.Rank == rank && otherSuits.Contains(c.Suit));
                         // Duo can be finished if the necessary cards haven't all been laid down yet
-                        if (count < 4)
+                        if (count < 2 * Tb.I.CardStack.CardDeckCount)
                             newDuos.Add(new Duo(c1, c2));
                         else
+                        {
                             thoughts.Add("Don't keep " + c1 + c2 + ": " +
                                 Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[0]] + "," +
                                 Card.RankLetters[rank] + Card.SuitSymbols[otherSuits[1]] +
                                 " already laid down twice each");
+                        }
                     }
                 }
                 allDuos.AddRange(newDuos);
             }
             return allDuos;
-        }
-
-        /// <summary>
-        /// Returns the run/set from the given list of runs/sets which has the lowest value
-        /// </summary>
-        /// <param name="runs">An optional list of runs to check</param>
-        /// <param name="sets">An optional list of sets to check</param>
-        /// <returns></returns>
-        public static Pack GetLowestValue(List<Run> runs, List<Set> sets)
-        {
-            var minValRun = runs.OrderBy(run => run.Value).FirstOrDefault();
-            var minValSet = sets.OrderBy(set => set.Value).FirstOrDefault();
-            if (minValRun != null && minValSet != null)
-            {
-                if (minValRun.Value < minValSet.Value)
-                    minValSet = null;
-                else
-                    minValRun = null;
-            }
-
-            if (minValRun != null)
-                return minValRun;
-            else if (minValSet != null)
-                return minValSet;
-            else
-                throw new RummyException("Could not find the lowest valued set or run!" +
-                    " Maybe both lists are empty?");
         }
 
         /// <summary>

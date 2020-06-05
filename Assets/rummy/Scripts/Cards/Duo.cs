@@ -7,19 +7,21 @@ namespace rummy.Cards
     {
         public Card A { get; private set; }
         public Card B { get; private set; }
-        public int Value() => A.Value + B.Value;
-        public IEnumerable<Card> GetList() => new List<Card>() { A, B };
+        public int Value { get; private set; }
 
         public Duo(Card card1, Card card2)
         {
             A = card1;
             B = card2;
+
+            if (A.Rank == Card.CardRank.ACE)
+                Value = 1 + B.Value;
+            else
+                Value = A.Value + B.Value;
         }
 
-        public override string ToString()
-        {
-            return A.ToString() + B.ToString();
-        }
+        public IEnumerable<Card> GetList() => new List<Card>() { A, B };
+        public override string ToString() => A.ToString() + B.ToString();
 
         /// <summary>
         /// Returns whether both duos contain one identical card

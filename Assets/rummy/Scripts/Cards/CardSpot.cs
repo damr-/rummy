@@ -5,14 +5,9 @@ using UnityEngine;
 
 namespace rummy.Cards
 {
-    public class CardSpot : RadialLayout<Card>
+    public class CardSpot : HandCardSpot
     {
-        public override List<Card> Objects { get; protected set; } = new List<Card>();
-        public bool HasCards => Objects.Count > 0;
         public override string ToString() => gameObject.name;
-
-        [Tooltip("The factor by which cards will be scaled when added to the spot. When removed, the scaling is undone")]
-        public float CardScale = 1.0f;
 
         public enum SpotType
         {
@@ -24,17 +19,18 @@ namespace rummy.Cards
 
         protected override void InitValues()
         {
-            yIncrement = -0.01f * (decrementAngle ? -1 : 1);
+            yIncrement = 0.01f;
         }
 
-        public List<Card> ResetSpot()
+        protected override float GetDeltaAngle()
+        {
+            return angleSpread / (Mathf.Max(Objects.Count, 4) - 1);
+        }
+
+        public override List<Card> ResetSpot()
         {
             Type = SpotType.NONE;
-
-            var cards = new List<Card>(Objects);
-            while (Objects.Count > 0)
-                RemoveCard(Objects[0]);
-            return cards;
+            return base.ResetSpot();
         }
 
         public int GetValue()
@@ -74,31 +70,26 @@ namespace rummy.Cards
             return count == 4;
         }
 
-        public void AddCard(Card card)
+        public override void AddCard(Card card)
         {
-            if (Objects.Contains(card))
-                throw new RummyException("CardSpot " + gameObject.name + " already contains " + card);
-
-            var cards = new List<Card>(Objects);
-
             // By default, add the new card at the end
-            int idx = cards.Count;
+            int idx = Objects.Count;
 
             // If the run is empty or only contains joker cards, also add the new card at the end
             // otherwise
-            if (Type == SpotType.RUN && cards.Count(c => !c.IsJoker()) > 0)
+            if (Type == SpotType.RUN && Objects.Count(c => !c.IsJoker()) > 0)
             {
                 // Find out the rank of the last card in the run
-                int highestNonJokerIdx = cards.GetFirstCardIndex(cards.Count - 1, false);
-                var highestNonJokerRank = cards[highestNonJokerIdx].Rank;
-                var highestRank = highestNonJokerRank + (cards.Count - 1 - highestNonJokerIdx);
+                int highestNonJokerIdx = Objects.GetFirstCardIndex(Objects.Count - 1, false);
+                var highestNonJokerRank = Objects[highestNonJokerIdx].Rank;
+                var highestRank = highestNonJokerRank + (Objects.Count - 1 - highestNonJokerIdx);
                 if (highestNonJokerIdx == 0 && highestNonJokerRank == Card.CardRank.ACE)
-                    highestRank = (Card.CardRank)cards.Count;
+                    highestRank = (Card.CardRank)Objects.Count;
 
                 // If adding ACE after King is not possible, add ACE at beginning
                 if (card.Rank == Card.CardRank.ACE &&
                     (highestRank < Card.CardRank.KING ||
-                    (highestRank == Card.CardRank.ACE && !cards.Last().IsJoker())))
+                    (highestRank == Card.CardRank.ACE && !Objects[Objects.Count - 1].IsJoker())))
                 {
                     idx = 0;
                 }
@@ -107,22 +98,22 @@ namespace rummy.Cards
                     if (highestRank == Card.CardRank.ACE)
                         idx = 0;
                     else
-                        idx = cards.Count;
+                        idx = Objects.Count;
                 }
                 else // Any other case, the card will be sorted by rank
                 {
-                    for (int i = 0; i < cards.Count; i++)
+                    for (int i = 0; i < Objects.Count; i++)
                     {
-                        var rank = cards[i].Rank;
-                        if (cards[i].IsJoker()) // Figure out the rank of the card which the joker is replacing
+                        var rank = Objects[i].Rank;
+                        if (Objects[i].IsJoker()) // Figure out the rank of the card which the joker is replacing
                         {
-                            if (i == 0 && cards.Count == 1)
+                            if (i == 0 && Objects.Count == 1)
                             {
                                 // Joker is the only card in the run and the next card comes after the joker
                                 idx = 1;
                                 break;
                             }
-                            rank = CardUtil.GetJokerRank(cards, i);
+                            rank = CardUtil.GetJokerRank(Objects, i);
                         }
                         else if (i == 0 && rank == Card.CardRank.ACE)
                             rank = (Card.CardRank)1; // Although it's not actually a Joker
@@ -135,20 +126,7 @@ namespace rummy.Cards
                     }
                 }
             }
-
-            cards.Insert(idx, card);
-            card.transform.SetParent(transform, true);
-            card.transform.localScale = card.transform.localScale * CardScale;
-            Objects = new List<Card>(cards);
-            UpdatePositions();
-        }
-
-        public void RemoveCard(Card card)
-        {
-            Objects.Remove(card);
-            card.transform.localScale = card.transform.localScale / CardScale;
-            card.transform.SetParent(null, true);
-            UpdatePositions();
+            AddCard(card, idx);
         }
 
         /// <summary>

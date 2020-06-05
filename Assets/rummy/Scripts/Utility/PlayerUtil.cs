@@ -40,7 +40,7 @@ namespace rummy.Utility
                 for (int i = 0; i < allDuos.Count; i++)
                 {
                     var canAdd = true;
-                    foreach(var duo in duos)
+                    foreach (var duo in duos)
                     {
                         if (Duo.AreHalfDuplicates(allDuos[i], duo))
                         {
@@ -48,12 +48,12 @@ namespace rummy.Utility
                             break;
                         }
                     }
-                    if(canAdd)
+                    if (canAdd)
                         duos.Add(allDuos[i]);
                 }
 
                 // Keep high value duos if the player has yet to lay down any cards
-                duos = (HasLaidDown ? duos.OrderBy(duo => duo.Value()) : duos.OrderByDescending(duo => duo.Value())).ToList();
+                duos = (HasLaidDown ? duos.OrderBy(duo => duo.Value) : duos.OrderByDescending(duo => duo.Value)).ToList();
 
                 var keptDuos = new List<Duo>();
                 var notKeptDuos = new List<Duo>();
@@ -68,9 +68,9 @@ namespace rummy.Utility
                     else
                         notKeptDuos.Add(duo);
                 }
-                if (keptDuos.Any())
+                if (keptDuos.Count > 0)
                     thoughts.Add(keptDuos.GetListMsg("Keep duo"));
-                if (notKeptDuos.Any())
+                if (notKeptDuos.Count > 0)
                     thoughts.Add(notKeptDuos.GetListMsg("Cannot keep duo"));
             }
 
@@ -86,11 +86,12 @@ namespace rummy.Utility
         {
             var possibleDiscards = new List<Card>(PlayerHandCards);
 
-            // Don't discard unique, finished card combos
-            var combos = CardUtil.GetAllUniqueCombos(PlayerHandCards, Tb.I.GameMaster.GetAllCardSpotCards());
+            // Don't discard unique, finished card combos with enough value
+            var combos = CardUtil.GetAllUniqueCombos(PlayerHandCards, Tb.I.GameMaster.GetAllCardSpotCards())
+                                    .Where(c => c.Value > Tb.I.GameMaster.MinimumLaySum).ToList();
             foreach (var combo in combos)
                 possibleDiscards = possibleDiscards.Except(combo.GetCards()).ToList();
-            if(combos.Any())
+            if (combos.Count > 0)
                 thoughts.Add(combos.GetListMsg("Keep combo"));
 
             if (possibleDiscards.Count == 0)
@@ -115,7 +116,7 @@ namespace rummy.Utility
                     singleCards.Remove(keptSingle);
                 }
 
-                if (singleCards.Any())
+                if (singleCards.Count > 0)
                     thoughts.Add(singleCards.GetListMsg("Keep single"));
             }
             return possibleDiscards;
@@ -135,7 +136,7 @@ namespace rummy.Utility
                 hypotheticalHandCards.Remove(card);
 
                 var possibleCombos = CardUtil.GetAllPossibleCombos(hypotheticalHandCards, Tb.I.GameMaster.GetAllCardSpotCards(), true);
-                int hypotheticalValue = possibleCombos.Any() ? possibleCombos[0].Value : 0;
+                int hypotheticalValue = possibleCombos.Count > 0 ? possibleCombos[0].Value : 0;
 
                 if (hypotheticalValue == 0)
                     continue;
@@ -157,14 +158,14 @@ namespace rummy.Utility
         /// <summary>
         /// Updates the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
         /// </summary>
-        /// <param name="turnEnded">Whether the update happens after the player's turn has ended and a card was already discarded</param>
+        /// <param name="turnEnded">Whether the update happens right after the player has discarded a card and therefore ended their turn</param>
         public static List<Single> UpdateSingleLaydownCards(List<Card> PlayerHandCards, CardCombo laydownCards, bool turnEnded = false)
         {
             var singleLayDownCards = new List<Single>();
 
             var availableCards = new List<Card>(PlayerHandCards);
 
-            // Don't check cards part of sets or runs
+            // Exclude the cards which will be laid down anyway as sets/runs
             availableCards = availableCards.Except(laydownCards.GetCards()).ToList();
 
             var jokerCards = availableCards.Where(c => c.IsJoker());
@@ -178,12 +179,17 @@ namespace rummy.Utility
             {
                 var cardSpots = Tb.I.GameMaster.GetAllCardSpots().Where(cs => !cs.IsFull(false));
                 canFitCard = false;
-                foreach (CardSpot cardSpot in cardSpots)
+
+                for (int i = availableCards.Count - 1; i >= 0; i--)
                 {
-                    for (int i = availableCards.Count - 1; i >= 0; i--)
+                    var availableCard = availableCards[i];
+
+                    CardSpot chosenSpot = null;
+                    Card joker = null;
+
+                    foreach (var cardSpot in cardSpots)
                     {
-                        Card availableCard = availableCards[i];
-                        if (!cardSpot.CanFit(availableCard, out Card joker))
+                        if (!cardSpot.CanFit(availableCard, out joker))
                             continue;
 
                         // Find all single cards which are already gonna be added to the cardspot in question
@@ -202,8 +208,15 @@ namespace rummy.Utility
                         if (alreadyPlanned)
                             continue;
 
-                        var newEntry = new Single(availableCard, cardSpot, joker);
-                        singleLayDownCards.Add(newEntry);
+                        // Try to find a spot with a replacable joker. Single jokers just take the first found spot
+                        chosenSpot = cardSpot;
+                        if (joker != null || allowedJokers)
+                            break;
+                    }
+
+                    if (chosenSpot != null)
+                    {
+                        singleLayDownCards.Add(new Single(availableCard, chosenSpot, joker));
                         availableCards.RemoveAt(i);
                         canFitCard = true;
                     }

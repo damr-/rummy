@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1280647515219737037}
-  - component: {fileID: 6559614368312652775}
+  - component: {fileID: 1699965912696960743}
   m_Layer: 0
   m_Name: HandCardSpot
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Father: {fileID: 4032213821864712742}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6559614368312652775
+--- !u!114 &1699965912696960743
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,15 +41,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 613060522907015676}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44c72d2182036412193b8aa44c032e1a, type: 3}
+  m_Script: {fileID: 11500000, guid: cf1679c469aec40d5aa3679adc1643da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   startAngle: 0
   radius: 4
   angleSpread: 180
-  decrementAngle: 0
+  leftToRight: 0
   CardScale: 1
-  Type: 0
 --- !u!1 &1026081579024202515
 GameObject:
   m_ObjectHideFlags: 0
@@ -174,7 +173,7 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 6693671369617983552}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 55
+  CharsPerLine: 60
 --- !u!114 &8724135574287151886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2610,7 +2609,7 @@ MonoBehaviour:
   startAngle: 0
   radius: 8
   angleSpread: 180
-  decrementAngle: 0
+  leftToRight: 0
   CardSpotPrefab: {fileID: 6361658429361687218, guid: 9133b941f36f6463ba0df50f00585ad7,
     type: 3}
   degreesPerSpot: 40

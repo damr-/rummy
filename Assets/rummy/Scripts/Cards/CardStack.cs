@@ -9,10 +9,11 @@ namespace rummy.Cards
     public class CardStack : MonoBehaviour
     {
         public GameObject CardPrefab;
+        public int CardDeckCount = 2;
 
         private Stack<Card> Cards = new Stack<Card>();
         public int CardCount => Cards.Count;
-        public bool cardStackCreated = false;
+        private bool cardStackCreated = false;
 
         private CardStackType type;
 
@@ -64,12 +65,12 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Create two regular decks of cards with one red and one black joker each
-        /// or 'order' the existing cards when a new game starts
+        /// Create <see cref="CardDeckCount"/> regular decks of cards with one red and one black joker each
+        /// or order the existing cards when a new game starts
         /// </summary>
         private void CreateCardStack()
         {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < CardDeckCount; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
@@ -109,7 +110,7 @@ namespace rummy.Cards
 
         private void CreateCardStackNoJoker()
         {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < CardDeckCount; i++)
             {
                 for (int suit = 1; suit <= Card.CardSuitCount; suit++)
                 {
@@ -165,36 +166,36 @@ namespace rummy.Cards
         {
             for (int i = 0; i < 10; i++)
             {
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
-                CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
+                CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             }
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.ACE, Card.CardSuit.SPADES);
-
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
             CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.SIX, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.DIAMONDS);
 
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.SEVEN, Card.CardSuit.CLUBS);
-
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.EIGHT, Card.CardSuit.CLUBS);
-
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
-
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.QUEEN, Card.CardSuit.SPADES);
-
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
-
             CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.JACK, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
+
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.CLUBS);
+            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
         }
 
         /// <summary>

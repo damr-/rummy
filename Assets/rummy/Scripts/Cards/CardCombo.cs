@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using System;
 using rummy.Utility;
 
 namespace rummy.Cards
@@ -115,7 +114,6 @@ namespace rummy.Cards
                     var cards = Sets[i].Cards;
                     cards.Add(joker);
                     Sets[i] = new Set(cards);
-                    // Tb.I.GameMaster.LogMsg("Add " + joker + " to set: " + Sets[i] + ". Value: " + Value, UnityEngine.LogType.Log);
 
                     if (Value >= Tb.I.GameMaster.MinimumLaySum)
                         return true;
@@ -132,7 +130,7 @@ namespace rummy.Cards
                     Card joker = availableJokers[j];
                     if (!Runs[i].CanFit(joker, out _))
                         continue;
-                    (int,int) jokerVal = Runs[i].JokerValue();
+                    (int, int) jokerVal = Runs[i].JokerValue();
                     if (jokerVal.Item1 == 0 && jokerVal.Item2 == 0)
                         continue;
 
@@ -142,7 +140,6 @@ namespace rummy.Cards
                     else if (jokerVal.Item1 > 0)
                         cards.Insert(0, joker);
                     Runs[i] = new Run(cards);
-                    // Tb.I.GameMaster.LogMsg("Add " + joker + " to run: " + Runs[i] + ". Value: " + Value, UnityEngine.LogType.Log);
 
                     if (Value >= Tb.I.GameMaster.MinimumLaySum)
                         return true;

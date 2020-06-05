@@ -25,7 +25,7 @@ namespace rummy
         public PlayerState State { get; private set; } = PlayerState.IDLE;
 
         #region PlayerCardSpot
-        private CardSpot HandCardSpot;
+        private HandCardSpot HandCardSpot;
         public int HandCardCount { get { return HandCardSpot.Objects.Count; } }
 
         private CardSpotsNode PlayerCardSpotsNode;
@@ -89,7 +89,7 @@ namespace rummy
 
         private void Start()
         {
-            HandCardSpot = GetComponentInChildren<CardSpot>();
+            HandCardSpot = GetComponentInChildren<HandCardSpot>();
             PlayerCardSpotsNode = GetComponentInChildren<CardSpotsNode>();
         }
 
@@ -145,7 +145,7 @@ namespace rummy
                     case LayStage.RUNS:
                         card = laydownCards.Runs[currentCardPackIdx].Cards[currentCardIdx];
                         break;
-                    default: // LayStage.SINGLES
+                    default: // LayStage.SINGLES:
                         card = singleLayDownCards[currentCardIdx].Card;
                         break;
                 }
@@ -218,7 +218,7 @@ namespace rummy
 
             var combos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false);
             PossibleCardCombosChanged.Invoke(combos);
-            laydownCards = combos.Any() ? combos[0] : new CardCombo();
+            laydownCards = combos.Count > 0 ? combos[0] : new CardCombo();
             singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
@@ -240,7 +240,7 @@ namespace rummy
                             var combo = new CardCombo(combos[i]);
                             var jokersInUse = combo.GetCards().Where(c => c.IsJoker()).ToList();
                             var remainingJokers = jokers.Except(jokersInUse).ToList();
-                            if (!remainingJokers.Any())
+                            if (remainingJokers.Count == 0)
                                 continue;
                             var canLayCombo = combo.TryAddJoker(remainingJokers);
                             if (canLayCombo && combo.CardCount < HandCardCount)
@@ -279,7 +279,7 @@ namespace rummy
             var possibleCombos = CardUtil.GetAllPossibleCombos(HandCards, Tb.I.GameMaster.GetAllCardSpotCards(), false);
             if (broadcastCombos)
                 PossibleCardCombosChanged.Invoke(possibleCombos);
-            return possibleCombos.Any() ? possibleCombos[0] : new CardCombo();
+            return possibleCombos.Count > 0 ? possibleCombos[0] : new CardCombo();
         }
 
         /// <summary>

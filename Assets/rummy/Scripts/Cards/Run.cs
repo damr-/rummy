@@ -81,13 +81,14 @@ namespace rummy.Cards
                 {
                     if (i == 0 && Cards.Count == 1)
                     {
-                        // The joker is the first and only card in the run, abort.
+                        // The joker is the first and only card in the run,
+                        // which will have value zero for now
                         break;
                     }
 
                     var jokerRank = CardUtil.GetJokerRank(Cards, i);
 
-                    // If the next card is a TWO: RANK(2-1)=Rank(1)=JOKER
+                    // If the next card is a TWO, jokerRank is RANK(2-1)=Rank(1)=JOKER
                     if (jokerRank == Card.CardRank.JOKER)
                     {
                         // JOKER is ACE, ACE counts 1 in ACE-2-3

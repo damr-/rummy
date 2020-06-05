@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using rummy.Cards;
 
 namespace rummy.Utility
@@ -6,14 +8,14 @@ namespace rummy.Utility
     public static class Extensions
     {
         /// <summary>
-        /// Returns the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list.
+        /// Returns the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list
         /// </summary>
-        public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this List<Card> cards)
+        public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this IEnumerable<Card> cards)
         {
             var cardsByRank = new Dictionary<Card.CardRank, List<Card>>();
-            for (int i = 0; i < cards.Count; i++)
+            for (int i = 0; i < cards.Count(); i++)
             {
-                Card card = cards[i];
+                Card card = cards.ElementAt(i);
                 if (cardsByRank.ContainsKey(card.Rank))
                     cardsByRank[card.Rank].Add(card);
                 else
@@ -23,14 +25,14 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the given list of cards as a dictionary. Keys are CardSuits, Values are all the cards in 'cards' with that suit.
+        /// Returns the given list of cards as a dictionary. Keys are CardSuits, Values are all the cards in 'cards' with that suit
         /// </summary>
-        public static IDictionary<Card.CardSuit, List<Card>> GetCardsBySuit(this List<Card> cards)
+        public static IDictionary<Card.CardSuit, List<Card>> GetCardsBySuit(this IEnumerable<Card> cards)
         {
             var cardsBySuit = new Dictionary<Card.CardSuit, List<Card>>();
-            for (int i = 0; i < cards.Count; i++)
+            for (int i = 0; i < cards.Count(); i++)
             {
-                Card card = cards[i];
+                Card card = cards.ElementAt(i);
                 if (cardsBySuit.ContainsKey(card.Suit))
                     cardsBySuit[card.Suit].Add(card);
                 else
