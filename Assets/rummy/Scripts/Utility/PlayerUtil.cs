@@ -11,14 +11,14 @@ namespace rummy.Utility
         /// Returns the optimal card in 'PlayerHandCards' to discard.
         /// There will always be a valid card returned, no need for null checks
         /// </summary>
-        public static Card GetCardToDiscard(List<Card> PlayerHandCards, List<Single> singleLayDownCards, bool HasLaidDown, out List<string> thoughts)
+        public static Card GetCardToDiscard(List<Card> PlayerHandCards, CardCombo layDownCards, List<Single> singleLayDownCards, bool HasLaidDown, out List<string> thoughts)
         {
             thoughts = new List<string>();
             var possibleDiscards = new List<Card>(PlayerHandCards);
 
             //Try to keep the best combo and known singles on hand for laying down later
             if (!HasLaidDown)
-                possibleDiscards = KeepUsableCards(PlayerHandCards, singleLayDownCards, out thoughts);
+                possibleDiscards = KeepUsableCards(PlayerHandCards, layDownCards, singleLayDownCards, out thoughts);
 
             //Don't allow discarding joker cards unless they're all that's left
             var jokerCards = possibleDiscards.Where(c => c.IsJoker());
@@ -66,17 +66,15 @@ namespace rummy.Utility
         /// Returns a list of cards in 'PlayerHandCards' which can be discarded.
         /// It always contains 1 or more cards.
         /// </summary>
-        public static List<Card> KeepUsableCards(List<Card> PlayerHandCards, List<Single> singleLayDownCards, out List<string> thoughts)
+        public static List<Card> KeepUsableCards(List<Card> PlayerHandCards, CardCombo layDownCards, List<Single> singleLayDownCards, out List<string> thoughts)
         {
             thoughts = new List<string>();
 
             var possibleDiscards = new List<Card>(PlayerHandCards);
             var laidDownCards = Tb.I.GameMaster.GetAllCardSpotCards();
-            var combos = CardUtil.GetAllPossibleCombos(PlayerHandCards, laidDownCards, false);
 
             // Don't discard the cards of the best combo
-            if (combos.Count > 0)
-                possibleDiscards = possibleDiscards.Except(combos[0].GetCards()).ToList();
+            possibleDiscards = possibleDiscards.Except(layDownCards.GetCards()).ToList();
 
             if (possibleDiscards.Count == 0)
             {
