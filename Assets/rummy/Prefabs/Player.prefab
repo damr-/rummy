@@ -25,7 +25,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 613060522907015676}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 6816080719994698603}
@@ -44,9 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf1679c469aec40d5aa3679adc1643da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startAngle: 0
-  radius: 4
-  angleSpread: 180
+  startAngle: 5
+  radius: 3
+  angleSpread: 170
   leftToRight: 0
   CardScale: 1
 --- !u!1 &1026081579024202515
@@ -290,15 +290,15 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1928585597931773584}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.85}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4922848105189188700}
   - {fileID: 6924355904615602054}
   m_Father: {fileID: 4032213821864712742}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 3.5, y: -0}
@@ -1494,7 +1494,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5499674433792271634}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 10}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1280647515219737037}
@@ -2613,9 +2613,9 @@ MonoBehaviour:
   CardSpotPrefab: {fileID: 6361658429361687218, guid: 9133b941f36f6463ba0df50f00585ad7,
     type: 3}
   degreesPerSpot: 40
-  spotStartAngle: 180
+  spotStartAngle: 170
   spotRadius: 1
-  spotAngleSpread: 180
+  spotAngleSpread: 160
 --- !u!1 &9008195497925259066
 GameObject:
   m_ObjectHideFlags: 0

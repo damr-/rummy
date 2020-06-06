@@ -32,6 +32,7 @@ namespace rummy.Cards
                 throw new RummyException("Tried to create a stack but there already is one!");
             type = cardServeType;
             ReCreateCardStack();
+            SetCardVisibilities();
             cardStackCreated = true;
         }
 
@@ -52,16 +53,13 @@ namespace rummy.Cards
                     CreateHeartCardStack();
                     break;
                 default: // TEST_CardServeType.CUSTOM
-                    while (Cards.Count > 0)
+                    while (CardCount > 0)
                         Destroy(Cards.Pop().gameObject);
                     CreateCustomStack();
                     break;
             }
             if (type != CardStackType.CUSTOM)
                 Cards = new Stack<Card>(Cards.OrderBy(x => Random.Range(0, int.MaxValue)));
-
-            foreach (Card card in Cards)
-                card.SetVisible(false);
         }
 
         /// <summary>
@@ -170,26 +168,6 @@ namespace rummy.Cards
                 CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
             }
 
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.DIAMONDS);
-
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-            CreateCard(Card.CardRank.TEN, Card.CardSuit.HEARTS);
-
-            CreateCard(Card.CardRank.FIVE, Card.CardSuit.CLUBS);
-            CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLUBS);
-            CreateCard(Card.CardRank.FOUR, Card.CardSuit.SPADES);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.CLUBS);
-            CreateCard(Card.CardRank.THREE, Card.CardSuit.SPADES);
-
             CreateCard(Card.CardRank.FIVE, Card.CardSuit.CLUBS);
             CreateCard(Card.CardRank.FIVE, Card.CardSuit.SPADES);
             CreateCard(Card.CardRank.FOUR, Card.CardSuit.CLUBS);
@@ -219,7 +197,14 @@ namespace rummy.Cards
             if (CardCount == 0)
                 throw new RummyException("CardStack is empty!");
             var card = Cards.Pop();
+            if (CardCount > 0)
+            {
+                var next = Cards.Peek();
+                next.SendToBackground(true);
+                next.SetVisible(true);
+            }
             card.transform.SetParent(null, true);
+            card.SendToBackground(false);
             return card;
         }
 
@@ -228,7 +213,7 @@ namespace rummy.Cards
         /// Usually the card stack is restocked with the cards from the discard stack
         /// or all cards from the game when it is over
         /// </summary>
-        public void Restock(List<Card> cards)
+        public void Restock(List<Card> cards, bool newGame)
         {
             foreach (var card in cards)
             {
@@ -236,7 +221,19 @@ namespace rummy.Cards
                 card.transform.SetParent(transform, true);
                 Cards.Push(card);
             }
-            ReCreateCardStack();
+            if (newGame)
+                ReCreateCardStack();
+            SetCardVisibilities();
+        }
+
+        private void SetCardVisibilities()
+        {
+            foreach (var card in Cards)
+            {
+                card.SetVisible(false);
+                card.SetTurned(true);
+            }
+            Cards.Peek().SetVisible(true);
         }
     }
 

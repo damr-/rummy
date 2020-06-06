@@ -15,7 +15,7 @@ namespace rummy.Cards
 
         protected override void InitValues()
         {
-            yIncrement = -0.01f;
+            zIncrement = 0.01f;
         }
 
         public virtual void AddCard(Card card)

@@ -127,5 +127,5 @@ MonoBehaviour:
   radius: 2
   angleSpread: 180
   leftToRight: 1
-  CardScale: 0.5
+  CardScale: 0.75
   Type: 0

@@ -115,7 +115,7 @@ namespace rummy
                 cards.AddRange(p.ResetPlayer());
 
             Random.InitState(Seed);
-            Tb.I.CardStack.Restock(cards);
+            Tb.I.CardStack.Restock(cards, true);
             StartGame();
         }
 
@@ -185,7 +185,7 @@ namespace rummy
             if (Tb.I.CardStack.CardCount == 0)
             {
                 var discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
-                Tb.I.CardStack.Restock(discardedCards);
+                Tb.I.CardStack.Restock(discardedCards, false);
             }
 
             drawWaitStartTime = Time.time;

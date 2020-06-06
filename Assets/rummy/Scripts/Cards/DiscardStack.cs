@@ -11,8 +11,11 @@ namespace rummy.Cards
 
         public void AddCard(Card card)
         {
+            if(CardCount > 0)
+                PeekCard().SetVisible(false);
             card.transform.SetParent(transform, true);
             Cards.Push(card);
+            card.SetVisible(true);
         }
         public Card DrawCard()
         {
@@ -21,7 +24,6 @@ namespace rummy.Cards
             return card;
         }
         public Card PeekCard() => Cards.Peek();
-        public Vector3 GetNextCardPos() => transform.position + Vector3.up * 0.0001f * Cards.Count;
 
         /// <summary>
         /// Removes and returns all cards but the latest
@@ -32,14 +34,13 @@ namespace rummy.Cards
             Card lastDiscarded = Cards.Pop();
             var cards = RemoveCards();
             AddCard(lastDiscarded);
-            lastDiscarded.transform.position = GetNextCardPos();
             return cards;
         }
 
         public List<Card> RemoveCards()
         {
             List<Card> removedCards = new List<Card>();
-            while (Cards.Count > 0)
+            while (CardCount > 0)
                 removedCards.Add(DrawCard());
             return removedCards;
         }

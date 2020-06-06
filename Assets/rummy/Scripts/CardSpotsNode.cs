@@ -16,6 +16,7 @@ namespace rummy
         public float spotAngleSpread = 180f;
 
         public override List<CardSpot> Objects { get; protected set; } = new List<CardSpot>();
+        protected override void InitValues() { }
 
         public CardSpot AddCardSpot()
         {
@@ -48,10 +49,6 @@ namespace rummy
             return cards;
         }
 
-        protected override void InitValues()
-        {
-            yOffset = -1;
-        }
 
     }
 

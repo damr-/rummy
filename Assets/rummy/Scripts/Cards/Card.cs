@@ -160,13 +160,18 @@ namespace rummy.Cards
 
         public UnityEvent TypeChanged = new UnityEvent();
 
-        public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
+        public class CardStateChangedEvent: UnityEvent<bool> { }
+        public CardStateChangedEvent VisibilityChanged = new CardStateChangedEvent();
+        public CardStateChangedEvent HasBeenTurned = new CardStateChangedEvent();
+        public CardStateChangedEvent SentToBackground = new CardStateChangedEvent();
 
-        public void SetVisible(bool visible)
-        {
-            transform.rotation = Quaternion.identity;
-            transform.rotation *= Quaternion.LookRotation(Vector3.forward, Vector3.up * (visible ? 1 : -1));
-        }
+        public void SetVisible(bool visible) => VisibilityChanged.Invoke(visible);
+        /// <summary>Sets this card to show its back (turned=true) or not</summary>
+        public void SetTurned(bool turned) => HasBeenTurned.Invoke(turned);
+        /// <summary>Send this card behind other cards (background=true) or not</summary>
+        public void SendToBackground(bool background) => SentToBackground.Invoke(background);
+
+        public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
 
         public void MoveCard(Vector3 targetPosition, bool animateMovement)
         {

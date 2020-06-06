@@ -11,8 +11,7 @@ namespace rummy
         public float angleSpread = 180f;
 
         public bool leftToRight = false;
-        protected float yIncrement = 0;
-        protected float yOffset = 0;
+        protected float zIncrement = 0;
 
         public abstract List<T> Objects { get; protected set; }
 
@@ -29,8 +28,8 @@ namespace rummy
             {
                 var angle = startAngle + i * deltaAngle * (leftToRight ? -1 : 1);
                 float x = radius * Mathf.Cos(angle * Mathf.PI / 180f);
-                float z = radius * Mathf.Sin(angle * Mathf.PI / 180f);
-                Objects[i].transform.position = transform.position + new Vector3(x, i * yIncrement + yOffset, z);
+                float y = radius * Mathf.Sin(angle * Mathf.PI / 180f);
+                Objects[i].transform.position = transform.position + new Vector3(x, y, i * zIncrement);
             }
         }
 

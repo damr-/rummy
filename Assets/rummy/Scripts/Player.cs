@@ -209,7 +209,7 @@ namespace rummy
         {
             card.MoveFinished.RemoveAllListeners();
             HandCardSpot.AddCard(card);
-            card.SetVisible(true);
+            card.SetTurned(false);
             if (isServingCard)
             {
                 State = PlayerState.IDLE;
@@ -409,7 +409,7 @@ namespace rummy
             State = PlayerState.DISCARDING;
             HandCardSpot.RemoveCard(card);
             card.MoveFinished.AddListener(DiscardCardMoveFinished);
-            card.MoveCard(Tb.I.DiscardStack.GetNextCardPos(), Tb.I.GameMaster.AnimateCardMovement);
+            card.MoveCard(Tb.I.DiscardStack.transform.position, Tb.I.GameMaster.AnimateCardMovement);
         }
 
         private void DiscardCardMoveFinished(Card card)
