@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Single = rummy.Cards.Single;
+using rummy.Cards;
 
 namespace rummy.UI.CardOutput
 {

@@ -1,5 +1,4 @@
-﻿using rummy.Utility;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace rummy.UI
