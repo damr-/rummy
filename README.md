@@ -22,8 +22,6 @@ A Unity application which plays the famous game 'Rummy' against itself.
 ## Remarks
 - The players always try to lay down the highest valued card combination. They will never purposefully keep a finished card pack on their hands. Same goes for single cards.
 - Once a player has laid down card packs and surpassed the minimum required value, they always try to get rid of the highest valued card to minimze losses if they lose the game.
-- The players do not count/memorize the cards which had been discarded to figure out possible card combinations.
-- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible.
--Since every card exists twice in the game, if the duo's missing third card is already laid down twice, the duo will *not* be kept, since it cannot be completed.
+- Players do not count/memorize the cards which had been discarded to figure out possible card combinations.
+- Players *do* check for sets/runs in their hand cards which only consist of two cards ("duos") and try to keep them on hand for as long as possible. Since every card exists twice in the game, if the duo's missing card has already been laid down twice, the duo will *not* be kept.
 - Starting with 13 cards, it is possible that the game ends in a draw. This happens when both players laid down 3 complete sets of 4 cards each. With one card remaining in their hand, neither player can win. In that case, the game is forcefully ended as a draw.
-- The code could definitely be improved a lot in terms of elegance, shortness and performance.
