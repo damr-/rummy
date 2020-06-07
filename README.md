@@ -9,9 +9,8 @@ A Unity application which plays the famous game 'Rummy' against itself.
 
 ## Rules
 - 2 players (AI), each starts with 13 cards in their hand.
-- At the beginning of their turn, the player draws a card. To end the turn, the player discards one card.
-- The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are laid down, except one, which is then discarded to finish the game. The sum of the losing player's hand cards is taken as a measure for how badly they lost.
-
+- At the beginning of their turn, the player draws a card. To end their turn, the player discards one card.
+- The goal is to get rid of all the cards in one's hand. This means the all the cards in the player's hand are laid down, except one, which is then discarded to finish the game.
 - After round 2, if a player can form card packs with a combined value greater than a minimum required value (usually 30 or 40), these packs are laid down. Card packs are sets and runs.
   - Sets are formed by 3 or 4 cards of the same rank but different suits. In a set of 3 cards, one can be replaced by a joker of the same color. Adding a joker with the correct color to a set of 3 cards is allowed.
   - Runs consist of at least 3 cards of the same suit which form an ascending sequence. A run can start with Ace-2-3 and end with Q-K-Ace but must not form loops (K-Ace-2 segments are forbidden). When creating a run of 3 cards, only one card can be replaced by a joker of the same color (adding more joker cards later is allowed though).
