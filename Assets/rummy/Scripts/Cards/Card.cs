@@ -62,7 +62,7 @@ namespace rummy.Cards
             { CardRank.JACK,    10 },
             { CardRank.QUEEN,   10 },
             { CardRank.KING,    10 },
-            { CardRank.ACE,     10 }
+            { CardRank.ACE,     11 }
         };
 
         public static readonly IDictionary<CardRank, string> RankLetters = new Dictionary<CardRank, string>
@@ -108,7 +108,7 @@ namespace rummy.Cards
         public static List<CardSuit> GetOtherTwo(CardSuit s1, CardSuit s2)
         {
             if (s1 == s2)
-                throw new RummyException("GetOtherTwo got the same CardSuit twice");
+                throw new RummyException("GetOtherTwo got the same CardSuit twice: " + s1);
             var suits = new List<CardSuit>() { CardSuit.HEARTS, CardSuit.DIAMONDS, CardSuit.SPADES, CardSuit.CLUBS };
             suits.Remove(s1);
             suits.Remove(s2);
@@ -156,15 +156,16 @@ namespace rummy.Cards
         private Vector3 targetPos;
 
         public class Event_MoveFinished : UnityEvent<Card> { }
-        public Event_MoveFinished MoveFinished = new Event_MoveFinished();
+        public Event_MoveFinished MoveFinished = new();
 
-        public UnityEvent TypeChanged = new UnityEvent();
+        public UnityEvent TypeChanged = new();
 
         public class CardStateChangedEvent: UnityEvent<bool> { }
-        public CardStateChangedEvent VisibilityChanged = new CardStateChangedEvent();
-        public CardStateChangedEvent HasBeenTurned = new CardStateChangedEvent();
-        public CardStateChangedEvent SentToBackground = new CardStateChangedEvent();
+        public CardStateChangedEvent VisibilityChanged = new();
+        public CardStateChangedEvent HasBeenTurned = new();
+        public CardStateChangedEvent SentToBackground = new();
 
+        /// <summary> En- or Disable the sprite renderer </summary>
         public void SetVisible(bool visible) => VisibilityChanged.Invoke(visible);
         /// <summary>Sets this card to show its back (turned=true) or not</summary>
         public void SetTurned(bool turned) => HasBeenTurned.Invoke(turned);

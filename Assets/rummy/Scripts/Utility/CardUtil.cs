@@ -66,9 +66,9 @@ namespace rummy.Utility
             var allCombos = new List<CardCombo>();
             allCombos.AddRange(GetPossibleSetAndRunCombos(sets, runs, new CardCombo()));
             allCombos.AddRange(GetPossibleRunCombos(runs, new CardCombo()));
-            allCombos = allCombos.Where(combo => combo.PackCount > 0)
+            allCombos = allCombos.Where(combo => combo.MeldCount > 0)
                                  .OrderByDescending(combo => combo.Value)
-                                 .ThenBy(combo => combo.PackCount)
+                                 .ThenBy(combo => combo.MeldCount)
                                  .ToList();
             if (allowLayingAll)
                 return allCombos;

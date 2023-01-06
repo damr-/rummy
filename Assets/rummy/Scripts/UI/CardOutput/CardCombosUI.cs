@@ -41,7 +41,7 @@ namespace rummy.UI.CardOutput
             for (int i = 0; i < uniqueCombos.Count; i++)
             {
                 CardCombo cardCombo = uniqueCombos[i];
-                if (cardCombo.PackCount == 0)
+                if (cardCombo.MeldCount == 0)
                     continue;
 
                 string msg = "";

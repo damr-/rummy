@@ -25,6 +25,9 @@ namespace rummy
         public PlayerState State { get; private set; } = PlayerState.IDLE;
 
         #region PlayerCardSpot
+        [SerializeField]
+        private bool CardsVisible = false;
+
         private HandCardSpot HandCardSpot;
         public int HandCardCount { get { return HandCardSpot.Objects.Count; } }
 
@@ -36,12 +39,12 @@ namespace rummy
 
         #region CardSets
         /// <summary>The card sets and runs which are going to be laid down</summary>
-        private CardCombo laydownCards = new CardCombo();
+        private CardCombo laydownCards = new();
 
         /// <summary>The single cards which are going to be laid down</summary>
-        private List<Single> singleLayDownCards = new List<Single>();
+        private List<Single> singleLayDownCards = new();
 
-        private int currentCardPackIdx = 0, currentCardIdx = 0;
+        private int currentMeldIdx = 0, currentCardIdx = 0;
         private Card returningJoker;
         private bool isCardBeingLaidDown, isJokerBeingReturned;
 
@@ -54,7 +57,7 @@ namespace rummy
         private LayStage layStage = LayStage.SETS;
 
         /// <summary>
-        /// Whether the player can lay down card packs and pick up cards from the discard stack
+        /// Whether the player can lay down melds and pick up cards from the discard stack
         /// </summary>
         public bool HasLaidDown { get; private set; }
         #endregion
@@ -64,13 +67,13 @@ namespace rummy
         public UnityEvent TurnFinished = new UnityEvent();
 
         public class Event_PossibleCardCombosChanged : UnityEvent<List<CardCombo>> { }
-        public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new Event_PossibleCardCombosChanged();
+        public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new();
 
         public class Event_PossibleSinglesChanged : UnityEvent<List<Single>> { }
-        public Event_PossibleSinglesChanged PossibleSinglesChanged = new Event_PossibleSinglesChanged();
+        public Event_PossibleSinglesChanged PossibleSinglesChanged = new();
 
         public class Event_NewThought : UnityEvent<string> { }
-        public Event_NewThought NewThought = new Event_NewThought();
+        public Event_NewThought NewThought = new();
         #endregion
 
         public List<Card> ResetPlayer()
@@ -106,7 +109,7 @@ namespace rummy
                 {
                     State = PlayerState.LAYING;
                     isCardBeingLaidDown = false;
-                    currentCardPackIdx = 0;
+                    currentMeldIdx = 0;
                     currentCardIdx = 0;
                     currentCardSpot = null;
                     layStage = LayStage.SETS;
@@ -140,10 +143,10 @@ namespace rummy
                 switch (layStage)
                 {
                     case LayStage.SETS:
-                        card = laydownCards.Sets[currentCardPackIdx].Cards[currentCardIdx];
+                        card = laydownCards.Sets[currentMeldIdx].Cards[currentCardIdx];
                         break;
                     case LayStage.RUNS:
-                        card = laydownCards.Runs[currentCardPackIdx].Cards[currentCardIdx];
+                        card = laydownCards.Runs[currentMeldIdx].Cards[currentCardIdx];
                         break;
                     default: // LayStage.SINGLES:
                         card = singleLayDownCards[currentCardIdx].Card;
@@ -151,6 +154,8 @@ namespace rummy
                 }
 
                 HandCardSpot.RemoveCard(card);
+                if (!CardsVisible)
+                    card.SetTurned(false);
                 card.MoveFinished.AddListener(LayDownCardMoveFinished);
                 card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
             }
@@ -179,9 +184,9 @@ namespace rummy
             if (!isServingCard && HasLaidDown)
             {
                 // Check if we want to draw from discard stack
-                // Note that players will never discard a card which can be added to an already laid-down card pack.
+                // Note that players will never discard a card which can be added to an already laid-down meld.
                 // Therefore, no need to check for that case here.
-                Card discardedCard = Tb.I.DiscardStack.PeekCard();
+                Card discardedCard = Tb.I.DiscardStack.TopmostCard();
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Objects) { discardedCard };
                 var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false);
                 int hypotheticalValue = hypotheticalBestCombo.Value;
@@ -209,7 +214,8 @@ namespace rummy
         {
             card.MoveFinished.RemoveAllListeners();
             HandCardSpot.AddCard(card);
-            card.SetTurned(false);
+            if (CardsVisible)
+                card.SetTurned(false);
             if (isServingCard)
             {
                 State = PlayerState.IDLE;
@@ -226,7 +232,7 @@ namespace rummy
             {
                 var usedJokers = false;
 
-                // If the player has not laid down card packs yet, check if their sum would be enough to do so
+                // If the player has not laid down melds yet, check if their sum would be enough to do so
                 if (!HasLaidDown)
                 {
                     HasLaidDown = laydownCards.Value >= Tb.I.GameMaster.MinimumLaySum;
@@ -301,20 +307,20 @@ namespace rummy
             isCardBeingLaidDown = false;
             currentCardSpot.AddCard(card);
 
-            int cardCount, cardPackCount;
+            int cardCount, meldCount;
             switch (layStage)
             {
                 case LayStage.SETS:
-                    cardCount = laydownCards.Sets[currentCardPackIdx].Count;
-                    cardPackCount = laydownCards.Sets.Count;
+                    cardCount = laydownCards.Sets[currentMeldIdx].Count;
+                    meldCount = laydownCards.Sets.Count;
                     break;
                 case LayStage.RUNS:
-                    cardCount = laydownCards.Runs[currentCardPackIdx].Count;
-                    cardPackCount = laydownCards.Runs.Count;
+                    cardCount = laydownCards.Runs[currentMeldIdx].Count;
+                    meldCount = laydownCards.Runs.Count;
                     break;
                 default: // LayStage.SINGLES
                     cardCount = singleLayDownCards.Count;
-                    cardPackCount = 1;
+                    meldCount = 1;
 
                     if (!card.IsJoker())
                     {
@@ -334,15 +340,15 @@ namespace rummy
                 return;
             }
 
-            // All cards of the current pack have been laid down
+            // All cards of the current meld have been laid down
             currentCardIdx = 0;
-            currentCardPackIdx++;
-            currentCardSpot = null;  // Find a new spot for the next pack
+            currentMeldIdx++;
+            currentCardSpot = null;  // Find a new spot for the next meld
 
-            if (currentCardPackIdx < cardPackCount)
+            if (currentMeldIdx < meldCount)
                 return;
 
-            // All packs or singles have been laid down
+            // All melds or singles have been laid down
             if (layStage == LayStage.RUNS || layStage == LayStage.SINGLES ||
                 (layStage == LayStage.SETS && laydownCards.Runs.Count == 0))
             {
@@ -350,7 +356,7 @@ namespace rummy
             }
             else // LayStage.SETS -> Start laying runs
             {
-                currentCardPackIdx = 0;
+                currentMeldIdx = 0;
                 layStage = LayStage.RUNS;
             }
         }
@@ -360,6 +366,10 @@ namespace rummy
             returningJoker.MoveFinished.RemoveAllListeners();
             isJokerBeingReturned = false;
             HandCardSpot.AddCard(joker);
+
+            if (!CardsVisible)
+                joker.SetTurned(true);
+
             returningJoker = null;
 
             // All possible runs/sets/singles have to be calculated again with that newly returned joker
@@ -408,6 +418,8 @@ namespace rummy
 
             State = PlayerState.DISCARDING;
             HandCardSpot.RemoveCard(card);
+            if (!CardsVisible)
+                card.SetTurned(false);
             card.MoveFinished.AddListener(DiscardCardMoveFinished);
             card.MoveCard(Tb.I.DiscardStack.transform.position, Tb.I.GameMaster.AnimateCardMovement);
         }

@@ -70,7 +70,6 @@ namespace rummy.Cards
             foreach (var card in cards)
             {
                 card.transform.position = transform.position;
-                card.transform.SetParent(transform, true);
                 Cards.Push(card);
             }
             if (newGame)
@@ -108,7 +107,6 @@ namespace rummy.Cards
                 next.SendToBackground(true);
                 next.SetVisible(true);
             }
-            card.transform.SetParent(null, true);
             card.SendToBackground(false);
             return card;
         }

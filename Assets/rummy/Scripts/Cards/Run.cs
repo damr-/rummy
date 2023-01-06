@@ -5,7 +5,7 @@ using rummy.Utility;
 namespace rummy.Cards
 {
 
-    public class Run : Pack
+    public class Run : Meld
     {
         public Card.CardSuit Suit { get; private set; }
         public Card.CardColor Color { get; private set; }

@@ -12,7 +12,6 @@ namespace rummy.UI
         {
             RoundCount = 0,
             GameSeed = 1,
-            PlayerLaidCardsSum = 2,
             PlayerHandCardCount = 3,
             CardStackCardCount = 4,
             DiscardStackCardCount = 5
@@ -27,11 +26,11 @@ namespace rummy.UI
         private void Start()
         {
             text = GetComponent<Text>();
-            if (OutputValue == Value.PlayerLaidCardsSum || OutputValue == Value.PlayerHandCardCount)
+            if (OutputValue == Value.PlayerHandCardCount)
             {
                 Player = GetComponentInParent<Player>();
                 if (Player == null)
-                    throw new MissingReferenceException("ValueOutput is set to output PlayerLaidCardsSum or PlayerHandCardCount but is not child of a Player!");
+                    throw new MissingReferenceException("ValueOutput is set to output PlayerHandCardCount but is not child of a Player!");
             }
             else if (OutputValue == Value.CardStackCardCount)
             {
@@ -60,8 +59,6 @@ namespace rummy.UI
                     return "Round " + Tb.I.GameMaster.RoundCount;
                 case Value.GameSeed:
                     return "Seed " + Tb.I.GameMaster.Seed;
-                case Value.PlayerLaidCardsSum:
-                    return Player.GetLaidCardsSum().ToString();
                 case Value.PlayerHandCardCount:
                     return Player.HandCardCount.ToString();
                 case Value.CardStackCardCount:

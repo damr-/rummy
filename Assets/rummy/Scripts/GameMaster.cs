@@ -26,14 +26,14 @@ namespace rummy
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
 
         public int CardsPerPlayer = 13;
-        public int EarliestAllowedLaydownRound = 2;
+        public int EarliestLaydownRound = 2;
         public int MinimumLaySum = 40;
         public float CardMoveSpeed = 50f;
 
         public int RoundCount { get; private set; }
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
-        public bool LayingAllowed() => RoundCount >= EarliestAllowedLaydownRound;
-        private List<Player> Players = new List<Player>();
+        public bool LayingAllowed() => RoundCount >= EarliestLaydownRound;
+        private List<Player> Players = new();
         private Player CurrentPlayer { get { return Players[currentPlayerID]; } }
 
         private bool isCardBeingDealt;
@@ -56,7 +56,7 @@ namespace rummy
         private GameState gameState = GameState.NONE;
 
         public class Event_GameOver : UnityEvent<Player> { }
-        public Event_GameOver GameOver = new Event_GameOver();
+        public Event_GameOver GameOver = new();
 
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
@@ -66,7 +66,7 @@ namespace rummy
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
 
-            Players = FindObjectsOfType<Player>().OrderBy(p => p.name[p.name.Length - 1]).ToList();
+            Players = FindObjectsOfType<Player>().OrderBy(p => p.name[^1]).ToList();
 
             Random.InitState(Seed);
             Tb.I.CardStack.CreateCardStack(CardStackType);
