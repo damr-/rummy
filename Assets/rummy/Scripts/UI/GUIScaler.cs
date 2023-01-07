@@ -17,7 +17,7 @@ namespace rummy.UI
 
         // Use parents for easier identification of the objects in the editor
         public Transform[] canvasScalerParents;
-        private readonly List<CanvasScaler> canvasScalers = new List<CanvasScaler>();
+        private readonly List<CanvasScaler> canvasScalers = new();
 
         private void Start()
         {
@@ -27,8 +27,7 @@ namespace rummy.UI
 
         public void ChangeScale(bool increase)
         {
-            GUIScale = Mathf.Max(GUIScale, minScale);
-            GUIScale = Mathf.Min(GUIScale, maxScale);
+            GUIScale = Mathf.Min(Mathf.Max(GUIScale, minScale), maxScale);
 
             GUIScale += deltaGUIScale * (increase ? 1 : -1);
             foreach (var scaler in canvasScalers)

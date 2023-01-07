@@ -9,7 +9,7 @@ namespace rummy.UI.CardOutput
 
     public class CardCombosUI : CardOutputUI
     {
-        private Color notEnoughPointsColor = new Color(25/255f, 25/255f, 25/255f, 0.5f);
+        private Color notEnoughPointsColor = new(25/255f, 25/255f, 25/255f, 0.5f);
 
         protected override void SetupPlayerSub()
         {
@@ -26,7 +26,7 @@ namespace rummy.UI.CardOutput
                 return;
 
             // Do not display duplicate possibilities
-            List<CardCombo> uniqueCombos = new List<CardCombo>();
+            List<CardCombo> uniqueCombos = new();
             foreach (CardCombo combo in cardCombos)
             {
                 if (uniqueCombos.All(c => !c.LooksEqual(combo)))
@@ -58,7 +58,7 @@ namespace rummy.UI.CardOutput
                 msg = msg.TrimEnd().TrimEnd(',') + " (" + cardCombo.Value + ")";
 
                 Color msgColor = Color.black;
-                if(!player.HasLaidDown)
+                if (!player.HasLaidDown)
                     msgColor = cardCombo.Value < Tb.I.GameMaster.MinimumLaySum ? notEnoughPointsColor : Color.black;
                 outputView.PrintMessage(new ScrollView.Message(msg, msgColor));
             }

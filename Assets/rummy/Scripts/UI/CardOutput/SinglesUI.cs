@@ -26,7 +26,7 @@ namespace rummy.UI.CardOutput
                 int cardValue;
                 if(single.Card.IsJoker())
                 {
-                    // TODO: Find out the joker value (not really necessary though?)
+                    // TODO: Find out the joker value?
                     cardValue = 0;
                 }
                 else

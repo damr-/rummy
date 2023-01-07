@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.Events;
 using rummy.Utility;
 using rummy.Cards;
+using TMPro;
+using rummy.UI;
+using UnityEngine.UI;
 
 namespace rummy
 {
@@ -34,7 +37,7 @@ namespace rummy
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
         public bool LayingAllowed() => RoundCount >= EarliestLaydownRound;
         private List<Player> Players = new();
-        private Player CurrentPlayer { get { return Players[currentPlayerID]; } }
+        private Player CurrentPlayer => Players[currentPlayerID];
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
@@ -61,12 +64,16 @@ namespace rummy
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
+        private Scoreboard Scoreboard;
+
         private void Start()
         {
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
 
             Players = FindObjectsOfType<Player>().OrderBy(p => p.name[^1]).ToList();
+            Scoreboard = GetComponentInChildren<Scoreboard>();
+            Scoreboard.AddPlayerNamesLine(Players);
 
             Random.InitState(Seed);
             Tb.I.CardStack.CreateCardStack(CardStackType);
@@ -163,6 +170,7 @@ namespace rummy
             CurrentPlayer.TurnFinished.RemoveAllListeners();
             if (CurrentPlayer.HandCardCount == 0)
             {
+                WriteScores();
                 GameOver.Invoke(CurrentPlayer);
                 gameState = GameState.NONE;
                 return;
@@ -176,6 +184,7 @@ namespace rummy
 
                 if (IsGameADraw())
                 {
+                    WriteScores();
                     GameOver.Invoke(null);
                     gameState = GameState.NONE;
                     return;
@@ -190,6 +199,11 @@ namespace rummy
 
             drawWaitStartTime = Time.time;
             gameState = GameState.DRAWWAIT;
+        }
+
+        private void WriteScores()
+        {
+            Scoreboard.AddScoreLine(Players);
         }
 
         private void TryStopSkipping()

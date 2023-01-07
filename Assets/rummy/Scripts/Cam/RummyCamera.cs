@@ -10,10 +10,20 @@ namespace rummy.Cam
         public float initialSize = 5f;
         private Camera cam;
 
+        private int playerCount = 0;
+        private int playersVisible = 0;
+
         private void Start()
         {
             cam = GetComponent<Camera>();
             cam.orthographicSize = initialSize;
+
+            var players = FindObjectsOfType<Player>();
+            playerCount = players.Length;
+            foreach(var p in players)
+            {
+                p.GetComponentInChildren<CameraAnchor>().BecameVisible.AddListener(PlayerBecameVisible);
+            }
         }
 
         private void Update()
@@ -21,9 +31,13 @@ namespace rummy.Cam
             cam.orthographicSize += moveSpeed * Time.deltaTime;
         }
 
-        public void AnchorBecameVisible()
+        private void PlayerBecameVisible()
         {
-            enabled = false;
+            playersVisible += 1;
+            if (playersVisible >= playerCount)
+            {
+                enabled = false;
+            }
         }
     }
 

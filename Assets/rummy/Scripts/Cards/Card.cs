@@ -196,7 +196,7 @@ namespace rummy.Cards
             if (Vector3.Distance(transform.position, targetPos) <= 2 * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed)
                 FinishMove();
             else
-                transform.Translate((targetPos - transform.position).normalized * Time.deltaTime * Tb.I.GameMaster.CardMoveSpeed, Space.World);
+                transform.Translate(Tb.I.GameMaster.CardMoveSpeed * Time.deltaTime * (targetPos - transform.position).normalized, Space.World);
         }
     }
 

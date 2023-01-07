@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Events;
 using rummy.Cards;
 using rummy.Utility;
+using UnityEngine.UI;
+using TMPro;
 
 namespace rummy
 {
@@ -29,12 +31,18 @@ namespace rummy
         private bool CardsVisible = false;
 
         private HandCardSpot HandCardSpot;
-        public int HandCardCount { get { return HandCardSpot.Objects.Count; } }
+        public int HandCardCount => HandCardSpot.Objects.Count;
+        public int GetHandCardsSum()
+        {
+            return HandCardSpot.Objects.Sum(c => c.Rank == Card.CardRank.JOKER ? 20 : c.Value);
+        }
 
         private CardSpotsNode PlayerCardSpotsNode;
         private CardSpot currentCardSpot;
         public List<CardSpot> GetPlayerCardSpots() => PlayerCardSpotsNode.Objects;
         public int GetLaidCardsSum() => PlayerCardSpotsNode.Objects.Sum(spot => spot.GetValue());
+
+        private Image playerNameHighlight;
         #endregion
 
         #region CardSets
@@ -64,7 +72,7 @@ namespace rummy
 
         #region Events
         [HideInInspector]
-        public UnityEvent TurnFinished = new UnityEvent();
+        public UnityEvent TurnFinished = new();
 
         public class Event_PossibleCardCombosChanged : UnityEvent<List<CardCombo>> { }
         public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new();
@@ -94,6 +102,10 @@ namespace rummy
         {
             HandCardSpot = GetComponentInChildren<HandCardSpot>();
             PlayerCardSpotsNode = GetComponentInChildren<CardSpotsNode>();
+
+            var playerName = transform.Find("PlayerCanvas/PlayerNameHighlight/PlayerName");
+            playerName.GetComponent<TextMeshProUGUI>().text = gameObject.name;
+            playerNameHighlight = transform.Find("PlayerCanvas/PlayerNameHighlight").GetComponent<Image>();
         }
 
         private void Update()
@@ -139,20 +151,13 @@ namespace rummy
                     currentCardSpot.Type = (layStage == LayStage.RUNS) ? CardSpot.SpotType.RUN : CardSpot.SpotType.SET;
                 }
 
-                Card card;
-                switch (layStage)
+                Card card = layStage switch
                 {
-                    case LayStage.SETS:
-                        card = laydownCards.Sets[currentMeldIdx].Cards[currentCardIdx];
-                        break;
-                    case LayStage.RUNS:
-                        card = laydownCards.Runs[currentMeldIdx].Cards[currentCardIdx];
-                        break;
-                    default: // LayStage.SINGLES:
-                        card = singleLayDownCards[currentCardIdx].Card;
-                        break;
-                }
-
+                    LayStage.SETS => laydownCards.Sets[currentMeldIdx].Cards[currentCardIdx],
+                    LayStage.RUNS => laydownCards.Runs[currentMeldIdx].Cards[currentCardIdx],
+                    LayStage.SINGLES => singleLayDownCards[currentCardIdx].Card,
+                    _ => throw new RummyException("Invalid lay stage: " + layStage)
+                };
                 HandCardSpot.RemoveCard(card);
                 if (!CardsVisible)
                     card.SetTurned(false);
@@ -174,6 +179,7 @@ namespace rummy
         public void BeginTurn()
         {
             NewThought.Invoke("<CLEAR>");
+            playerNameHighlight.enabled = true;
             DrawCard(false);
         }
 
@@ -435,6 +441,7 @@ namespace rummy
             PossibleSinglesChanged.Invoke(singleLayDownCards);
 
             TurnFinished.Invoke();
+            playerNameHighlight.enabled = false;
             State = PlayerState.IDLE;
         }
     }

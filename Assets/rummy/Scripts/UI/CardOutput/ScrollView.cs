@@ -11,7 +11,7 @@ namespace rummy.UI.CardOutput
         public GameObject EntryPrefab;
 
         public int CharsPerLine = 36;
-        protected List<GameObject> spawnedTaskPanels = new List<GameObject>();
+        protected List<GameObject> spawnedTaskPanels = new();
 
         private void Start()
         {

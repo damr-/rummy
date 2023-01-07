@@ -111,7 +111,7 @@ namespace rummy.Utility
             var nextRank = Card.CardRank.TWO;
             if (currentRun.Count > 0)
             {
-                var lastRank = currentRun[currentRun.Count - 1].Rank;
+                Card.CardRank lastRank = currentRun[^1].Rank;
                 if (lastRank != Card.CardRank.ACE)
                     nextRank = lastRank + 1;
             }
@@ -200,7 +200,7 @@ namespace rummy.Utility
                 return new List<Run>();
 
             var thoughts = new List<string>();
-            var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, ref thoughts);
+            List<Duo> duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, ref thoughts);
             if (duoRuns.Count == 0)
                 return new List<Run>();
 

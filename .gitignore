@@ -3,7 +3,8 @@
 [Oo]bj/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
-Assets/AssetStoreTools*
+[Aa]ssets/AssetStoreTools*
+[Aa]ssets/TextMesh*Pro/
 
 # Visual Studio cache directory
 .vs/

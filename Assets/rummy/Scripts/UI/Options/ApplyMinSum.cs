@@ -17,12 +17,14 @@ namespace rummy.UI.Options
 
         public void ApplyNewMinSum()
         {
-            int.TryParse(NewMinSumInput.text, out int newMinSum);
-            if (newMinSum < 0)
-                return;
-
-            Tb.I.GameMaster.MinimumLaySum = newMinSum;
-            CurrentSumText.text = newMinSum.ToString();
+            if (int.TryParse(NewMinSumInput.text, out int newMinSum))
+            {
+                if (newMinSum >= 0)
+                {
+                    Tb.I.GameMaster.MinimumLaySum = newMinSum;
+                    CurrentSumText.text = newMinSum.ToString();
+                }
+            }
         }
         
     }

@@ -1,6 +1,5 @@
 ﻿using rummy.UI;
 using rummy.Utility;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,18 +8,15 @@ namespace rummy
 
     public class KeyboardInput : MonoBehaviour
     {
-        public Button OptionsButton;
-        public Button HideButton;
+        public Button MenuButton;
+        public Button CloseMenuButton;
         public GUIScaler guiScaler;
-
-        private float firstPressTime = -1f;
-        private readonly float detectDuration = 1f;
 
         private void Start()
         {
-            if (OptionsButton == null)
+            if (MenuButton == null)
                 throw new MissingReferenceException("Missing OptionsButton in " + gameObject);
-            if (HideButton == null)
+            if (CloseMenuButton == null)
                 throw new MissingReferenceException("Missing HideButton in " + gameObject);
             if (guiScaler == null)
                 throw new MissingReferenceException("Missing guiScaler in " + gameObject);
@@ -36,36 +32,15 @@ namespace rummy
             if (Input.GetKeyDown(KeyCode.Minus))
                 guiScaler.ChangeScale(false);
 
-            if (Input.GetKeyDown(KeyCode.O))
-            {
-                if (OptionsButton.gameObject.activeInHierarchy)
-                    OptionsButton.onClick.Invoke();
-                else
-                    HideButton.onClick.Invoke();
-            }
-
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (firstPressTime < 0)
-                    firstPressTime = Time.time;
+                if (MenuButton.gameObject.activeInHierarchy)
+                    MenuButton.onClick.Invoke();
                 else
-                {
-                    if (Time.time - firstPressTime < detectDuration)
-                        QuitApp();
-                    else
-                        firstPressTime = -1;
-                }
+                    CloseMenuButton.onClick.Invoke();
             }
         }
 
-        public void QuitApp()
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
-        }
     }
 
 }

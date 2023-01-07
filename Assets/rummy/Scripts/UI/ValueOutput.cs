@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using rummy.Utility;
 using rummy.Cards;
+using TMPro;
 
 namespace rummy.UI
 {
-    [RequireComponent(typeof(Text))]
+    [RequireComponent(typeof(TextMeshProUGUI))]
     public class ValueOutput : MonoBehaviour
     {
         public enum Value
@@ -18,14 +18,14 @@ namespace rummy.UI
         }
         public Value OutputValue;
 
-        private Text text;
+        private TextMeshProUGUI text;
         private Player Player;
         private CardStack CardStack;
         private DiscardStack DiscardStack;
 
         private void Start()
         {
-            text = GetComponent<Text>();
+            text = GetComponent<TextMeshProUGUI>();
             if (OutputValue == Value.PlayerHandCardCount)
             {
                 Player = GetComponentInParent<Player>();
@@ -48,24 +48,15 @@ namespace rummy.UI
 
         private void Update()
         {
-            text.text = GetValueOutput();
-        }
-
-        private string GetValueOutput()
-        {
-            switch (OutputValue)
+            text.text = OutputValue switch
             {
-                case Value.RoundCount:
-                    return "Round " + Tb.I.GameMaster.RoundCount;
-                case Value.GameSeed:
-                    return "Seed " + Tb.I.GameMaster.Seed;
-                case Value.PlayerHandCardCount:
-                    return Player.HandCardCount.ToString();
-                case Value.CardStackCardCount:
-                    return CardStack.CardCount.ToString();
-                default: // case Value.DiscardStackCardCount:
-                    return DiscardStack.CardCount.ToString();
-            }
+                Value.RoundCount => "Round " + Tb.I.GameMaster.RoundCount,
+                Value.GameSeed => "Seed " + Tb.I.GameMaster.Seed,
+                Value.PlayerHandCardCount => Player.HandCardCount.ToString(),
+                Value.CardStackCardCount => CardStack.CardCount.ToString(),
+                Value.DiscardStackCardCount => DiscardStack.CardCount.ToString(),
+                _ => throw new RummyException("Invalid output value type: " + OutputValue)
+            };
         }
     }
 
