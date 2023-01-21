@@ -14,7 +14,7 @@ namespace rummy.Cards
         public void AddRun(Run run) => Runs.Add(run);
 
         public int CardCount => Sets.Sum(s => s.Count) + Runs.Sum(r => r.Count);
-        public int PackCount => Sets.Count() + Runs.Count();
+        public int MeldCount => Sets.Count() + Runs.Count();
         public int Value => Sets.Sum(s => s.Value) + Runs.Sum(r => r.Value);
 
         public CardCombo() : this(new List<Set>(), new List<Run>()) { }
@@ -68,7 +68,7 @@ namespace rummy.Cards
         ///</summary>
         public bool LooksEqual(CardCombo other)
         {
-            if (other.PackCount != PackCount)
+            if (other.MeldCount != MeldCount)
                 return false;
             if (other.CardCount != CardCount)
                 return false;

@@ -7,7 +7,7 @@ namespace rummy.UI
     public class GameOverUI : MonoBehaviour
     {
         public GameObject gameOverCanvas;
-        public Text loserCardValue;
+        public Text gameResult;
         [Tooltip("Enable to automatically continue with the next game when a game has ended")]
         public bool continueImmediately;
         public void SetContinueImmediately(bool newValue) => continueImmediately = newValue;
@@ -33,9 +33,9 @@ namespace rummy.UI
         {
             gameOverCanvas.SetActive(true);
             if (player != null)
-                loserCardValue.text = player.gameObject.name + " won!";
+                gameResult.text = player.gameObject.name + " won!";
             else
-                loserCardValue.text = "Draw!";
+                gameResult.text = "Draw!";
         }
 
         public void Hide()

@@ -5,7 +5,7 @@ using rummy.Utility;
 namespace rummy.Cards
 {
 
-    public class Set : Pack
+    public class Set : Meld
     {
         public Card.CardRank Rank { get; private set; }
         public bool HasTwoBlackCards { get; private set; }

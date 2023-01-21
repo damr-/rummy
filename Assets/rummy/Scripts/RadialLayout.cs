@@ -15,7 +15,11 @@ namespace rummy
 
         public abstract List<T> Objects { get; protected set; }
 
-        private void Start() { InitValues(); }
+        private void Start()
+        {
+            InitValues();
+        }
+
         protected abstract void InitValues();
 
         public void UpdatePositions()
@@ -23,12 +27,17 @@ namespace rummy
             if (Objects.Count == 0)
                 return;
 
-            float deltaAngle = GetDeltaAngle();
+            // Sign of delta angle depends on the direction
+            float deltaAngle = GetDeltaAngle() * (leftToRight ? -1 : 1);
             for (int i = 0; i < Objects.Count; i++)
             {
-                var angle = startAngle + i * deltaAngle * (leftToRight ? -1 : 1);
-                float x = radius * Mathf.Cos(angle * Mathf.PI / 180f);
-                float y = radius * Mathf.Sin(angle * Mathf.PI / 180f);
+                // correct for Player rotation
+                var angle = startAngle
+                    + i * deltaAngle
+                    + transform.root.rotation.eulerAngles.z;
+                angle *= Mathf.PI / 180f;
+                float x = radius * Mathf.Cos(angle);
+                float y = radius * Mathf.Sin(angle);
                 Objects[i].transform.position = transform.position + new Vector3(x, y, i * zIncrement);
             }
         }

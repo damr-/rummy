@@ -6,24 +6,26 @@ namespace rummy.Cards
 
     public class DiscardStack : MonoBehaviour
     {
-        private readonly Stack<Card> Cards = new Stack<Card>();
+        private readonly Stack<Card> Cards = new();
         public int CardCount => Cards.Count;
 
         public void AddCard(Card card)
         {
             if(CardCount > 0)
-                PeekCard().SetVisible(false);
-            card.transform.SetParent(transform, true);
+                TopmostCard().SetVisible(false);
             Cards.Push(card);
             card.SetVisible(true);
         }
+
         public Card DrawCard()
         {
             var card = Cards.Pop();
-            card.transform.SetParent(null, true);
+            if (CardCount > 0)
+                TopmostCard().SetVisible(true);
             return card;
         }
-        public Card PeekCard() => Cards.Peek();
+
+        public Card TopmostCard() => Cards.Peek();
 
         /// <summary>
         /// Removes and returns all cards but the latest
@@ -39,7 +41,7 @@ namespace rummy.Cards
 
         public List<Card> RemoveCards()
         {
-            List<Card> removedCards = new List<Card>();
+            List<Card> removedCards = new();
             while (CardCount > 0)
                 removedCards.Add(DrawCard());
             return removedCards;

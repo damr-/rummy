@@ -6,8 +6,9 @@ namespace rummy.UI.Options
     [RequireComponent(typeof(Text))]
     public class GUIScaleUI : MonoBehaviour
     {
-        private Text text;
         public float GUIScale = 1.0f;
+
+        private Text text;
 
         private void Start()
         {

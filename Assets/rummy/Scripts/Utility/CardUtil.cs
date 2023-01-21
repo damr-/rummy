@@ -66,9 +66,9 @@ namespace rummy.Utility
             var allCombos = new List<CardCombo>();
             allCombos.AddRange(GetPossibleSetAndRunCombos(sets, runs, new CardCombo()));
             allCombos.AddRange(GetPossibleRunCombos(runs, new CardCombo()));
-            allCombos = allCombos.Where(combo => combo.PackCount > 0)
+            allCombos = allCombos.Where(combo => combo.MeldCount > 0)
                                  .OrderByDescending(combo => combo.Value)
-                                 .ThenBy(combo => combo.PackCount)
+                                 .ThenBy(combo => combo.MeldCount)
                                  .ToList();
             if (allowLayingAll)
                 return allCombos;
@@ -111,7 +111,7 @@ namespace rummy.Utility
             var nextRank = Card.CardRank.TWO;
             if (currentRun.Count > 0)
             {
-                var lastRank = currentRun[currentRun.Count - 1].Rank;
+                Card.CardRank lastRank = currentRun[^1].Rank;
                 if (lastRank != Card.CardRank.ACE)
                     nextRank = lastRank + 1;
             }
@@ -200,7 +200,7 @@ namespace rummy.Utility
                 return new List<Run>();
 
             var thoughts = new List<string>();
-            var duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, ref thoughts);
+            List<Duo> duoRuns = GetAllDuoRuns(PlayerCards, LaidDownCards, ref thoughts);
             if (duoRuns.Count == 0)
                 return new List<Run>();
 

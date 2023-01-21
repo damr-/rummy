@@ -11,7 +11,7 @@ namespace rummy.Cards
         public GameObject CardPrefab;
         public int CardDeckCount = 2;
 
-        private Stack<Card> Cards = new Stack<Card>();
+        private Stack<Card> Cards = new();
         public int CardCount => Cards.Count;
         private bool cardStackCreated = false;
 
@@ -70,7 +70,6 @@ namespace rummy.Cards
             foreach (var card in cards)
             {
                 card.transform.position = transform.position;
-                card.transform.SetParent(transform, true);
                 Cards.Push(card);
             }
             if (newGame)
@@ -108,7 +107,6 @@ namespace rummy.Cards
                 next.SendToBackground(true);
                 next.SetVisible(true);
             }
-            card.transform.SetParent(null, true);
             card.SendToBackground(false);
             return card;
         }
@@ -199,7 +197,7 @@ namespace rummy.Cards
                         CreateCard(Card.CardRank.JACK, (Card.CardSuit)suit);
                     else
                     {
-                        int index = (suit - 1) + i * Card.CardSuitCount;
+                        int index = suit - 1 + (i * Card.CardSuitCount);
                         Cards.ElementAt(Cards.Count - 1 - index).SetType(Card.CardRank.JACK, (Card.CardSuit)suit);
                     }
                 }
@@ -216,7 +214,7 @@ namespace rummy.Cards
                         CreateCard((Card.CardRank)rank, Card.CardSuit.HEARTS);
                     else
                     {
-                        int index = (rank - 1) + i * Card.CardRankCount;
+                        int index = rank - 1 + (i * Card.CardRankCount);
                         Cards.ElementAt(Cards.Count - 1 - index).SetType((Card.CardRank)rank, Card.CardSuit.HEARTS);
                     }
                 }
