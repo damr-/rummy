@@ -19,7 +19,7 @@ namespace rummy.UI.Options
         {
             if (int.TryParse(NewMinSumInput.text, out int newMinSum))
             {
-                if (newMinSum >= 0)
+                if (0 <= newMinSum && newMinSum <= 999)
                 {
                     Tb.I.GameMaster.MinimumLaySum = newMinSum;
                     CurrentSumText.text = newMinSum.ToString();

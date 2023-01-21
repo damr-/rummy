@@ -4,15 +4,14 @@ using UnityEngine;
 using UnityEngine.Events;
 using rummy.Utility;
 using rummy.Cards;
-using TMPro;
 using rummy.UI;
-using UnityEngine.UI;
 
 namespace rummy
 {
 
     public class GameMaster : MonoBehaviour
     {
+        public bool StartWithRandomSeed = true;
         public int Seed;
 
         public float GameSpeed = 1.0f;
@@ -22,16 +21,18 @@ namespace rummy
         public void SetAnimateCardMovement(bool value) => AnimateCardMovement = value;
 
         private float drawWaitStartTime;
-        public float DrawWaitDuration = 2f;
+        public float DrawWaitDuration = 0.5f;
         public void SetDrawWaitDuration(float value) => DrawWaitDuration = value;
 
-        public float PlayWaitDuration = 2f;
+        public float PlayWaitDuration = 1f;
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
 
         public int CardsPerPlayer = 13;
         public int EarliestLaydownRound = 2;
         public int MinimumLaySum = 40;
-        public float CardMoveSpeed = 50f;
+        public float PlayCardMoveSpeed = 50f;
+        public float DealCardMoveSpeed = 200f;
+        public float CurrentCardMoveSpeed = 0f;
 
         public int RoundCount { get; private set; }
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
@@ -39,12 +40,22 @@ namespace rummy
         private List<Player> Players = new();
         private Player CurrentPlayer => Players[currentPlayerID];
 
+        public static List<string> PlayerNamePool = new() {
+            "Agnes", "Alfred", "Archy", "Barty", "Benjamin", "Bertram", "Bruni",
+            "Buster", "Edith", "Ester", "Flo", "Francis", "Francisco", "Gil",
+            "Gob", "Gus", "Hank", "Harold", "Harriet", "Henry", "Jacques",
+            "Jorge", "Juan", "Kitty", "Lionel", "Louie", "Lucille", "Lupe",
+            "Mabel", "Maeby", "Marco", "Marta", "Maurice", "Maynard",
+            "Mildred", "Monty", "Mordecai", "Morty", "Pablo", "Seymour",
+            "Stan", "Tobias", "Vivian", "Walter", "Wilbur"};
+
         private bool isCardBeingDealt;
         private int currentPlayerID;
+        private int currentStartingPlayerID = -1;
         private bool skippingDone;
 
         /// <summary>
-        /// FOR DEV PURPOSES ONLY! Disable card movement animation and set the wait durations to 0 until the given round starts. '0' means no round is skipped
+        /// Quickly forward until the set round starts. '0' means no round is skipped
         /// </summary>
         public int SkipUntilRound = 0;
         private float tmpPlayerWaitDuration, tmpDrawWaitDuration, DefaultGameSpeed;
@@ -64,18 +75,31 @@ namespace rummy
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
-        private Scoreboard Scoreboard;
+        public Scoreboard Scoreboard;
 
         private void Start()
         {
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
 
-            Players = FindObjectsOfType<Player>().OrderBy(p => p.name[^1]).ToList();
-            Scoreboard = GetComponentInChildren<Scoreboard>();
+            if(StartWithRandomSeed)
+                Seed = Random.Range(0, int.MaxValue);
+            Random.InitState(Seed);
+
+            Players = FindObjectsOfType<Player>().ToList();
+            List<string> usedNames = new();
+            foreach (var p in Players)
+            {
+                string playerName;
+                do
+                {
+                    playerName = PlayerNamePool.ElementAt(Random.Range(0, PlayerNamePool.Count));
+                } while (usedNames.Contains(playerName));
+                p.SetPlayerName(playerName);
+                usedNames.Add(playerName);
+            }
             Scoreboard.AddPlayerNamesLine(Players);
 
-            Random.InitState(Seed);
             Tb.I.CardStack.CreateCardStack(CardStackType);
             StartGame();
         }
@@ -98,7 +122,9 @@ namespace rummy
             RoundCount = 0;
 
             gameState = GameState.DEALING;
-            currentPlayerID = 0;
+            CurrentCardMoveSpeed = DealCardMoveSpeed;
+            currentStartingPlayerID = (currentStartingPlayerID + 1) % Players.Count;
+            currentPlayerID = currentStartingPlayerID;
         }
 
         public void NextGame()
@@ -141,10 +167,11 @@ namespace rummy
                 {
                     isCardBeingDealt = false;
                     currentPlayerID = (currentPlayerID + 1) % Players.Count;
-
-                    if (currentPlayerID == 0 && CurrentPlayer.HandCardCount == CardsPerPlayer)
+                    if (currentPlayerID == currentStartingPlayerID &&
+                        CurrentPlayer.HandCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
+                        CurrentCardMoveSpeed = PlayCardMoveSpeed;
                         RoundCount = 1;
                         TryStopSkipping();
                     }

@@ -350,12 +350,12 @@ GameObject:
   - component: {fileID: 30539081309301249}
   - component: {fileID: 673942737407393825}
   m_Layer: 5
-  m_Name: ShowButtonNew
+  m_Name: ShowButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3847640990121085252
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1766,7 +1766,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5714324eef71d4ff0aa43915b122ceb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CardsVisible: 1
+  CardsVisible: 0
   TurnFinished:
     m_PersistentCalls:
       m_Calls: []

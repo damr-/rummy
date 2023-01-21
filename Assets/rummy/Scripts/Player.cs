@@ -14,6 +14,23 @@ namespace rummy
     {
         private float waitStartTime;
 
+        public string PlayerName { get; private set; }
+        public void SetPlayerName(string name)
+        {
+            PlayerName = name;
+            PlayerNameText.text = PlayerName;
+        }
+        private TextMeshProUGUI PlayerNameText
+        {
+            get
+            {
+                if (_playerNameText == null)
+                    _playerNameText = transform.Find("PlayerCanvas/PlayerNameHighlight/PlayerName").GetComponent<TextMeshProUGUI>();
+                return _playerNameText;
+            }
+        }
+        private TextMeshProUGUI _playerNameText;
+
         public enum PlayerState
         {
             IDLE = 0,
@@ -103,8 +120,6 @@ namespace rummy
             HandCardSpot = GetComponentInChildren<HandCardSpot>();
             PlayerCardSpotsNode = GetComponentInChildren<CardSpotsNode>();
 
-            var playerName = transform.Find("PlayerCanvas/PlayerNameHighlight/PlayerName");
-            playerName.GetComponent<TextMeshProUGUI>().text = gameObject.name;
             playerNameHighlight = transform.Find("PlayerCanvas/PlayerNameHighlight").GetComponent<Image>();
         }
 

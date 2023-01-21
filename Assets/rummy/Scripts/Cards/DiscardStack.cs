@@ -20,8 +20,11 @@ namespace rummy.Cards
         public Card DrawCard()
         {
             var card = Cards.Pop();
+            if (CardCount > 0)
+                TopmostCard().SetVisible(true);
             return card;
         }
+
         public Card TopmostCard() => Cards.Peek();
 
         /// <summary>

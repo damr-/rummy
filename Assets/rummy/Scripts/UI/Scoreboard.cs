@@ -29,14 +29,13 @@ namespace rummy.UI
 
         private void AddLine(List<Player> players, bool addNames)
         {
-
             GameObject lineObj = Instantiate(LinePrefab, ScrollViewContent.transform);
 
             foreach (var p in players)
             {
                 GameObject scoreObj = Instantiate(EntryPrefab, lineObj.transform);
                 if (addNames)
-                    scoreObj.GetComponent<TextMeshProUGUI>().text = p.gameObject.name;
+                    scoreObj.GetComponent<TextMeshProUGUI>().text = p.PlayerName;
                 else
                 {
                     string score = p.GetHandCardsSum().ToString();
@@ -53,6 +52,11 @@ namespace rummy.UI
         private void UpdateViewSize()
         {
             ScrollViewContent.sizeDelta = new Vector2(ScrollViewContent.sizeDelta.x, 25 * lines.Count + 10);
+        }
+
+        public void ToggleActive()
+        {
+            gameObject.SetActive(!gameObject.activeSelf);
         }
     }
 

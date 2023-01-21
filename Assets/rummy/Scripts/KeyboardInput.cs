@@ -1,5 +1,4 @@
 ﻿using rummy.UI;
-using rummy.Utility;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,9 +23,6 @@ namespace rummy
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.P))
-                Tb.I.GameMaster.TogglePause();
-
             if (Input.GetKeyDown(KeyCode.Plus))
                 guiScaler.ChangeScale(true);
             if (Input.GetKeyDown(KeyCode.Minus))

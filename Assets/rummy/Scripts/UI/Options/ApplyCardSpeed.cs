@@ -11,13 +11,13 @@ namespace rummy.UI.Options
 
         private void Start()
         {
-            currentSpeedText.text = Tb.I.GameMaster.CardMoveSpeed.ToString();
+            currentSpeedText.text = Tb.I.GameMaster.CurrentCardMoveSpeed.ToString();
         }
 
         public void ApplySpeed()
         {
             int newSpeed = (int)newSpeedSlider.value;
-            Tb.I.GameMaster.CardMoveSpeed = newSpeed;
+            Tb.I.GameMaster.CurrentCardMoveSpeed = newSpeed;
             currentSpeedText.text = newSpeed.ToString();
         }
     }
