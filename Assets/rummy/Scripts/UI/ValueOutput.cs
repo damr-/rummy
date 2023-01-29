@@ -11,11 +11,16 @@ namespace rummy.UI
         public enum Value
         {
             RoundCount = 0,
-            GameSeed = 1,
+            Seed = 1,
+            CardSpeed = 2,
             PlayerHandCardCount = 3,
             CardStackCardCount = 4,
             DiscardStackCardCount = 5,
             MinLaySum = 6,
+            GuiScale = 7,
+            GameSpeed = 8,
+            PlayWaitDuration = 9,
+            DrawWaitDuration = 10
         }
         public Value OutputValue;
 
@@ -24,6 +29,7 @@ namespace rummy.UI
         private CardStack CardStack;
         private DiscardStack DiscardStack;
         private GameMaster GameMaster;
+        private GUIScaler GUIScaler;
 
         private void Start()
         {
@@ -33,38 +39,57 @@ namespace rummy.UI
                 case Value.PlayerHandCardCount:
                     Player = GetComponentInParent<Player>();
                     if (Player == null)
-                        throw new MissingReferenceException("ValueOutput is set to output PlayerHandCardCount but is not child of a Player!");
+                        throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a Player!");
                     break;
                 case Value.CardStackCardCount:
                     CardStack = GetComponentInParent<CardStack>();
                     if (CardStack == null)
-                        throw new MissingReferenceException("ValueOutput is set to output the CardStackCardCount but is not child of a CardStack!");
+                        throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a CardStack!");
                     break;
                 case Value.DiscardStackCardCount:
                     DiscardStack = GetComponentInParent<DiscardStack>();
                     if (DiscardStack == null)
-                        throw new MissingReferenceException("ValueOutput is set to output the DiscardStackCardCount but is not child of a DiscardStack!");
+                        throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a DiscardStack!");
                     break;
+                case Value.RoundCount:
+                case Value.Seed:
+                case Value.CardSpeed:
                 case Value.MinLaySum:
+                case Value.GameSpeed:
+                case Value.PlayWaitDuration:
+                case Value.DrawWaitDuration:
                     GameMaster = GetComponentInParent<GameMaster>();
                     if (GameMaster == null)
-                        throw new MissingReferenceException("ValueOutput is set to output the MinLaySum but is not child of the GameMaster!");
+                        throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a GameMaster!");
+                    break;
+                case Value.GuiScale:
+                    GUIScaler = GetComponentInParent<GUIScaler>();
+                    if (GUIScaler == null)
+                        throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a GUIScaler!");
                     break;
             }
         }
 
         private void Update()
         {
-            text.text = OutputValue switch
+            if (isActiveAndEnabled)
             {
-                Value.RoundCount => "Round " + Tb.I.GameMaster.RoundCount,
-                Value.GameSeed => "Game Seed: " + Tb.I.GameMaster.Seed,
-                Value.PlayerHandCardCount => Player.HandCardCount.ToString(),
-                Value.CardStackCardCount => CardStack.CardCount.ToString(),
-                Value.DiscardStackCardCount => DiscardStack.CardCount.ToString(),
-                Value.MinLaySum => GameMaster.MinimumLaySum.ToString(),
-                _ => throw new RummyException("Invalid output value type: " + OutputValue)
-            };
+                text.text = OutputValue switch
+                {
+                    Value.RoundCount => GameMaster.RoundCount.ToString(),
+                    Value.Seed => GameMaster.Seed.ToString(),
+                    Value.CardSpeed => GameMaster.CurrentCardMoveSpeed.ToString("0.00"),
+                    Value.PlayerHandCardCount => Player.HandCardCount.ToString(),
+                    Value.CardStackCardCount => CardStack.CardCount.ToString(),
+                    Value.DiscardStackCardCount => DiscardStack.CardCount.ToString(),
+                    Value.MinLaySum => GameMaster.MinimumLaySum.ToString(),
+                    Value.GuiScale => GUIScaler.GUIScale.ToString("0.00"),
+                    Value.GameSpeed => GameMaster.GameSpeed.ToString("0"),
+                    Value.PlayWaitDuration => GameMaster.PlayWaitDuration.ToString("0.00"),
+                    Value.DrawWaitDuration => GameMaster.DrawWaitDuration.ToString("0.00"),
+                    _ => throw new RummyException("Invalid output value type: " + OutputValue)
+                };
+            }
         }
     }
 

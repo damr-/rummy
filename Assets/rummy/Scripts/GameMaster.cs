@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using rummy.Utility;
 using rummy.Cards;
 using rummy.UI;
 
@@ -11,32 +10,43 @@ namespace rummy
 
     public class GameMaster : MonoBehaviour
     {
-        public bool StartWithRandomSeed = true;
-        public int Seed;
+        [SerializeField]
+        private int CardsPerPlayer = 13;
+        [SerializeField]
+        private int EarliestLaydownRound = 2;
+        public int MinimumLaySum { get; private set; } = 40;
+        public void SetMinimumLaySum(int value) => MinimumLaySum = value;
 
-        public float GameSpeed = 1.0f;
+        [SerializeField]
+        private bool StartWithRandomSeed = true;
+        public int Seed;
+        public void SetSeed(int value) => Seed = value;
+
+        private float DefaultGameSpeed; // Stored during pause
+        public float GameSpeed { get; private set; } = 1.0f;
         public void SetGameSpeed(float value) => GameSpeed = value;
 
-        public bool AnimateCardMovement = true;
+        public bool AnimateCardMovement { get; private set; } = true;
         public void SetAnimateCardMovement(bool value) => AnimateCardMovement = value;
 
         private float drawWaitStartTime;
-        public float DrawWaitDuration = 0.5f;
+        public float DrawWaitDuration { get; private set; } = 0.5f;
         public void SetDrawWaitDuration(float value) => DrawWaitDuration = value;
 
-        public float PlayWaitDuration = 1f;
+        public float PlayWaitDuration { get; private set; } = 1f;
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
 
-        public int CardsPerPlayer = 13;
-        public int EarliestLaydownRound = 2;
-        public int MinimumLaySum = 40;
-        public float PlayCardMoveSpeed = 50f;
-        public float DealCardMoveSpeed = 200f;
-        public float CurrentCardMoveSpeed = 0f;
+        [SerializeField]
+        private float PlayCardMoveSpeed = 50f;
+        [SerializeField]
+        private float DealCardMoveSpeed = 200f;
+        public float CurrentCardMoveSpeed { get; private set; }
+        public void SetCurrentCardMoveSpeed(float value) => CurrentCardMoveSpeed = value;
 
         public int RoundCount { get; private set; }
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
         public bool LayingAllowed() => RoundCount >= EarliestLaydownRound;
+
         private List<Player> Players = new();
         private Player CurrentPlayer => Players[currentPlayerID];
 
@@ -51,14 +61,12 @@ namespace rummy
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
-        private int currentStartingPlayerID = -1;
-        private bool skippingDone;
+        private int currentStartingPlayerID = -1;        
 
-        /// <summary>
-        /// Quickly forward until the set round starts. '0' means no round is skipped
-        /// </summary>
-        public int SkipUntilRound = 0;
-        private float tmpPlayerWaitDuration, tmpDrawWaitDuration, DefaultGameSpeed;
+        [SerializeField]
+        private int SkipUntilRound = 0; // Quickly forward until the given round starts. '0': no round is skipped
+        private bool skippingDone;
+        private float storedPlayerWaitDur, storedDrawWaitDur, storedGameSpeed;
 
         private enum GameState
         {
@@ -72,10 +80,12 @@ namespace rummy
         public class Event_GameOver : UnityEvent<Player> { }
         public Event_GameOver GameOver = new();
 
+        public CardStack CardStack;
+        public DiscardStack DiscardStack;
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
-        public Scoreboard Scoreboard;
+        private Scoreboard Scoreboard;
 
         private void Start()
         {
@@ -98,24 +108,26 @@ namespace rummy
                 p.SetPlayerName(playerName);
                 usedNames.Add(playerName);
             }
+            Scoreboard = GetComponentInChildren<Scoreboard>(true);
             Scoreboard.AddPlayerNamesLine(Players);
 
-            Tb.I.CardStack.CreateCardStack(CardStackType);
+            CardStack.CreateCardStack(CardStackType);
             StartGame();
         }
 
         private void StartGame()
         {
-            DefaultGameSpeed = GameSpeed;
-            tmpPlayerWaitDuration = PlayWaitDuration;
-            tmpDrawWaitDuration = DrawWaitDuration;
             if (SkipUntilRound > 0)
             {
+                storedGameSpeed = GameSpeed;
+                storedPlayerWaitDur = PlayWaitDuration;
+                storedDrawWaitDur = DrawWaitDuration;
+
                 skippingDone = false;
                 AnimateCardMovement = false;
                 PlayWaitDuration = 0f;
                 DrawWaitDuration = 0f;
-                GameSpeed = 4;
+                GameSpeed = 10;
             }
 
             Time.timeScale = GameSpeed;
@@ -137,18 +149,18 @@ namespace rummy
         {
             if (SkipUntilRound > 0)
             {
-                GameSpeed = DefaultGameSpeed;
-                DrawWaitDuration = tmpDrawWaitDuration;
-                PlayWaitDuration = tmpPlayerWaitDuration;
+                GameSpeed = storedGameSpeed;
+                PlayWaitDuration = storedPlayerWaitDur;
+                DrawWaitDuration = storedDrawWaitDur;
             }
 
             var cards = new List<Card>();
-            cards.AddRange(Tb.I.DiscardStack.RemoveCards());
+            cards.AddRange(DiscardStack.RemoveCards());
             foreach (var p in Players)
                 cards.AddRange(p.ResetPlayer());
 
             Random.InitState(Seed);
-            Tb.I.CardStack.Restock(cards, true);
+            CardStack.Restock(cards, true);
             StartGame();
         }
 
@@ -218,10 +230,10 @@ namespace rummy
                 }
             }
 
-            if (Tb.I.CardStack.CardCount == 0)
+            if (CardStack.CardCount == 0)
             {
-                var discardedCards = Tb.I.DiscardStack.RecycleDiscardedCards();
-                Tb.I.CardStack.Restock(discardedCards, false);
+                var discardedCards = DiscardStack.RecycleDiscardedCards();
+                CardStack.Restock(discardedCards, false);
             }
 
             drawWaitStartTime = Time.time;
@@ -235,13 +247,14 @@ namespace rummy
 
         private void TryStopSkipping()
         {
-            if (skippingDone || SkipUntilRound <= 0 || RoundCount < SkipUntilRound)
-                return;
-            skippingDone = true;
-            AnimateCardMovement = true;
-            PlayWaitDuration = tmpPlayerWaitDuration;
-            DrawWaitDuration = tmpDrawWaitDuration;
-            GameSpeed = DefaultGameSpeed;
+            if (!skippingDone && RoundCount == SkipUntilRound)
+            {
+                skippingDone = true;
+                AnimateCardMovement = true;
+                GameSpeed = storedGameSpeed;
+                PlayWaitDuration = storedPlayerWaitDur;
+                DrawWaitDuration = storedDrawWaitDur;
+            }
         }
 
         /// <summary>

@@ -1766,7 +1766,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5714324eef71d4ff0aa43915b122ceb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CardsVisible: 0
+  CardsVisible: 1
   TurnFinished:
     m_PersistentCalls:
       m_Calls: []

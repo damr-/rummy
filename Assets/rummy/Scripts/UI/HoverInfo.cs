@@ -1,15 +1,20 @@
 using UnityEngine;
 
-public class HoverInfo : MonoBehaviour
+namespace rummy.UI
 {
-    public GameObject hoverUI;
 
-    public void OnMouseEnter()
+    public class HoverInfo : MonoBehaviour
     {
-        hoverUI.SetActive(true);
+        public GameObject hoverUI;
+
+        public void OnMouseEnter()
+        {
+            hoverUI.SetActive(true);
+        }
+        public void OnMouseExit()
+        {
+            hoverUI.SetActive(false);
+        }
     }
-    public void OnMouseExit()
-    {
-        hoverUI.SetActive(false);
-    }
+
 }

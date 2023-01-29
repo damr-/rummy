@@ -7,18 +7,24 @@ namespace rummy
 
     public class KeyboardInput : MonoBehaviour
     {
-        public Button MenuButton;
-        public Button CloseMenuButton;
-        public GUIScaler guiScaler;
+        [SerializeField]
+        private Button MenuButton;
+        [SerializeField]
+        private Button CloseMenuButton;
+        [SerializeField]
+        private Button PauseButton;
+
+        private GUIScaler guiScaler;
 
         private void Start()
         {
             if (MenuButton == null)
-                throw new MissingReferenceException("Missing OptionsButton in " + gameObject);
+                throw new MissingReferenceException($"Missing MenuButton in {gameObject}");
             if (CloseMenuButton == null)
-                throw new MissingReferenceException("Missing HideButton in " + gameObject);
-            if (guiScaler == null)
-                throw new MissingReferenceException("Missing guiScaler in " + gameObject);
+                throw new MissingReferenceException($"Missing CloseMenuButton in {gameObject}");
+            if (PauseButton == null)
+                throw new MissingReferenceException($"Missing PauseButton in {gameObject}");
+            guiScaler = GetComponent<GUIScaler>();
         }
 
         private void Update()
@@ -35,6 +41,9 @@ namespace rummy
                 else
                     CloseMenuButton.onClick.Invoke();
             }
+
+            if (Input.GetKeyDown(KeyCode.P))
+                PauseButton.onClick.Invoke();
         }
 
     }

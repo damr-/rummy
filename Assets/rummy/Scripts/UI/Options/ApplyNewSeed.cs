@@ -1,26 +1,24 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using rummy.Utility;
 
 namespace rummy.UI.Options
 {
 
     public class ApplyNewSeed : MonoBehaviour
     {
-        public Text CurrentSeedText;
         public InputField NewSeedInput;
+        private GameMaster GameMaster;
 
         private void Start()
         {
-            CurrentSeedText.text = Tb.I.GameMaster.Seed.ToString();
+            GameMaster = GetComponentInParent<GameMaster>();
         }
 
-        public void ApplySeed()
+        public void Apply()
         {
             if (int.TryParse(NewSeedInput.text, out int newSeed))
             {
-                Tb.I.GameMaster.Seed = newSeed;
-                CurrentSeedText.text = newSeed.ToString();
+                GameMaster.SetSeed(newSeed);
             }
         }
     }

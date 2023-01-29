@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using rummy.UI.Options;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,8 +7,6 @@ namespace rummy.UI
 
     public class GUIScaler : MonoBehaviour
     {
-        public GUIScaleUI guiScaleUI;
-
         public float GUIScale = 1.0f;
         public float deltaGUIScale = 0.25f;
         public float minScale = 0.5f;
@@ -32,8 +29,6 @@ namespace rummy.UI
             GUIScale += deltaGUIScale * (increase ? 1 : -1);
             foreach (var scaler in canvasScalers)
                 scaler.scaleFactor = GUIScale;
-
-            guiScaleUI.GUIScale = GUIScale;
         }
     }
 
