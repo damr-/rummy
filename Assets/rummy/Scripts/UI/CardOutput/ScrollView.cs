@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using rummy.Utility;
 
 namespace rummy.UI.CardOutput
 {
@@ -37,12 +38,7 @@ namespace rummy.UI.CardOutput
 
         public void ClearMessages()
         {
-            while (spawnedTaskPanels.Count > 0)
-            {
-                var panel = spawnedTaskPanels[0];
-                spawnedTaskPanels.RemoveAt(0);
-                Destroy(panel);
-            }
+            spawnedTaskPanels.ClearAndDestroy();
             UpdateViewSize();
         }
 

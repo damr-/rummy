@@ -19,7 +19,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether this meld intersects the other (whether the two have at least one card in common)
+        /// Return whether this meld intersects the other (whether the two have at least one card in common)
         /// </summary>
         public bool Intersects(Meld other) => Cards.Intersects(other.Cards);
 

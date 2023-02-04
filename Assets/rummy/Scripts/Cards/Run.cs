@@ -32,7 +32,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Calculates and returns the maximum/minimum Rank in this run, depending on
+        /// Calculate and return the minimum or maximum Rank in this run
         /// </summary>
         /// <param name="maxRank">Whether to look for the highest rank. If false, the lowest rank is returned</param>
         /// <returns></returns>
@@ -50,7 +50,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether the cards of the other run LOOK the same as the cards in this
+        /// Return whether the cards of the other run LOOK the same as the cards in this
         /// meaning that they are not checked for object-equality but only for same rank 
         /// </summary>
         public bool LooksEqual(Run other)
@@ -114,7 +114,7 @@ namespace rummy.Cards
 
 
         /// <summary>
-        /// Returns whether the given list of cards could form a valid run
+        /// Return whether the given list of cards could form a valid run
         /// </summary>
         public static bool IsValidRun(List<Card> cards)
         {
@@ -185,7 +185,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns the possible values a joker could have when added to the start/end of this run
+        /// Return the possible values a joker could have when added to the start/end of this run
         /// </summary>
         /// <returns>A tuple with the possible values for start and end. If a value is 0, a joker cannot be added there</returns>
         public (int,int) JokerValue()

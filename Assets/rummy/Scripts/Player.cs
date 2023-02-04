@@ -18,7 +18,8 @@ namespace rummy
         public void SetPlayerName(string name)
         {
             PlayerName = name;
-            PlayerNameText.text = PlayerName;
+            PlayerNameText.text = name;
+            gameObject.name = name;
         }
         private TextMeshProUGUI PlayerNameText
         {
@@ -47,6 +48,7 @@ namespace rummy
         [SerializeField]
         private bool CardsVisible = false;
 
+        [SerializeField]
         private HandCardSpot HandCardSpot;
         public int HandCardCount => HandCardSpot.Objects.Count;
         public int GetHandCardsSum()
@@ -54,11 +56,17 @@ namespace rummy
             return HandCardSpot.Objects.Sum(c => c.Rank == Card.CardRank.JOKER ? 20 : c.Value);
         }
 
+        [SerializeField]
         private CardSpotsNode PlayerCardSpotsNode;
         private CardSpot currentCardSpot;
         public List<CardSpot> GetPlayerCardSpots() => PlayerCardSpotsNode.Objects;
         public int GetLaidCardsSum() => PlayerCardSpotsNode.Objects.Sum(spot => spot.GetValue());
 
+        [SerializeField]
+        private TextMeshProUGUI cardCount;
+        [SerializeField]
+        private TextMeshProUGUI playerName;
+        [SerializeField]
         private Image playerNameHighlight;
         #endregion
 
@@ -101,7 +109,7 @@ namespace rummy
         public Event_NewThought NewThought = new();
         #endregion
 
-        public List<Card> ResetPlayer()
+        public void ResetPlayer()
         {
             HasLaidDown = false;
             State = PlayerState.IDLE;
@@ -109,18 +117,8 @@ namespace rummy
             PossibleSinglesChanged.Invoke(new List<Single>());
             NewThought.Invoke("<CLEAR>");
 
-            var cards = new List<Card>();
-            cards.AddRange(PlayerCardSpotsNode.ResetNode());
-            cards.AddRange(HandCardSpot.ResetSpot());
-            return cards;
-        }
-
-        private void Start()
-        {
-            HandCardSpot = GetComponentInChildren<HandCardSpot>();
-            PlayerCardSpotsNode = GetComponentInChildren<CardSpotsNode>();
-
-            playerNameHighlight = transform.Find("PlayerCanvas/PlayerNameHighlight").GetComponent<Image>();
+            PlayerCardSpotsNode.ResetNode();
+            HandCardSpot.ResetSpot();
         }
 
         private void Update()
@@ -231,6 +229,18 @@ namespace rummy
             card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
         }
 
+        /// <summary>
+        /// Rotate the player towards the camera and make sure the text is still readable
+        /// </summary>
+        internal void Rotate()
+        {
+            transform.localRotation = Quaternion.Euler(0, 0, 180);
+            HandCardSpot.leftToRight = true;
+            PlayerCardSpotsNode.leftToRight = true;
+            cardCount.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0, 0, 180);
+            playerName.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0, 0, 180);
+        }
+
         private void DrawCardFinished(Card card, bool isServingCard)
         {
             card.MoveFinished.RemoveAllListeners();
@@ -296,7 +306,7 @@ namespace rummy
         }
 
         /// <summary>
-        /// Returns the card combo with the highest possible value from the given 'HandCards'.
+        /// Return the card combo with the highest possible value from the given 'HandCards'.
         /// </summary>
         /// <param name="HandCards">The cards in the player's hand</param>
         /// <param name="broadcastCombos">Whether to broadcast all possible combos for UI output</param>
@@ -310,8 +320,8 @@ namespace rummy
         }
 
         /// <summary>
-        /// Chooses one card in <see cref="singleLayDownCards"/> which is kept on hand.
-        /// Prioritizes cards who do not replace a joker
+        /// Choose one card in <see cref="singleLayDownCards"/> which is kept on hand.
+        /// Prioritize cards who do not replace a joker
         /// </summary>
         private void KeepOneSingleCard()
         {

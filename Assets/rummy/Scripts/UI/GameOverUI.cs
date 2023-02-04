@@ -8,7 +8,10 @@ namespace rummy.UI
     {
         public GameObject gameOverCanvas;
         public Text gameResult;
-        [Tooltip("Enable to automatically continue with the next game when a game has ended")]
+
+        /// <summary>
+        /// Whether to automatically continue with the next one when a game has ended
+        /// </summary>
         public bool continueImmediately;
         public void SetContinueImmediately(bool newValue) => continueImmediately = newValue;
 
@@ -24,7 +27,7 @@ namespace rummy.UI
         {
             if (continueImmediately && gameOverCanvas.activeInHierarchy)
             {
-                gameMaster.NextGame();
+                gameMaster.NextGame(false);
                 Hide();
             }
         }

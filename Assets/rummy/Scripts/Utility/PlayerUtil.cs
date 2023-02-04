@@ -8,8 +8,8 @@ namespace rummy.Utility
     public static class PlayerUtil
     {
         /// <summary>
-        /// Returns the optimal card in 'PlayerHandCards' to discard.
-        /// There will always be a valid card returned, no need for null checks
+        /// Return the optimal card in 'PlayerHandCards' to discard.
+        /// There will always be a valid card returned
         /// </summary>
         public static Card GetCardToDiscard(List<Card> PlayerHandCards, List<Single> singleLayDownCards, bool HasLaidDown, ref List<string> thoughts)
         {
@@ -79,7 +79,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns a list of cards in 'PlayerHandCards' which can be discarded.
+        /// Return a list of cards in 'PlayerHandCards' which can be discarded.
         /// It always contains 1 or more cards.
         /// </summary>
         public static List<Card> KeepUsableCards(List<Card> PlayerHandCards, List<Single> singleLayDownCards, ref List<string> thoughts)
@@ -123,7 +123,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the highest value card which would lead to the highest possible hand card combo when excluded from building combos
+        /// Return the highest value card which would lead to the highest possible hand card combo when excluded from building combos
         /// </summary>
         public static Card GetLeastImpactfulCard(List<Card> PlayerHandCards)
         {
@@ -156,7 +156,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Updates the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
+        /// Update the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
         /// </summary>
         /// <param name="turnEnded">Whether the update happens right after the player has discarded a card and therefore ended their turn</param>
         public static List<Single> UpdateSingleLaydownCards(List<Card> PlayerHandCards, CardCombo laydownCards, bool turnEnded = false)

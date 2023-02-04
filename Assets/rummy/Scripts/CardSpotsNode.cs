@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using rummy.Cards;
 using UnityEngine;
+using rummy.Utility;
 
 namespace rummy
 {
@@ -34,22 +35,12 @@ namespace rummy
             return cardSpot;
         }
 
-        public List<Card> ResetNode()
+        public void ResetNode()
         {
-            var cards = new List<Card>();
             foreach (var cardSpot in Objects)
-                cards.AddRange(cardSpot.ResetSpot());
-
-            while (Objects.Count > 0)
-            {
-                CardSpot obj = Objects[0];
-                Objects.RemoveAt(0);
-                Destroy(obj.gameObject);
-            }
-            return cards;
+                cardSpot.ResetSpot();
+            Objects.ClearAndDestroy();
         }
-
-
     }
 
 }

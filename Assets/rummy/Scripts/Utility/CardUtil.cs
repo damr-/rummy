@@ -8,7 +8,7 @@ namespace rummy.Utility
     public static class CardUtil
     {
         /// <summary>
-        /// Returns all combos which don't have any cards in common, sorted descending by value
+        /// Return all combos which don't have any cards in common, sorted descending by value
         /// </summary>
         public static List<CardCombo> GetAllUniqueCombos(List<Card> HandCards, List<Card> LaidDownCards)
         {
@@ -34,8 +34,8 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns a sorted (descending, by value) list of all possible combos which could be laid down, with sets and runs as well as joker
-        /// combinations extracted from the given 'HandCards'.
+        /// Return a sorted (descending, by value) list of all possible combos which
+        /// could be laid down, with sets and runs as well as joker combinations extracted from the given 'HandCards'.
         /// <param name="allowLayingAll"> Whether combos are allowed which would require the player to lay down all cards from his hand ('HandCards').
         /// This is usually not useful, unless hypothetical hands are examined, where one card was removed before. </param>
         /// </summary>
@@ -76,7 +76,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets (consisting of 3 or 4 cards)
+        /// Return all possible sets (consisting of 3 or 4 cards)
         /// which can be combined from 'availableCards' and the current set 'currentSet' 
         /// </summary>
         private static List<Set> GetPossibleSets(List<Card> availableCards, List<Card> currentSet)
@@ -101,7 +101,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible runs of 'minLength' <= length <= 'maxLength'
+        /// Return all possible runs of 'minLength' <= length <= 'maxLength'
         /// which can be created from in 'availableCards' and the current run 'currentRun'
         /// </summary>
         /// <param name="availableCards">A list of cards with the same suit</param>
@@ -143,7 +143,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible combinations of sets and runs which can be found in the given lists of sets and runs
+        /// Return all possible combinations of sets and runs which can be found in the given lists of sets and runs
         /// </summary>
         private static List<CardCombo> GetPossibleSetAndRunCombos(List<Set> sets, List<Run> runs, CardCombo currentCombo)
         {
@@ -169,7 +169,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible combinations of runs which can be found in the given list of runs
+        /// Return all possible combinations of runs which can be found in the given list of runs
         /// </summary>
         private static List<CardCombo> GetPossibleRunCombos(List<Run> runs, CardCombo currentRunCombo)
         {
@@ -190,8 +190,8 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Looks for duos which could form complete 3-card-runs using a joker and
-        /// returns all possible combinations using the available joker cards
+        /// Look for duos which could form complete 3-card-runs using a joker and
+        /// return all possible combinations using the available joker cards
         /// </summary>
         private static List<Run> GetPossibleJokerRuns(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
@@ -227,7 +227,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all runs which only consist of two cards and could theoretically be completed by waiting for a third.
+        /// Return all runs which only consist of two cards and could theoretically be completed by waiting for a third
         /// </summary>
         /// <param name="PlayerCards">The cards on the player's hand</param>
         /// <param name="LaidDownCards">The cards which have already been laid down by the players. Used to check whether a run is theoretically possible</param>
@@ -305,7 +305,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible sets which can be created using joker cards.
+        /// Return all possible sets which can be created using joker cards
         /// </summary>
         private static List<Set> GetPossibleJokerSets(List<Card> PlayerCards, List<Card> LaidDownCards)
         {
@@ -353,11 +353,11 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns all possible duos (sets of two cards with different suits) from 'PlayerHandCards'
+        /// Return all possible duos (sets of two cards with different suits) from 'PlayerHandCards'
         /// </summary>
         /// <param name="PlayerHandCards">The cards in the player's hand</param>
-        /// <param name="LaidDownCards">Cards which have already been laid down by players.
-        /// Used to check if it is unnecessary to keep a certain duo, because the needed cards have already been laid down</param>
+        /// <param name="LaidDownCards">Cards which have already been laid down by players. Used to check if it
+        /// is unnecessary to keep a certain duo, because the needed cards have already been laid down</param>
         /// <returns></returns>
         public static List<Duo> GetAllDuoSets(List<Card> PlayerHandCards, List<Card> LaidDownCards, ref List<string> thoughts)
         {
@@ -399,7 +399,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the rank of the joker card, which is at index 'jokerIndex' in the list of cards 'cards'.
+        /// Return the rank of the joker card, which is at index 'jokerIndex' in the list of cards 'cards'.
         /// If the rank cannot be figured out or card at the given jokerIndex is not a joker, a <see cref="RummyException"/> is thrown
         /// </summary>
         /// <param name="cards">The list of cards which contains the joker</param>

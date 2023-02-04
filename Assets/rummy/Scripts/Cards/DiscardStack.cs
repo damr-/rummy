@@ -28,23 +28,25 @@ namespace rummy.Cards
         public Card TopmostCard() => Cards.Peek();
 
         /// <summary>
-        /// Removes and returns all cards but the latest
+        /// Remove and return all cards except the latest
         /// </summary>
         /// <returns>A list of all cards, except the one which was discarded last</returns>
         public List<Card> RecycleDiscardedCards()
         {
             Card lastDiscarded = Cards.Pop();
-            var cards = RemoveCards();
+
+            List<Card> cards = new();
+            while (CardCount > 0)
+                cards.Add(DrawCard());
+
             AddCard(lastDiscarded);
             return cards;
         }
 
-        public List<Card> RemoveCards()
+        public void RemoveCards()
         {
-            List<Card> removedCards = new();
             while (CardCount > 0)
-                removedCards.Add(DrawCard());
-            return removedCards;
+                Destroy(Cards.Pop().gameObject);
         }
     }
 

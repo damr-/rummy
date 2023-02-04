@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using rummy.Utility;
 
 namespace rummy.UI
 {
@@ -10,50 +11,62 @@ namespace rummy.UI
         public GameObject LinePrefab;
         public GameObject EntryPrefab;
 
-        protected List<GameObject> lines = new();
+        private readonly List<GameObject> lines = new();
+        private readonly List<int> playerTotals = new();
 
-        private void Start()
-        {
-            UpdateViewSize();
-        }
+        private static readonly int BASE_WIDTH = 100;
 
-        public void AddPlayerNamesLine(List<Player> players)
-        {
-            AddLine(players, true);
-        }
-
-        public void AddScoreLine(List<Player> players)
-        {
-            AddLine(players, false);
-        }
-
-        private void AddLine(List<Player> players, bool addNames)
+        public void AddLine(List<Player> players, bool isNamesLine)
         {
             GameObject lineObj = Instantiate(LinePrefab, ScrollViewContent.transform);
 
-            foreach (var p in players)
-            {
-                GameObject scoreObj = Instantiate(EntryPrefab, lineObj.transform);
-                string content;
-                if (addNames)
-                    content = p.PlayerName;
-                else
-                {
-                    string score = p.GetHandCardsSum().ToString();
-                    if (score == "0")
-                        score = "-";
-                    content = score;
-                }
-                scoreObj.GetComponentInChildren<TextMeshProUGUI>().text = content;
-            }
+            if (isNamesLine)
+                AddPlayerNamesLine(players, lineObj);
+            else
+                AddScoresLine(players, lineObj);
 
             lines.Add(lineObj);
-            UpdateViewSize();
+            // Update the vertical size of the scroll view
+            ScrollViewContent.sizeDelta = new Vector2(ScrollViewContent.sizeDelta.x, 15 * lines.Count + 10);
         }
 
-        private void UpdateViewSize()
+        private void AddPlayerNamesLine(List<Player> players, GameObject lineObj)
         {
-            ScrollViewContent.sizeDelta = new Vector2(ScrollViewContent.sizeDelta.x, 25 * lines.Count + 10);
+            foreach (Player p in players)
+            {
+                GameObject scoreObj = Instantiate(EntryPrefab, lineObj.transform);
+                var tmp = scoreObj.GetComponentInChildren<TextMeshProUGUI>();
+                tmp.text = $"{p.PlayerName} (0)";
+                playerTotals.Add(0);
+            }
+
+            // Adjust width to fit all players
+            var rectTransform = GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(BASE_WIDTH * players.Count, rectTransform.sizeDelta.y);
+
+        }
+
+        private void AddScoresLine(List<Player> players, GameObject lineObj)
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                Player p = players[i];
+
+                GameObject scoreObj = Instantiate(EntryPrefab, lineObj.transform);
+                int score = p.GetHandCardsSum();
+                string scoreText = score.ToString();
+                scoreObj.GetComponentInChildren<TextMeshProUGUI>().text = scoreText == "0" ? "-" : scoreText;
+
+                playerTotals[i] += score;
+                lines[0].transform.GetChild(i).GetComponentInChildren<TextMeshProUGUI>().text = $"{p.PlayerName} ({playerTotals[i]})";
+            }
+        }
+
+        public void Clear()
+        {
+            lines.ClearAndDestroy();
+            for (int i = 0; i < playerTotals.Count; i++)
+                playerTotals[i] = 0;
         }
     }
 

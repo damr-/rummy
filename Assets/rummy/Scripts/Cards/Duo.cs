@@ -24,7 +24,7 @@ namespace rummy.Cards
         public override string ToString() => A.ToString() + B.ToString();
 
         /// <summary>
-        /// Returns whether both duos contain one identical card
+        /// Return whether both duos contain one identical card
         /// and the other two cards look alike but are not the same
         /// </summary>
         public static bool AreHalfDuplicates(Duo d1, Duo d2)

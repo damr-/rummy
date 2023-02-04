@@ -13,6 +13,8 @@ namespace rummy
         private Button CloseMenuButton;
         [SerializeField]
         private Button PauseButton;
+        [SerializeField]
+        private Button ScoreboardButton;
 
         private GUIScaler guiScaler;
 
@@ -24,6 +26,8 @@ namespace rummy
                 throw new MissingReferenceException($"Missing CloseMenuButton in {gameObject}");
             if (PauseButton == null)
                 throw new MissingReferenceException($"Missing PauseButton in {gameObject}");
+            if (PauseButton == null)
+                throw new MissingReferenceException($"Missing ScoreboardButton in {gameObject}");
             guiScaler = GetComponent<GUIScaler>();
         }
 
@@ -44,6 +48,8 @@ namespace rummy
 
             if (Input.GetKeyDown(KeyCode.P))
                 PauseButton.onClick.Invoke();
+            if (Input.GetKeyDown(KeyCode.S))
+                ScoreboardButton.onClick.Invoke();
         }
 
     }

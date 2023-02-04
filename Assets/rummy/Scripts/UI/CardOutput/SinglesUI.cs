@@ -25,10 +25,7 @@ namespace rummy.UI.CardOutput
             {
                 int cardValue;
                 if(single.Card.IsJoker())
-                {
-                    // TODO: Find out the joker value?
                     cardValue = 0;
-                }
                 else
                     cardValue = single.Card.Value;
                 string msg = "" + single + "->" + single.CardSpot + " (" + cardValue + ")" + (single.Joker != null ? " (SWAP)" : "");

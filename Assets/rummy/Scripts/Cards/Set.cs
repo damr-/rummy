@@ -29,7 +29,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether the given list of cards could form a valid set
+        /// Return whether the given list of cards could form a valid set
         /// </summary>
         public static bool IsValidSet(List<Card> cards)
         {
@@ -72,7 +72,7 @@ namespace rummy.Cards
         }
 
         ///<summary>
-        /// Returns whether the cards of the other set LOOK the same as the cards in this
+        /// Return whether the cards of the other set LOOK the same as the cards in this
         /// meaning that they are not checked for object-equality but only for same suit 
         ///</summary>
         public bool LooksEqual(Set other)

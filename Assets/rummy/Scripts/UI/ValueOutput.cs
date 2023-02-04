@@ -20,7 +20,8 @@ namespace rummy.UI
             GuiScale = 7,
             GameSpeed = 8,
             PlayWaitDuration = 9,
-            DrawWaitDuration = 10
+            DrawWaitDuration = 10,
+            PlayerCount = 11
         }
         public Value OutputValue;
 
@@ -58,6 +59,7 @@ namespace rummy.UI
                 case Value.GameSpeed:
                 case Value.PlayWaitDuration:
                 case Value.DrawWaitDuration:
+                case Value.PlayerCount:
                     GameMaster = GetComponentInParent<GameMaster>();
                     if (GameMaster == null)
                         throw new MissingReferenceException($"ValueOutput is set to output {OutputValue} but is not child of a GameMaster!");
@@ -87,6 +89,7 @@ namespace rummy.UI
                     Value.GameSpeed => GameMaster.GameSpeed.ToString("0"),
                     Value.PlayWaitDuration => GameMaster.PlayWaitDuration.ToString("0.00"),
                     Value.DrawWaitDuration => GameMaster.DrawWaitDuration.ToString("0.00"),
+                    Value.PlayerCount => GameMaster.PlayerCount.ToString(),
                     _ => throw new RummyException("Invalid output value type: " + OutputValue)
                 };
             }

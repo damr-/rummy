@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using rummy.Utility;
 using UnityEngine;
 
@@ -27,12 +26,6 @@ namespace rummy.Cards
             return angleSpread / (Mathf.Max(Objects.Count, 4) - 1);
         }
 
-        public override List<Card> ResetSpot()
-        {
-            Type = SpotType.NONE;
-            return base.ResetSpot();
-        }
-
         public int GetValue()
         {
             int value = 0;
@@ -56,7 +49,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether this CardSpot is full and cannot take any more cards
+        /// Return whether this CardSpot is full and cannot take any more cards
         /// </summary>
         public bool IsFull(bool includeJokers)
         {
@@ -89,7 +82,7 @@ namespace rummy.Cards
                 // If adding ACE after King is not possible, add ACE at beginning
                 if (card.Rank == Card.CardRank.ACE &&
                     (highestRank < Card.CardRank.KING ||
-                    (highestRank == Card.CardRank.ACE && !Objects[Objects.Count - 1].IsJoker())))
+                    (highestRank == Card.CardRank.ACE && !Objects[^1].IsJoker())))
                 {
                     idx = 0;
                 }
@@ -130,7 +123,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Checks whether this CardSpot can fit the 'newCard', optionally
+        /// Check whether this CardSpot can fit the 'newCard', optionally
         /// returning the Joker which is currently occupying that spot
         /// </summary>
         /// <returns>True if the card can fit in this spot, false otherwise</returns>

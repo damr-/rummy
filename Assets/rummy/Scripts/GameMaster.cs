@@ -4,12 +4,43 @@ using UnityEngine;
 using UnityEngine.Events;
 using rummy.Cards;
 using rummy.UI;
+using rummy.Utility;
 
 namespace rummy
 {
 
     public class GameMaster : MonoBehaviour
     {
+        public int PlayerCount = 2;
+        public Transform PlayersParent;
+        public GameObject PlayerPrefab;
+        public void ChangePlayerCount(bool increase)
+        {
+            if (increase) {
+                if (PlayerCount < 6)
+                    PlayerCount += 1;
+            }
+            else if (PlayerCount > 2)
+                PlayerCount -= 1;
+        }
+        private static readonly int PLAYER_X = 15;
+        private static readonly int PLAYER_Y = 14;
+        private static readonly Vector3 LD = new(-PLAYER_X, -PLAYER_Y, 0);
+        private static readonly Vector3 LU = new(-PLAYER_X,  PLAYER_Y, 0);
+        private static readonly Vector3 CD = new(0, -PLAYER_Y, 0);
+        private static readonly Vector3 CU = new(0, PLAYER_Y, 0);
+        private static readonly Vector3 RD = new(PLAYER_X, -PLAYER_Y, 0);
+        private static readonly Vector3 RU = new(PLAYER_X,  PLAYER_Y, 0);
+
+        private readonly IDictionary<int, List<Vector3>> PlayerPos = new Dictionary<int, List<Vector3>>()
+        {
+            {2, new List<Vector3> { CD, CU } },
+            {3, new List<Vector3> { CD, LU, RU } },
+            {4, new List<Vector3> { CD, LU, CU, RU } },
+            {5, new List<Vector3> { CD, LD, LU, RU, RD } },
+            {6, new List<Vector3> { CD, LD, LU, CU, RU, RD } }
+        };
+
         [SerializeField]
         private int CardsPerPlayer = 13;
         [SerializeField]
@@ -18,7 +49,7 @@ namespace rummy
         public void SetMinimumLaySum(int value) => MinimumLaySum = value;
 
         [SerializeField]
-        private bool StartWithRandomSeed = true;
+        private bool RandomizeSeed = true;
         public int Seed;
         public void SetSeed(int value) => Seed = value;
 
@@ -47,7 +78,7 @@ namespace rummy
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
         public bool LayingAllowed() => RoundCount >= EarliestLaydownRound;
 
-        private List<Player> Players = new();
+        public readonly List<Player> Players = new();
         private Player CurrentPlayer => Players[currentPlayerID];
 
         public static List<string> PlayerNamePool = new() {
@@ -61,7 +92,7 @@ namespace rummy
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
-        private int currentStartingPlayerID = -1;        
+        private int currentStartingPlayerID = -1;
 
         [SerializeField]
         private int SkipUntilRound = 0; // Quickly forward until the given round starts. '0': no round is skipped
@@ -92,31 +123,18 @@ namespace rummy
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
 
-            if(StartWithRandomSeed)
+            if (RandomizeSeed)
                 Seed = Random.Range(0, int.MaxValue);
             Random.InitState(Seed);
 
-            Players = FindObjectsOfType<Player>().ToList();
-            List<string> usedNames = new();
-            foreach (var p in Players)
-            {
-                string playerName;
-                do
-                {
-                    playerName = PlayerNamePool.ElementAt(Random.Range(0, PlayerNamePool.Count));
-                } while (usedNames.Contains(playerName));
-                p.SetPlayerName(playerName);
-                usedNames.Add(playerName);
-            }
             Scoreboard = GetComponentInChildren<Scoreboard>(true);
-            Scoreboard.AddPlayerNamesLine(Players);
-
-            CardStack.CreateCardStack(CardStackType);
-            StartGame();
+            StartGame(true);
         }
 
-        private void StartGame()
+        private void StartGame(bool newGame)
         {
+            CardStack.CreateCardStack(CardStackType);
+
             if (SkipUntilRound > 0)
             {
                 storedGameSpeed = GameSpeed;
@@ -133,20 +151,78 @@ namespace rummy
             Time.timeScale = GameSpeed;
             RoundCount = 0;
 
+            if (newGame)
+            {
+                Players.ClearAndDestroy();
+                currentStartingPlayerID = -1;
+                CreatePlayers();
+            }
+
             gameState = GameState.DEALING;
             CurrentCardMoveSpeed = DealCardMoveSpeed;
             currentStartingPlayerID = (currentStartingPlayerID + 1) % Players.Count;
             currentPlayerID = currentStartingPlayerID;
         }
 
-        public void NextGame()
+        private void CreatePlayers()
         {
-            Seed += 1;
-            RestartGame();
+            List<string> usedNames = new();
+            while (Players.Count < PlayerCount)
+            {
+                var p = Instantiate(PlayerPrefab, PlayersParent).GetComponent<Player>();
+                Players.Add(p);
+
+                string playerName;
+                do
+                {
+                    playerName = PlayerNamePool.ElementAt(Random.Range(0, PlayerNamePool.Count));
+                } while (usedNames.Contains(playerName));
+
+                p.SetPlayerName(playerName);
+                usedNames.Add(playerName);
+            }
+
+            //Update player positions for current player count
+            List<Vector3> pos = PlayerPos[Players.Count];
+            for (int i = 0; i < Players.Count; i++)
+            {
+                var p = Players[i];
+                p.transform.position = pos[i];
+                if (pos[i].y > 0) // Rotate the players in the top row
+                    p.Rotate();
+            }
+
+            Scoreboard.Clear();
+            Scoreboard.AddLine(Players, true);
         }
 
-        public void RestartGame()
+        /// <summary>
+        /// Change the seed and restart the game
+        /// </summary>
+        /// <param name="newGame"></param>
+        public void NextGame(bool newGame)
         {
+            if (RandomizeSeed)
+            {
+                int prevSeed = Seed;
+                do
+                {
+                    Seed = Random.Range(0, int.MaxValue);
+                } while (Seed == prevSeed);
+            }
+            else
+                Seed += 1;
+
+            RestartGame(newGame);
+        }
+
+        /// <summary>
+        /// Remove all cards and start a new game
+        /// </summary>
+        /// <param name="newGame"></param>
+        public void RestartGame(bool newGame)
+        {
+            gameState = GameState.NONE;
             if (SkipUntilRound > 0)
             {
                 GameSpeed = storedGameSpeed;
@@ -154,14 +230,13 @@ namespace rummy
                 DrawWaitDuration = storedDrawWaitDur;
             }
 
-            var cards = new List<Card>();
-            cards.AddRange(DiscardStack.RemoveCards());
+            DiscardStack.RemoveCards();
             foreach (var p in Players)
-                cards.AddRange(p.ResetPlayer());
+                p.ResetPlayer();
+            FindObjectsOfType<Card>().ToList().ClearAndDestroy();
 
             Random.InitState(Seed);
-            CardStack.Restock(cards, true);
-            StartGame();
+            StartGame(newGame);
         }
 
         private void Update()
@@ -209,7 +284,7 @@ namespace rummy
             CurrentPlayer.TurnFinished.RemoveAllListeners();
             if (CurrentPlayer.HandCardCount == 0)
             {
-                WriteScores();
+                Scoreboard.AddLine(Players, false);
                 GameOver.Invoke(CurrentPlayer);
                 gameState = GameState.NONE;
                 return;
@@ -223,7 +298,7 @@ namespace rummy
 
                 if (IsGameADraw())
                 {
-                    WriteScores();
+                    Scoreboard.AddLine(Players, false);
                     GameOver.Invoke(null);
                     gameState = GameState.NONE;
                     return;
@@ -233,16 +308,11 @@ namespace rummy
             if (CardStack.CardCount == 0)
             {
                 var discardedCards = DiscardStack.RecycleDiscardedCards();
-                CardStack.Restock(discardedCards, false);
+                CardStack.Restock(discardedCards);
             }
 
             drawWaitStartTime = Time.time;
             gameState = GameState.DRAWWAIT;
-        }
-
-        private void WriteScores()
-        {
-            Scoreboard.AddScoreLine(Players);
         }
 
         private void TryStopSkipping()
@@ -258,7 +328,7 @@ namespace rummy
         }
 
         /// <summary>
-        /// Returns whether the current game is a draw and cannot be won by any player
+        /// Return whether the current game is a draw and cannot be won by any player
         /// </summary>
         private bool IsGameADraw()
         {

@@ -1,13 +1,34 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using rummy.Cards;
 
 namespace rummy.Utility
 {
     public static class Extensions
     {
+        public static void ClearAndDestroy<T>(this List<T> objects) where T : MonoBehaviour
+        {
+            while (objects.Count > 0)
+            {
+                var obj = objects[0];
+                objects.RemoveAt(0);
+                Object.Destroy(obj.gameObject);
+            }
+        }
+
+        public static void ClearAndDestroy(this List<GameObject> objects)
+        {
+            while (objects.Count > 0)
+            {
+                var obj = objects[0];
+                objects.RemoveAt(0);
+                Object.Destroy(obj);
+            }
+        }
+
         /// <summary>
-        /// Returns the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list
+        /// Return the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list
         /// </summary>
         public static IDictionary<Card.CardRank, List<Card>> GetCardsByRank(this IEnumerable<Card> cards)
         {
@@ -24,7 +45,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the given list of cards as a dictionary. Keys are CardSuits, Values are all the cards in 'cards' with that suit
+        /// Return the given list of cards as a dictionary. Keys are CardSuits, Values are all the cards in 'cards' with that suit
         /// </summary>
         public static IDictionary<Card.CardSuit, List<Card>> GetCardsBySuit(this IEnumerable<Card> cards)
         {
@@ -41,7 +62,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns whether the list intersects the other list of cards (whether the two lists have at least one card in common)
+        /// Return whether the list intersects the other list of cards (whether the two lists have at least one card in common)
         /// </summary>
         public static bool Intersects(this List<Card> list, List<Card> otherList)
         {
@@ -57,7 +78,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the first card of the given list of cards which is not a joker
+        /// Return the first card of the given list of cards which is not a joker
         /// </summary>
         /// <returns>The found card or null otherwise</returns>
         public static Card GetFirstCard(this List<Card> cards)
@@ -67,7 +88,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns the index of the first card which is not a joker, starting the search at startIndex and searching in the desired direction
+        /// Return the index of the first card which is not a joker, starting the search at startIndex and searching in the desired direction
         /// </summary>
         /// <returns>The index of the first non-joker card or -1 if none was found</returns>
         public static int GetFirstCardIndex(this List<Card> cards, int startIndex = 0, bool searchForward = true)
@@ -82,8 +103,8 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Returns each .ToString() of a list of MonoBehaviours concatenated to string and prefixed with 'title'
-        /// The passed list type T has to implement .ToString() !
+        /// Return each ToString() of a list of MonoBehaviours concatenated to string and prefixed with 'title'
+        /// The passed list type T has to implement ToString()
         /// </summary>
         /// <param name="list">The list of MonoBehaviours</param>
         /// <param name="title">The title of a single monobehaviour. An 's' will be appended if list.Count > 0</param>

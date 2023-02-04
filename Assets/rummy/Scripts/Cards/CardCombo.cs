@@ -30,7 +30,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Sorts the combo's sets and runs by their value, in descending order
+        /// Sort the combo's sets and runs by their value, in descending order
         /// </summary>
         public void Sort()
         {
@@ -49,8 +49,8 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether this card combo intersects the other
-        /// (whether the sets and runs of the two combos have at least one card in common)
+        /// Return whether this card combo intersects the other (whether the sets
+        /// and runs of the two combos have at least one card in common)
         /// </summary>
         public bool Intersects(CardCombo other) => GetCards().Intersects(other.GetCards());
 
@@ -63,7 +63,7 @@ namespace rummy.Cards
         }
 
         ///<summary>
-        /// Returns whether the 'other' CardCombo looks the same as this one, meaning that it has the same runs and sets.
+        /// Return whether the 'other' CardCombo looks the same as this one, meaning that it has the same runs and sets.
         /// ONLY CHECKING the suit and rank, not whether the cards are actually identical Objects.
         ///</summary>
         public bool LooksEqual(CardCombo other)
@@ -94,7 +94,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Returns whether adding any of the passed jokers will increase the CardCombo's value to or above <see cref="GameMaster.MinimumLaySum"/>.
+        /// Return whether adding any of the passed jokers will increase the CardCombo's value to or above <see cref="GameMaster.MinimumLaySum"/>.
         /// If successful, the jokers are added to the CardCombo.
         /// </summary>
         public bool TryAddJoker(List<Card> jokers)

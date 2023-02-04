@@ -24,9 +24,8 @@ namespace rummy.UI
 
         public void ChangeScale(bool increase)
         {
-            GUIScale = Mathf.Min(Mathf.Max(GUIScale, minScale), maxScale);
-
             GUIScale += deltaGUIScale * (increase ? 1 : -1);
+            GUIScale = Mathf.Min(Mathf.Max(GUIScale, minScale), maxScale);
             foreach (var scaler in canvasScalers)
                 scaler.scaleFactor = GUIScale;
         }

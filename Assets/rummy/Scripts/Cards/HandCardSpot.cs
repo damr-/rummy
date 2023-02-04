@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using rummy.Utility;
 
 namespace rummy.Cards
 {
@@ -30,12 +31,9 @@ namespace rummy.Cards
             UpdatePositions();
         }
 
-        public virtual List<Card> ResetSpot()
+        public virtual void ResetSpot()
         {
-            var cards = new List<Card>(Objects);
-            while (Objects.Count > 0)
-                RemoveCard(Objects[0]);
-            return cards;
+            Objects.ClearAndDestroy();
         }
     }
 
