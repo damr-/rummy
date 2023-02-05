@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using rummy.Utility;
 using UnityEngine;
 using UnityEngine.Events;
+using rummy.Utility;
 
 namespace rummy.Cards
 {
@@ -191,12 +191,14 @@ namespace rummy.Cards
 
         private void Update()
         {
-            if (!isMoving)
-                return;
-            if (Vector3.Distance(transform.position, targetPos) <= 2 * Time.deltaTime * Tb.I.GameMaster.CurrentCardMoveSpeed)
-                FinishMove();
-            else
-                transform.Translate(Tb.I.GameMaster.CurrentCardMoveSpeed * Time.deltaTime * (targetPos - transform.position).normalized, Space.World);
+            if (isMoving)
+            {
+                var distPerFrame = Tb.I.GameMaster.CurrentCardMoveSpeed * Time.deltaTime;
+                if (Vector3.Distance(transform.position, targetPos) < 2 * distPerFrame)
+                    FinishMove();
+                else
+                    transform.Translate(distPerFrame * (targetPos - transform.position).normalized, Space.World);
+            }
         }
     }
 

@@ -52,6 +52,8 @@ namespace rummy
         private bool RandomizeSeed = true;
         public int Seed;
         public void SetSeed(int value) => Seed = value;
+        [SerializeField]
+        private int startingPlayer = 0;
 
         private float DefaultGameSpeed; // Stored during pause
         public float GameSpeed { get; private set; } = 1.0f;
@@ -67,12 +69,11 @@ namespace rummy
         public float PlayWaitDuration { get; private set; } = 1f;
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
 
-        [SerializeField]
-        private float PlayCardMoveSpeed = 50f;
-        [SerializeField]
-        private float DealCardMoveSpeed = 200f;
-        public float CurrentCardMoveSpeed { get; private set; }
-        public void SetCurrentCardMoveSpeed(float value) => CurrentCardMoveSpeed = value;
+        public float CurrentCardMoveSpeed => gameState == GameState.DEALING ? DealCardMoveSpeed : PlayCardMoveSpeed;
+        public float PlayCardMoveSpeed { get; private set; } = 30f;
+        public float DealCardMoveSpeed { get; private set; } = 200f;
+        public void SetPlayCardMoveSpeed(float value) => PlayCardMoveSpeed = value;
+        public void SetDealCardMoveSpeed(float value) => DealCardMoveSpeed = value;
 
         public int RoundCount { get; private set; }
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
@@ -92,7 +93,7 @@ namespace rummy
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
-        private int currentStartingPlayerID = -1;
+        private int currentStartingPlayerID;
 
         [SerializeField]
         private int SkipUntilRound = 0; // Quickly forward until the given round starts. '0': no round is skipped
@@ -111,8 +112,10 @@ namespace rummy
         public class Event_GameOver : UnityEvent<Player> { }
         public Event_GameOver GameOver = new();
 
-        public CardStack CardStack;
-        public DiscardStack DiscardStack;
+        [SerializeField]
+        private CardStack CardStack;
+        [SerializeField]
+        private DiscardStack DiscardStack;
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
@@ -125,7 +128,6 @@ namespace rummy
 
             if (RandomizeSeed)
                 Seed = Random.Range(0, int.MaxValue);
-            Random.InitState(Seed);
 
             Scoreboard = GetComponentInChildren<Scoreboard>(true);
             StartGame(true);
@@ -133,6 +135,7 @@ namespace rummy
 
         private void StartGame(bool newGame)
         {
+            Random.InitState(Seed);
             CardStack.CreateCardStack(CardStackType);
 
             if (SkipUntilRound > 0)
@@ -154,14 +157,16 @@ namespace rummy
             if (newGame)
             {
                 Players.ClearAndDestroy();
-                currentStartingPlayerID = -1;
+                currentStartingPlayerID = startingPlayer - 1;
                 CreatePlayers();
             }
 
             gameState = GameState.DEALING;
-            CurrentCardMoveSpeed = DealCardMoveSpeed;
+            if (currentStartingPlayerID >= 0)
+                Players[currentStartingPlayerID].IsStarting.Invoke(false);
             currentStartingPlayerID = (currentStartingPlayerID + 1) % Players.Count;
             currentPlayerID = currentStartingPlayerID;
+            CurrentPlayer.IsStarting.Invoke(true);
         }
 
         private void CreatePlayers()
@@ -235,7 +240,6 @@ namespace rummy
                 p.ResetPlayer();
             FindObjectsOfType<Card>().ToList().ClearAndDestroy();
 
-            Random.InitState(Seed);
             StartGame(newGame);
         }
 
@@ -258,7 +262,6 @@ namespace rummy
                         CurrentPlayer.HandCardCount == CardsPerPlayer)
                     {
                         gameState = GameState.PLAYING;
-                        CurrentCardMoveSpeed = PlayCardMoveSpeed;
                         RoundCount = 1;
                         TryStopSkipping();
                     }

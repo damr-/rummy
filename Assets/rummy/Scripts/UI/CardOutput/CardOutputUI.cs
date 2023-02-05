@@ -6,13 +6,13 @@ namespace rummy.UI.CardOutput
     [RequireComponent(typeof(ScrollView))]
     public abstract class CardOutputUI : MonoBehaviour
     {        
-        protected Player player;
+        protected AIPlayer player;
         protected ScrollView outputView;
 
         private void Start()
         {
             outputView = GetComponent<ScrollView>();
-            player = GetComponentInParent<Player>();
+            player = GetComponentInParent<AIPlayer>();
 
             SetupPlayerSub();
         }

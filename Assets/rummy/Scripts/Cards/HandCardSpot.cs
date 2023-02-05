@@ -21,12 +21,16 @@ namespace rummy.Cards
 
         protected void AddCard(Card card, int index)
         {
+            if (Objects.Contains(card))
+                throw new RummyException($"CardSpot {gameObject} already contains card {card}");
             Objects.Insert(index, card);
             UpdatePositions();
         }
 
         public void RemoveCard(Card card)
         {
+            if (!Objects.Contains(card))
+                throw new RummyException($"CardSpot {gameObject} doesn't contain card {card}");
             Objects.Remove(card);
             UpdatePositions();
         }
