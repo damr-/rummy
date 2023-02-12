@@ -60,6 +60,7 @@ namespace rummy
         /// Whether the player can lay down melds and pick up cards from the discard stack
         /// </summary>
         public bool HasLaidDown { get; protected set; }
+        protected bool isCardBeingLaidDown, isJokerBeingReturned;
         #endregion
 
         #region Events
@@ -68,10 +69,19 @@ namespace rummy
         public UnityEvent TurnBegun = new();
         public UnityEvent TurnFinished = new();
         public UnityEvent<string> NameChanged = new();
+
+        public class Event_PossibleCardCombosChanged : UnityEvent<List<CardCombo>> { }
+        public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new();
+
+        public class Event_PossibleSinglesChanged : UnityEvent<List<Single>> { }
+        public Event_PossibleSinglesChanged PossibleSinglesChanged = new();
         #endregion
 
         public virtual void ResetPlayer()
         {
+            PossibleCardCombosChanged.Invoke(new List<CardCombo>());
+            PossibleSinglesChanged.Invoke(new List<Single>());
+
             HasLaidDown = false;
             State = PlayerState.IDLE;
 
@@ -85,8 +95,45 @@ namespace rummy
             DrawCard(false);
         }
 
-        public abstract void DrawCard(bool isServingCard);
-        protected abstract void DrawCardFinished(Card card, bool isServingCard);
+        public void DrawCard(bool isServingCard)
+        {
+            State = PlayerState.DRAWING;
+
+            Card card;
+            if(isServingCard)
+                card = Tb.I.CardStack.DrawCard();
+            else
+                card = GetCardToDraw();
+
+            card.MoveFinished.AddListener(c => DrawCardMoveFinished(c, isServingCard));
+            card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
+        }
+
+        protected abstract Card GetCardToDraw();
+
+        protected virtual void DrawCardMoveFinished(Card card, bool isServingCard)
+        {
+            card.MoveFinished.RemoveAllListeners();
+            HandCardSpot.AddCard(card);
+            if (CardsVisible)
+                card.SetTurned(false);
+            if (isServingCard)
+                State = PlayerState.IDLE;
+        }
+
+        protected List<CardCombo> UpdatePossibleCombos()
+        {
+            var combos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false);
+            PossibleCardCombosChanged.Invoke(combos);
+            return combos;
+        }
+
+        protected List<Single> UpdatePossibleSingles(CardCombo laydownCards)
+        {
+            var singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            PossibleSinglesChanged.Invoke(singleLayDownCards);
+            return singleLayDownCards;
+        }
 
         protected virtual void LayDownCardMoveFinished(Card card)
         {
@@ -98,6 +145,15 @@ namespace rummy
         {
             joker.MoveFinished.RemoveAllListeners();
             HandCardSpot.AddCard(joker);
+        }
+
+        protected virtual void DiscardCard(Card card)
+        {
+            HandCardSpot.RemoveCard(card);
+            if (!CardsVisible)
+                card.SetTurned(false);
+            card.MoveFinished.AddListener(DiscardCardMoveFinished);
+            card.MoveCard(Tb.I.DiscardStack.transform.position, Tb.I.GameMaster.AnimateCardMovement);
         }
 
         protected virtual void DiscardCardMoveFinished(Card card)

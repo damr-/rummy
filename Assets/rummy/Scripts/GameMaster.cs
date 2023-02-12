@@ -13,7 +13,8 @@ namespace rummy
     {
         public int PlayerCount = 2;
         public Transform PlayersParent;
-        public GameObject PlayerPrefab;
+        public GameObject HumanPlayerPrefab;
+        public GameObject AIPlayerPrefab;
         public void ChangePlayerCount(bool increase)
         {
             if (increase) {
@@ -171,10 +172,14 @@ namespace rummy
 
         private void CreatePlayers()
         {
+            var humanPlayer = Instantiate(HumanPlayerPrefab, PlayersParent).GetComponent<Player>();
+            Players.Add(humanPlayer);
+            humanPlayer.SetPlayerName("You");
+
             List<string> usedNames = new();
             while (Players.Count < PlayerCount)
             {
-                var p = Instantiate(PlayerPrefab, PlayersParent).GetComponent<Player>();
+                var p = Instantiate(AIPlayerPrefab, PlayersParent).GetComponent<Player>();
                 Players.Add(p);
 
                 string playerName;
@@ -261,11 +266,17 @@ namespace rummy
                     if (currentPlayerID == currentStartingPlayerID &&
                         CurrentPlayer.HandCardCount == CardsPerPlayer)
                     {
-                        gameState = GameState.PLAYING;
+                        drawWaitStartTime = Time.time;
+                        gameState = GameState.DRAWWAIT;
                         RoundCount = 1;
                         TryStopSkipping();
                     }
                 }
+            }
+            else if (gameState == GameState.DRAWWAIT)
+            {
+                if (Time.time - drawWaitStartTime > DrawWaitDuration)
+                    gameState = GameState.PLAYING;
             }
             else if (gameState == GameState.PLAYING)
             {
@@ -274,11 +285,6 @@ namespace rummy
                     CurrentPlayer.TurnFinished.AddListener(PlayerFinished);
                     CurrentPlayer.BeginTurn();
                 }
-            }
-            else if (gameState == GameState.DRAWWAIT)
-            {
-                if (Time.time - drawWaitStartTime > DrawWaitDuration)
-                    gameState = GameState.PLAYING;
             }
         }
 

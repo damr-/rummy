@@ -10,6 +10,8 @@ namespace rummy
 
     public class AIPlayer : Player
     {
+        public bool enableThoughts = false;
+
         #region CardMelds
         /// <summary>The card sets and runs which are going to be laid down</summary>
         private CardCombo laydownCards = new();
@@ -19,7 +21,6 @@ namespace rummy
 
         private float waitStartTime;
         private int currentMeldIdx = 0, currentCardIdx = 0;
-        private bool isCardBeingLaidDown, isJokerBeingReturned;
 
         private enum LayStage
         {
@@ -33,12 +34,11 @@ namespace rummy
         #region Events
         public class Event_NewThought : UnityEvent<string> { }
         public Event_NewThought NewThought = new();
-
-        public class Event_PossibleCardCombosChanged : UnityEvent<List<CardCombo>> { }
-        public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new();
-
-        public class Event_PossibleSinglesChanged : UnityEvent<List<Single>> { }
-        public Event_PossibleSinglesChanged PossibleSinglesChanged = new();
+        private void EmitThought(string thought)
+        {
+            if (enableThoughts)
+                NewThought.Invoke(thought);
+        }
         #endregion
 
         private void Update()
@@ -87,7 +87,7 @@ namespace rummy
                     LayStage.SETS => laydownCards.Sets[currentMeldIdx].Cards[currentCardIdx],
                     LayStage.RUNS => laydownCards.Runs[currentMeldIdx].Cards[currentCardIdx],
                     LayStage.SINGLES => singleLayDownCards[currentCardIdx].Card,
-                    _ => throw new RummyException("Invalid lay stage: " + layStage)
+                    _ => throw new RummyException($"Invalid lay stage: {layStage}")
                 };
                 HandCardSpot.RemoveCard(card);
                 if (!CardsVisible)
@@ -108,23 +108,20 @@ namespace rummy
 
         public override void ResetPlayer()
         {
-            NewThought.Invoke("<CLEAR>");
-            PossibleCardCombosChanged.Invoke(new List<CardCombo>());
-            PossibleSinglesChanged.Invoke(new List<Single>());
+            EmitThought("<CLEAR>");
             base.ResetPlayer();
         }
 
         public override void BeginTurn()
         {
-            NewThought.Invoke("<CLEAR>");
+            EmitThought("<CLEAR>");
             base.BeginTurn();
         }
 
-        public override void DrawCard(bool isServingCard)
+        protected override Card GetCardToDraw()
         {
-            State = PlayerState.DRAWING;
             bool takeFromDiscardStack = false;
-            if (!isServingCard && HasLaidDown)
+            if (HasLaidDown)
             {
                 // Check if we want to draw from discard stack
                 // Note that players will never discard a card which can be added to an already laid-down meld.
@@ -138,7 +135,7 @@ namespace rummy
 
                 if (hypotheticalValue > currentValue)
                 {
-                    NewThought.Invoke("Take " + discardedCard + " from discard pile to finish " + hypotheticalBestCombo);
+                    EmitThought($"Take {discardedCard} from discard pile to finish {hypotheticalBestCombo}");
                     takeFromDiscardStack = true;
                 }
             }
@@ -148,28 +145,19 @@ namespace rummy
                 card = Tb.I.DiscardStack.DrawCard();
             else
                 card = Tb.I.CardStack.DrawCard();
-
-            card.MoveFinished.AddListener(c => DrawCardFinished(c, isServingCard));
-            card.MoveCard(transform.position, Tb.I.GameMaster.AnimateCardMovement);
+            return card;
         }
 
-        protected override void DrawCardFinished(Card card, bool isServingCard)
+        protected override void DrawCardMoveFinished(Card card, bool isServingCard)
         {
-            card.MoveFinished.RemoveAllListeners();
-            HandCardSpot.AddCard(card);
-            if (CardsVisible)
-                card.SetTurned(false);
-            if (isServingCard)
-            {
-                State = PlayerState.IDLE;
-                return;
-            }
+            base.DrawCardMoveFinished(card, isServingCard);
 
-            var combos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false);
-            PossibleCardCombosChanged.Invoke(combos);
+            if (isServingCard)
+                return;
+
+            var combos = UpdatePossibleCombos();
             laydownCards = combos.Count > 0 ? combos[0] : new CardCombo();
-            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
-            PossibleSinglesChanged.Invoke(singleLayDownCards);
+            singleLayDownCards = UpdatePossibleSingles(laydownCards);
 
             if (Tb.I.GameMaster.LayingAllowed())
             {
@@ -198,13 +186,13 @@ namespace rummy
                                 laydownCards = combo;
                                 combos.Insert(0, combo);
                                 PossibleCardCombosChanged.Invoke(combos);
-                                NewThought.Invoke("Use jokers to lay down");
+                                EmitThought("Use jokers to lay down");
                                 HasLaidDown = true;
                                 break;
                             }
                         }
                         if (!HasLaidDown)
-                            NewThought.Invoke("Cannot reach " + Tb.I.GameMaster.MinimumLaySum + " using jokers");
+                            EmitThought($"Cannot reach {Tb.I.GameMaster.MinimumLaySum} using jokers");
                     }
                 }
 
@@ -241,7 +229,7 @@ namespace rummy
             if (keptSingle == null)
                 keptSingle = singleLayDownCards[0];
             singleLayDownCards.Remove(keptSingle);
-            NewThought.Invoke("Keep single " + keptSingle);
+            EmitThought($"Keep single {keptSingle}");
         }
 
         protected void DiscardCard()
@@ -250,13 +238,9 @@ namespace rummy
 
             var thoughts = new List<string>();
             Card card = PlayerUtil.GetCardToDiscard(HandCardSpot.Objects, singleLayDownCards, HasLaidDown, ref thoughts);
-            thoughts.ForEach(t => NewThought.Invoke(t));
+            thoughts.ForEach(t => EmitThought(t));
 
-            HandCardSpot.RemoveCard(card);
-            if (!CardsVisible)
-                card.SetTurned(false);
-            card.MoveFinished.AddListener(DiscardCardMoveFinished);
-            card.MoveCard(Tb.I.DiscardStack.transform.position, Tb.I.GameMaster.AnimateCardMovement);
+            DiscardCard(card);
         }
 
         protected override void DiscardCardMoveFinished(Card card)
@@ -278,13 +262,14 @@ namespace rummy
 
             // All possible runs/sets/singles have to be calculated again with that new joker
             laydownCards = GetBestCardCombo(HandCardSpot.Objects, true);
-            singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
-            PossibleSinglesChanged.Invoke(singleLayDownCards);
+
+            //singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            //PossibleSinglesChanged.Invoke(singleLayDownCards);
+            singleLayDownCards = UpdatePossibleSingles(laydownCards);
 
             if (laydownCards.CardCount == HandCardCount)
                 KeepOneSingleCard();
 
-            // Proceed with waiting
             State = PlayerState.WAITING;
             waitStartTime = Time.time;
         }

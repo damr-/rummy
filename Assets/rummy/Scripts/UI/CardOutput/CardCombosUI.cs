@@ -35,7 +35,7 @@ namespace rummy.UI.CardOutput
 
             string poss = " possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
             string var = " variant" + (cardCombos.Count == 1 ? "" : "s");
-            string header = uniqueCombos.Count + poss + " [" + cardCombos.Count + var + "]:";
+            string header = $"{uniqueCombos.Count} {poss} [{cardCombos.Count} {var}]:";
             outputView.PrintMessage(new ScrollView.Message(header));
 
             for (int i = 0; i < uniqueCombos.Count; i++)
@@ -55,7 +55,7 @@ namespace rummy.UI.CardOutput
                     foreach (Run run in cardCombo.Runs)
                         msg += run + ", ";
                 }
-                msg = msg.TrimEnd().TrimEnd(',') + " (" + cardCombo.Value + ")";
+                msg = msg.TrimEnd().TrimEnd(',') + $" ({cardCombo.Value})";
 
                 Color msgColor = Color.black;
                 if (!player.HasLaidDown)

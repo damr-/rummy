@@ -2256,7 +2256,7 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.21052632, y: 1}
+  m_AnchorMax: {x: 0.10526316, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4058,7 +4058,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayerCount: 2
   PlayersParent: {fileID: 105738726}
-  PlayerPrefab: {fileID: 5499674433792271634, guid: 5888c89fbb1e64531a04b4dbfe86ca66,
+  HumanPlayerPrefab: {fileID: 5499674433792271634, guid: ab7aeb13792e344d4bba30adbaccf12b,
+    type: 3}
+  AIPlayerPrefab: {fileID: 5499674433792271634, guid: 5888c89fbb1e64531a04b4dbfe86ca66,
     type: 3}
   CardsPerPlayer: 13
   EarliestLaydownRound: 0
@@ -4855,8 +4857,8 @@ RectTransform:
   m_Father: {fileID: 1315029575}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.21052632, y: 0}
-  m_AnchorMax: {x: 0.21052632, y: 1}
+  m_AnchorMin: {x: 0.10526316, y: 0}
+  m_AnchorMax: {x: 0.10526316, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

@@ -165,7 +165,7 @@ namespace rummy.Utility
 
             var availableCards = new List<Card>(PlayerHandCards);
 
-            // Exclude the cards which will be laid down anyway as sets/runs
+            // Exclude the cards which will be laid down anyway as melds
             availableCards = availableCards.Except(laydownCards.GetCards()).ToList();
 
             var jokerCards = availableCards.Where(c => c.IsJoker());

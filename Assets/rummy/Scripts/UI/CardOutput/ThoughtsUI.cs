@@ -5,7 +5,7 @@
     {
         protected override void SetupPlayerSub()
         {
-            player.NewThought.AddListener(UpdateThoughts);
+            (player as AIPlayer).NewThought.AddListener(UpdateThoughts);
         }
 
         private void UpdateThoughts(string newThought)

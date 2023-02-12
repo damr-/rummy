@@ -164,6 +164,7 @@ namespace rummy.Cards
         public CardStateChangedEvent VisibilityChanged = new();
         public CardStateChangedEvent HasBeenTurned = new();
         public CardStateChangedEvent SentToBackground = new();
+        public CardStateChangedEvent InteractabilityChanged = new();
 
         /// <summary> En- or Disable the sprite renderer </summary>
         public void SetVisible(bool visible) => VisibilityChanged.Invoke(visible);
@@ -171,6 +172,8 @@ namespace rummy.Cards
         public void SetTurned(bool turned) => HasBeenTurned.Invoke(turned);
         /// <summary>Send this card behind other cards (background=true) or not</summary>
         public void SendToBackground(bool background) => SentToBackground.Invoke(background);
+
+        public void SetInteractable(bool interactable) => InteractabilityChanged.Invoke(interactable);
 
         public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
 
