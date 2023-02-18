@@ -156,7 +156,7 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Update the list of single cards which can be laid down, <see cref="singleLayDownCards"/>.
+        /// Update the list of single cards which can be laid down, <see cref="singleLayDownCards"/>. The first found spot will be used
         /// </summary>
         /// <param name="turnEnded">Whether the update happens right after the player has discarded a card and therefore ended their turn</param>
         public static List<Single> UpdateSingleLaydownCards(List<Card> PlayerHandCards, CardCombo laydownCards, bool turnEnded = false)
@@ -171,7 +171,7 @@ namespace rummy.Utility
             var jokerCards = availableCards.Where(c => c.IsJoker());
             bool allowedJokers = false;
 
-            // At first, do not allow jokers to be laid down as singles
+            // Initially do not allow jokers to be laid down as singles
             availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
 
             bool canFitCard = false;
@@ -232,6 +232,25 @@ namespace rummy.Utility
                 }
             } while (canFitCard);
 
+            return singleLayDownCards;
+        }
+
+        /// <summary>
+        /// Get the full list of possible single cards which can be laid down in any combinatoric fashion (non-mutually exclusive)
+        /// </summary>
+        public static List<Single> UpdateAllSingleLaydownCards(List<Card> PlayerHandCards)
+        {
+            var singleLayDownCards = new List<Single>();
+
+            var cardSpots = Tb.I.GameMaster.GetAllCardSpots().Where(cs => !cs.IsFull(false));
+            foreach (var card in PlayerHandCards)
+            {
+                foreach (var cardSpot in cardSpots)
+                {
+                    if (cardSpot.CanFit(card, out Card joker))
+                        singleLayDownCards.Add(new Single(card, cardSpot, joker));
+                }
+            }
             return singleLayDownCards;
         }
     }

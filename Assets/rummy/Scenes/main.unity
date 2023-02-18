@@ -949,7 +949,7 @@ GameObject:
   m_Component:
   - component: {fileID: 152866269}
   m_Layer: 0
-  m_Name: --------------MISC-----------------
+  m_Name: -----MISC-----
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4064,8 +4064,8 @@ MonoBehaviour:
     type: 3}
   CardsPerPlayer: 13
   EarliestLaydownRound: 0
-  RandomizeSeed: 1
-  Seed: 0
+  RandomizeSeed: 0
+  Seed: 496127300
   startingPlayer: 0
   SkipUntilRound: 0
   CardStack: {fileID: 1551303502}
@@ -6585,7 +6585,7 @@ GameObject:
   m_Component:
   - component: {fileID: 855663860}
   m_Layer: 0
-  m_Name: '--------------GAME----------------- '
+  m_Name: -----GAME-----
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

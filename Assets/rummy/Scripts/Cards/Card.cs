@@ -6,6 +6,7 @@ using rummy.Utility;
 namespace rummy.Cards
 {
 
+    [RequireComponent(typeof(Collider2D))]
     public class Card : MonoBehaviour
     {
         #region defs
@@ -155,16 +156,12 @@ namespace rummy.Cards
         private bool isMoving;
         private Vector3 targetPos;
 
-        public class Event_MoveFinished : UnityEvent<Card> { }
-        public Event_MoveFinished MoveFinished = new();
-
+        public UnityEvent<Card> MoveFinished = new();
         public UnityEvent TypeChanged = new();
-
-        public class CardStateChangedEvent: UnityEvent<bool> { }
-        public CardStateChangedEvent VisibilityChanged = new();
-        public CardStateChangedEvent HasBeenTurned = new();
-        public CardStateChangedEvent SentToBackground = new();
-        public CardStateChangedEvent InteractabilityChanged = new();
+        public UnityEvent<bool> VisibilityChanged = new();
+        public UnityEvent<bool> HasBeenTurned = new();
+        public UnityEvent<bool> SentToBackground = new();
+        public UnityEvent<bool> IsHovered = new();
 
         /// <summary> En- or Disable the sprite renderer </summary>
         public void SetVisible(bool visible) => VisibilityChanged.Invoke(visible);
@@ -173,9 +170,18 @@ namespace rummy.Cards
         /// <summary>Send this card behind other cards (background=true) or not</summary>
         public void SendToBackground(bool background) => SentToBackground.Invoke(background);
 
-        public void SetInteractable(bool interactable) => InteractabilityChanged.Invoke(interactable);
-
         public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
+
+        private Collider2D _coll = null;
+        private Collider2D Coll
+        {
+            get
+            {
+                if (_coll == null)
+                    _coll = GetComponent<Collider2D>();
+                return _coll;
+            }
+        }
 
         public void MoveCard(Vector3 targetPosition, bool animateMovement)
         {
@@ -202,6 +208,27 @@ namespace rummy.Cards
                 else
                     transform.Translate(distPerFrame * (targetPos - transform.position).normalized, Space.World);
             }
+        }
+
+        public delegate void IsHoveredListener(Card c, bool h);
+
+        public void SetInteractable(bool interactable, IsHoveredListener listener)
+        {
+            Coll.enabled = interactable;
+            if (interactable)
+                IsHovered.AddListener(h => listener(this, h));
+            else
+                IsHovered.RemoveAllListeners();
+        }
+
+        public void OnMouseEnter()
+        {
+            IsHovered.Invoke(true);
+        }
+
+        public void OnMouseExit()
+        {
+            IsHovered.Invoke(false);
         }
     }
 

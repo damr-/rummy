@@ -12,6 +12,7 @@ namespace rummy.UI
         {
             RoundCount = 0,
             Seed = 1,
+            PlayerState = 2,
             PlayerHandCardCount = 3,
             CardStackCardCount = 4,
             DiscardStackCardCount = 5,
@@ -22,7 +23,7 @@ namespace rummy.UI
             DrawWaitDuration = 10,
             PlayerCount = 11,
             PlayCardMoveSpeed = 12,
-            DealCardMoveSpeed = 13
+            DealCardMoveSpeed = 13,
         }
         public Value OutputValue;
 
@@ -38,6 +39,7 @@ namespace rummy.UI
             text = GetComponent<TextMeshProUGUI>();
             switch (OutputValue)
             {
+                case Value.PlayerState:
                 case Value.PlayerHandCardCount:
                     Player = GetComponentInParent<Player>();
                     if (Player == null)
@@ -82,6 +84,7 @@ namespace rummy.UI
                 {
                     Value.RoundCount => GameMaster.RoundCount.ToString(),
                     Value.Seed => GameMaster.Seed.ToString(),
+                    Value.PlayerState => Player.State.ToString().FirstCharToUpper(),
                     Value.PlayerHandCardCount => Player.HandCardCount.ToString(),
                     Value.CardStackCardCount => CardStack.CardCount.ToString(),
                     Value.DiscardStackCardCount => DiscardStack.CardCount.ToString(),

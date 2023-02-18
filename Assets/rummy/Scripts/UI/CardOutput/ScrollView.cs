@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using rummy.Utility;
+using TMPro;
 
 namespace rummy.UI.CardOutput
 {
@@ -28,7 +28,7 @@ namespace rummy.UI.CardOutput
                 while (m.Length > CharsPerLine)
                 {
                     CreateMessageObj(m.Substring(0, CharsPerLine), message.color);
-                    m = m.Substring(CharsPerLine);
+                    m = m[CharsPerLine..];
                 }
                 CreateMessageObj(m, message.color);
             }
@@ -46,7 +46,7 @@ namespace rummy.UI.CardOutput
         {
             GameObject messageObj = Instantiate(EntryPrefab);
             messageObj.transform.SetParent(ScrollViewContent.transform, false);
-            Text text = messageObj.GetComponent<Text>();
+            TextMeshProUGUI text = messageObj.GetComponent<TextMeshProUGUI>();
             text.text = message;
             text.color = color;
 

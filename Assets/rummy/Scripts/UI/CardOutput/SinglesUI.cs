@@ -13,7 +13,7 @@ namespace rummy.UI.CardOutput
 
         private void UpdateSingles(List<Single> Singles)
         {
-            if (!gameObject.activeInHierarchy)
+            if (!AlwaysUpdate && !gameObject.activeInHierarchy)
                 return;
 
             outputView.ClearMessages();

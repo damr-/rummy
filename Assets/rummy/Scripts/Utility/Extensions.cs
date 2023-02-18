@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using rummy.Cards;
@@ -13,7 +14,7 @@ namespace rummy.Utility
             {
                 var obj = objects[0];
                 objects.RemoveAt(0);
-                Object.Destroy(obj.gameObject);
+                UnityEngine.Object.Destroy(obj.gameObject);
             }
         }
 
@@ -23,9 +24,17 @@ namespace rummy.Utility
             {
                 var obj = objects[0];
                 objects.RemoveAt(0);
-                Object.Destroy(obj);
+                UnityEngine.Object.Destroy(obj);
             }
         }
+
+        public static string FirstCharToUpper(this string input) =>
+            input switch
+            {
+                null => throw new ArgumentNullException(nameof(input)),
+                "" => throw new ArgumentException($"{nameof(input)} cannot be empty", nameof(input)),
+                _ => input[0].ToString().ToUpper() + input[1..].ToLower()
+            };
 
         /// <summary>
         /// Return the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list

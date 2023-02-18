@@ -4,8 +4,8 @@ A Unity application which plays the famous game 'Rummy' against itself.
 [Run in Browser (WebGL)](https://damr-.github.io/rummy/Builds/rummy/)
 
 ## Specific Rules
-- 2 AI players, each starts with 13 cards in their hand.
-- After round 2, card packs (melds) can be laid if their summed value is greater than 40.
+- 2--6 players (1 human, others AI), each starts with 13 cards in their hand.
+- Card packs (melds) can be laid if their summed value is greater than 40.
   - Sets are formed by 3 or 4 cards of the same rank but different suits. In a set of 3 cards, one can be replaced by a joker of the same color. Adding a joker with the correct color to a set of 3 cards is allowed.
   - Runs consist of at least 3 cards of the same suit which form an ascending sequence. Aces can be used for A-2-3 and Q-K-A but not K-A-2. When creating a run of 3 cards, only one card can be replaced by a joker of the same color (adding more joker cards later is allowed).
 - A player who has laid down melds can
@@ -14,7 +14,7 @@ A Unity application which plays the famous game 'Rummy' against itself.
   - add single cards to already laid down melds,
   - swap out Jokers in melds with the appropriate card.
 
-## Remarks
+## Remarks about AI players
 - The players always try to lay down the highest valued card combination. They will never purposefully keep a finished meld on their hands. Same goes for single cards.
 - Players do not count/memorize the cards which had been discarded to figure out possible card combinations.
 - Once a player has laid down the initial melds they always try to get rid of the highest valued card to minimize losses if they lose the game.

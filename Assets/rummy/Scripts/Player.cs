@@ -11,6 +11,7 @@ namespace rummy
 
     public abstract class Player : MonoBehaviour
     {
+        public UnityEvent<PlayerState> StateChanged = new();
         public enum PlayerState
         {
             IDLE = 0,
@@ -21,7 +22,16 @@ namespace rummy
             RETURNING_JOKER = 5,
             DISCARDING = 6
         }
-        public PlayerState State { get; protected set; } = PlayerState.IDLE;
+        private PlayerState _state = PlayerState.IDLE;
+        public PlayerState State
+        {
+            get => _state;
+            protected set
+            {
+                StateChanged.Invoke(value);
+                _state = value;
+            }
+        }
 
         public string PlayerName { get; private set; }
         public void SetPlayerName(string name)
@@ -55,11 +65,28 @@ namespace rummy
         private TextMeshProUGUI playerName;
         #endregion
 
-        #region CardSets
+        #region CardMelds
         /// <summary>
         /// Whether the player can lay down melds and pick up cards from the discard stack
         /// </summary>
         public bool HasLaidDown { get; protected set; }
+
+        /// <summary>All possible combos of melds to lay down</summary>
+        protected List<CardCombo> allPossibleCardCombos = new();
+        /// <summary>The card sets and runs which are going to be laid down</summary>
+        protected CardCombo laydownCardCombo = new();
+        /// <summary>The single cards which are going to be laid down</summary>
+        protected List<Single> laydownSingles = new();
+
+        protected enum LayStage
+        {
+            SETS = 0,
+            RUNS = 1,
+            SINGLES = 2
+        }
+        protected LayStage layStage = LayStage.SETS;
+
+        protected int currentMeldIdx = 0, currentCardIdx = 0;
         protected bool isCardBeingLaidDown, isJokerBeingReturned;
         #endregion
 
@@ -70,11 +97,8 @@ namespace rummy
         public UnityEvent TurnFinished = new();
         public UnityEvent<string> NameChanged = new();
 
-        public class Event_PossibleCardCombosChanged : UnityEvent<List<CardCombo>> { }
-        public Event_PossibleCardCombosChanged PossibleCardCombosChanged = new();
-
-        public class Event_PossibleSinglesChanged : UnityEvent<List<Single>> { }
-        public Event_PossibleSinglesChanged PossibleSinglesChanged = new();
+        public UnityEvent<List<CardCombo>> PossibleCardCombosChanged = new();
+        public UnityEvent<List<Single>> PossibleSinglesChanged = new();
         #endregion
 
         public virtual void ResetPlayer()
@@ -128,23 +152,129 @@ namespace rummy
             return combos;
         }
 
-        protected List<Single> UpdatePossibleSingles(CardCombo laydownCards)
+        protected List<Single> UpdatePossibleSingles(CardCombo laydownCards, bool allPossibilities)
         {
-            var singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
+            List<Single> singleLayDownCards;
+            if (allPossibilities)
+                singleLayDownCards = PlayerUtil.UpdateAllSingleLaydownCards(HandCardSpot.Objects);
+            else
+                singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
             PossibleSinglesChanged.Invoke(singleLayDownCards);
             return singleLayDownCards;
         }
 
-        protected virtual void LayDownCardMoveFinished(Card card)
+        protected virtual void Update()
+        {
+            if (State == PlayerState.LAYING && !isCardBeingLaidDown)
+            {
+                LaydownNextCard();
+            }
+
+            if (State == PlayerState.RETURNING_JOKER && !isJokerBeingReturned)
+            {
+                isJokerBeingReturned = true;
+                var joker = laydownSingles[currentCardIdx].Joker;
+                currentCardSpot.RemoveCard(joker);
+                joker.MoveFinished.AddListener(ReturnJokerMoveFinished);
+                joker.MoveCard(HandCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
+            }
+        }
+
+        protected void LaydownNextCard()
+        {
+            isCardBeingLaidDown = true;
+
+            if (layStage == LayStage.SINGLES)
+            {
+                currentCardSpot = laydownSingles[currentCardIdx].CardSpot;
+            }
+            else if (currentCardSpot == null)
+            {
+                currentCardSpot = PlayerCardSpotsNode.AddCardSpot();
+                currentCardSpot.Type = (layStage == LayStage.RUNS) ? CardSpot.SpotType.RUN : CardSpot.SpotType.SET;
+            }
+
+            Card card = layStage switch
+            {
+                LayStage.SETS => laydownCardCombo.Sets[currentMeldIdx].Cards[currentCardIdx],
+                LayStage.RUNS => laydownCardCombo.Runs[currentMeldIdx].Cards[currentCardIdx],
+                LayStage.SINGLES => laydownSingles[currentCardIdx].Card,
+                _ => throw new RummyException($"Invalid lay stage: {layStage}")
+            };
+            HandCardSpot.RemoveCard(card);
+            if (!CardsVisible)
+                card.SetTurned(false);
+            card.MoveFinished.AddListener(LayDownCardMoveFinished);
+            card.MoveCard(currentCardSpot.transform.position, Tb.I.GameMaster.AnimateCardMovement);
+        }
+
+        protected void LayDownCardMoveFinished(Card card)
         {
             card.MoveFinished.RemoveAllListeners();
             currentCardSpot.AddCard(card);
+            isCardBeingLaidDown = false;
+
+            int cardCount, meldCount;
+            switch (layStage)
+            {
+                case LayStage.SETS:
+                    cardCount = laydownCardCombo.Sets[currentMeldIdx].Count;
+                    meldCount = laydownCardCombo.Sets.Count;
+                    break;
+                case LayStage.RUNS:
+                    cardCount = laydownCardCombo.Runs[currentMeldIdx].Count;
+                    meldCount = laydownCardCombo.Runs.Count;
+                    break;
+                default: // LayStage.SINGLES
+                    cardCount = laydownSingles.Count;
+                    meldCount = 1;
+
+                    if (laydownSingles[currentCardIdx].Joker != null)
+                    {
+                        State = PlayerState.RETURNING_JOKER;
+                        return;
+                    }
+                    break;
+            }
+
+            // Proceed with the next card
+            if (currentCardIdx < cardCount - 1)
+            {
+                currentCardIdx++;
+                return;
+            }
+
+            // All cards of the current meld have been laid down
+            currentCardIdx = 0;
+            currentMeldIdx++;
+            currentCardSpot = null;  // Find a new spot for the next meld
+
+            // Check if more melds are going to be laid down
+            if (currentMeldIdx < meldCount)
+                return;
+
+            // Done with sets? Proceed with runs
+            if (layStage == LayStage.SETS && laydownCardCombo.Runs.Count > 0)
+            {
+                currentMeldIdx = 0;
+                layStage = LayStage.RUNS;
+            }
+            else
+            {
+                LayingCardsDone();
+            }
         }
+
+        protected abstract void LayingCardsDone();
 
         protected virtual void ReturnJokerMoveFinished(Card joker)
         {
             joker.MoveFinished.RemoveAllListeners();
             HandCardSpot.AddCard(joker);
+
+            isJokerBeingReturned = false;
+            if (!CardsVisible)
+                joker.SetTurned(true);
         }
 
         protected virtual void DiscardCard(Card card)

@@ -11,9 +11,18 @@ namespace rummy.UI
         {
             hoverUI.SetActive(true);
         }
+
         public void OnMouseExit()
         {
             hoverUI.SetActive(false);
+        }
+
+        public void SetHovered(bool hovered)
+        {
+            if (hovered)
+                OnMouseEnter();
+            else
+                OnMouseExit();
         }
     }
 
