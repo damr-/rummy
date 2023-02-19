@@ -189,6 +189,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6481a16c35f1474eaa9cec9a90696c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AlwaysUpdate: 0
+  selectedLine: -1
 --- !u!1 &1036412853166631455
 GameObject:
   m_ObjectHideFlags: 0
@@ -1433,6 +1435,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 547bcac25270a4f5e998207a45196723, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AlwaysUpdate: 0
+  selectedLine: -1
 --- !u!1 &4628308728450486997
 GameObject:
   m_ObjectHideFlags: 0
@@ -1572,6 +1576,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1964f1a6bf6244cb78485ac8ec963200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  AlwaysUpdate: 0
+  selectedLine: -1
 --- !u!1 &4918439851538387665
 GameObject:
   m_ObjectHideFlags: 0
@@ -1878,6 +1884,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e24ef62474c3464e8675268792d99d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  StateChanged:
+    m_PersistentCalls:
+      m_Calls: []
   CardsVisible: 1
   HandCardSpot: {fileID: 1699965912696960743}
   PlayerCardSpotsNode: {fileID: 2229986123030167218}
@@ -1943,6 +1952,12 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  PossibleCardCombosChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  PossibleSinglesChanged:
+    m_PersistentCalls:
+      m_Calls: []
   enableThoughts: 0
 --- !u!1 &5608181649481816726
 GameObject:

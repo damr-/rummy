@@ -84,7 +84,7 @@ namespace rummy.UI
                 {
                     Value.RoundCount => GameMaster.RoundCount.ToString(),
                     Value.Seed => GameMaster.Seed.ToString(),
-                    Value.PlayerState => Player.State.ToString().FirstCharToUpper(),
+                    Value.PlayerState => Player.State.ToString().FirstCharsToUpper(),
                     Value.PlayerHandCardCount => Player.HandCardCount.ToString(),
                     Value.CardStackCardCount => CardStack.CardCount.ToString(),
                     Value.DiscardStackCardCount => DiscardStack.CardCount.ToString(),

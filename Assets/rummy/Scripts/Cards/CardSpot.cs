@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using rummy.Utility;
 using UnityEngine;
 
@@ -63,13 +64,21 @@ namespace rummy.Cards
             return count == 4;
         }
 
+        public void AddCard(Single single)
+        {
+            if (Type == CardSpot.SpotType.RUN && single.Spot > -1)
+                AddCard(single.Card, single.Spot);
+            else
+                AddCard(single.Card);
+        }
+
         public override void AddCard(Card card)
         {
             // By default, add the new card at the end
             int idx = Objects.Count;
 
-            // If the run is empty or only contains joker cards, also add the new card at the end
-            // otherwise
+            // For runs, if it is empty or only contains joker cards, also add the new card at the end
+            // Otherwise:
             if (Type == SpotType.RUN && Objects.Count(c => !c.IsJoker()) > 0)
             {
                 // Find out the rank of the last card in the run
@@ -88,10 +97,7 @@ namespace rummy.Cards
                 }
                 else if (card.IsJoker()) // Joker will be added at the end, if possible
                 {
-                    if (highestRank == Card.CardRank.ACE)
-                        idx = 0;
-                    else
-                        idx = Objects.Count;
+                    idx = (highestRank == Card.CardRank.ACE) ? 0 : Objects.Count;
                 }
                 else // Any other case, the card will be sorted by rank
                 {
@@ -127,14 +133,15 @@ namespace rummy.Cards
         /// returning the Joker which is currently occupying that spot
         /// </summary>
         /// <returns>True if the card can fit in this spot, false otherwise</returns>
-        public bool CanFit(Card newCard, out Card Joker)
+        public bool CanFit(Card newCard, out Card Joker, out List<int> spots)
         {
             Joker = null;
-            if (Type == SpotType.NONE)
-                return false;
+            spots = new();
             if (Type == SpotType.SET)
                 return new Set(Objects).CanFit(newCard, out Joker);
-            return new Run(Objects).CanFit(newCard, out Joker);
+            if (Type == SpotType.RUN)
+                return new Run(Objects).CanFit(newCard, out Joker, out spots);
+            return false;
         }
     }
 

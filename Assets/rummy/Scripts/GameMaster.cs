@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 using rummy.Cards;
 using rummy.UI;
 using rummy.Utility;
@@ -13,33 +14,34 @@ namespace rummy
     {
         public int PlayerCount = 2;
         public Transform PlayersParent;
+        [SerializeField]
+        private bool HumanPlayer = true;
+        public void EnableHumanPlayer(bool enable) => HumanPlayer = enable;
         public GameObject HumanPlayerPrefab;
         public GameObject AIPlayerPrefab;
         public void ChangePlayerCount(bool increase)
         {
-            if (increase) {
-                if (PlayerCount < 6)
-                    PlayerCount += 1;
-            }
-            else if (PlayerCount > 2)
-                PlayerCount -= 1;
+            if (increase)
+                PlayerCount = Mathf.Min(6, PlayerCount + 1);
+            else
+                PlayerCount = Mathf.Max(2, PlayerCount - 1);
         }
         private static readonly int PLAYER_X = 15;
         private static readonly int PLAYER_Y = 14;
         private static readonly Vector3 LD = new(-PLAYER_X, -PLAYER_Y, 0);
-        private static readonly Vector3 LU = new(-PLAYER_X,  PLAYER_Y, 0);
+        private static readonly Vector3 LU = new(-PLAYER_X, PLAYER_Y, 0);
         private static readonly Vector3 CD = new(0, -PLAYER_Y, 0);
         private static readonly Vector3 CU = new(0, PLAYER_Y, 0);
         private static readonly Vector3 RD = new(PLAYER_X, -PLAYER_Y, 0);
-        private static readonly Vector3 RU = new(PLAYER_X,  PLAYER_Y, 0);
+        private static readonly Vector3 RU = new(PLAYER_X, PLAYER_Y, 0);
 
         private readonly IDictionary<int, List<Vector3>> PlayerPos = new Dictionary<int, List<Vector3>>()
         {
-            {2, new List<Vector3> { CD, CU } },
-            {3, new List<Vector3> { CD, LU, RU } },
-            {4, new List<Vector3> { CD, LU, CU, RU } },
-            {5, new List<Vector3> { CD, LD, LU, RU, RD } },
-            {6, new List<Vector3> { CD, LD, LU, CU, RU, RD } }
+            {2, new List<Vector3> { CD, CU } },
+            {3, new List<Vector3> { CD, LU, RU } },
+            {4, new List<Vector3> { CD, LU, CU, RU } },
+            {5, new List<Vector3> { CD, LD, LU, RU, RD } },
+            {6, new List<Vector3> { CD, LD, LU, CU, RU, RD } }
         };
 
         [SerializeField]
@@ -172,9 +174,13 @@ namespace rummy
 
         private void CreatePlayers()
         {
-            var humanPlayer = Instantiate(HumanPlayerPrefab, PlayersParent).GetComponent<Player>();
-            Players.Add(humanPlayer);
-            humanPlayer.SetPlayerName("You");
+            if (HumanPlayer)
+            {
+                var humanPlayer = Instantiate(HumanPlayerPrefab, PlayersParent).GetComponent<Player>();
+                Players.Add(humanPlayer);
+                humanPlayer.SetPlayerName("You");
+                GetComponent<GUIScaler>().AddCanvasScaler(humanPlayer.transform.Find("OutputCanvas").GetComponent<CanvasScaler>());
+            }
 
             List<string> usedNames = new();
             while (Players.Count < PlayerCount)

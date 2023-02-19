@@ -71,8 +71,6 @@ namespace rummy
         /// </summary>
         public bool HasLaidDown { get; protected set; }
 
-        /// <summary>All possible combos of melds to lay down</summary>
-        protected List<CardCombo> allPossibleCardCombos = new();
         /// <summary>The card sets and runs which are going to be laid down</summary>
         protected CardCombo laydownCardCombo = new();
         /// <summary>The single cards which are going to be laid down</summary>
@@ -145,22 +143,15 @@ namespace rummy
                 State = PlayerState.IDLE;
         }
 
-        protected List<CardCombo> UpdatePossibleCombos()
+        protected List<CardCombo> UpdatePossibleCombos(List<Card> ignoredCards = null)
         {
-            var combos = CardUtil.GetAllPossibleCombos(HandCardSpot.Objects, Tb.I.GameMaster.GetAllCardSpotCards(), false);
+            List<Card> cardPool = HandCardSpot.Objects;
+            if (ignoredCards != null)
+                cardPool = cardPool.Except(ignoredCards).ToList();
+
+            var combos = CardUtil.GetAllPossibleCombos(cardPool, Tb.I.GameMaster.GetAllCardSpotCards(), false);
             PossibleCardCombosChanged.Invoke(combos);
             return combos;
-        }
-
-        protected List<Single> UpdatePossibleSingles(CardCombo laydownCards, bool allPossibilities)
-        {
-            List<Single> singleLayDownCards;
-            if (allPossibilities)
-                singleLayDownCards = PlayerUtil.UpdateAllSingleLaydownCards(HandCardSpot.Objects);
-            else
-                singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
-            PossibleSinglesChanged.Invoke(singleLayDownCards);
-            return singleLayDownCards;
         }
 
         protected virtual void Update()
@@ -211,7 +202,10 @@ namespace rummy
         protected void LayDownCardMoveFinished(Card card)
         {
             card.MoveFinished.RemoveAllListeners();
-            currentCardSpot.AddCard(card);
+            if (layStage == LayStage.SINGLES)
+                currentCardSpot.AddCard(laydownSingles[currentCardIdx]);
+            else
+                currentCardSpot.AddCard(card);
             isCardBeingLaidDown = false;
 
             int cardCount, meldCount;

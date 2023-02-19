@@ -204,6 +204,9 @@ MonoBehaviour:
   SentToBackground:
     m_PersistentCalls:
       m_Calls: []
+  IsHovered:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8118724897325823775
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,6 +258,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverUI: {fileID: 6010195646321660065}
+  colorizeChildImage: 1
+  colorIdx: 3
+  highlightColors:
+  - {r: 1, g: 0, b: 0, a: 0.5882353}
+  - {r: 0, g: 1, b: 0, a: 0.5882353}
+  - {r: 0, g: 0, b: 1, a: 0.5882353}
+  - {r: 1, g: 0, b: 1, a: 0.5882353}
+  - {r: 1, g: 1, b: 0, a: 0.5882353}
+  - {r: 0, g: 1, b: 1, a: 0.5882353}
 --- !u!1 &6010195646321660065
 GameObject:
   m_ObjectHideFlags: 0

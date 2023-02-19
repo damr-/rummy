@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using rummy.Cards;
 using UnityEngine;
+using rummy.Cards;
 using rummy.Utility;
 
 namespace rummy.UI.CardOutput
@@ -9,7 +9,7 @@ namespace rummy.UI.CardOutput
 
     public class CardCombosUI : CardOutputUI
     {
-        private Color notEnoughPointsColor = new(25/255f, 25/255f, 25/255f, 0.5f);
+        private Color notEnoughPointsColor = new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f);
 
         protected override void SetupPlayerSub()
         {

@@ -30,7 +30,7 @@ namespace rummy.UI
         private void Start()
         {
             Player.StateChanged.AddListener(state =>
-                Button.interactable = state == Player.PlayerState.PLAYING);
+                Button.interactable = state == Player.PlayerState.PLAYING || state == Player.PlayerState.DISCARDING);
         }
     }
 

@@ -28,13 +28,17 @@ namespace rummy.Utility
             }
         }
 
-        public static string FirstCharToUpper(this string input) =>
-            input switch
-            {
-                null => throw new ArgumentNullException(nameof(input)),
-                "" => throw new ArgumentException($"{nameof(input)} cannot be empty", nameof(input)),
-                _ => input[0].ToString().ToUpper() + input[1..].ToLower()
-            };
+        /// <summary>
+        /// Split the string at underscores, capitalize each resulting part, and return them (joined by spaces) as one string
+        /// </summary>
+        public static string FirstCharsToUpper(this string input)
+        {
+            string result = "";
+            var parts = input.Split('_');
+            foreach (var part in parts)
+                result += $"{part[0].ToString().ToUpper()}{part[1..].ToLower()} ";
+            return result.TrimEnd();
+        }
 
         /// <summary>
         /// Return the given list of cards as a dictionary. Keys are Card ranks, values are the cards from the list

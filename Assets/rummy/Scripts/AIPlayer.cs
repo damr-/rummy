@@ -69,12 +69,13 @@ namespace rummy
         protected override Card GetCardToDraw()
         {
             bool takeFromDiscardStack = false;
+            
+            // Check if we want to draw from discard stack
             if (HasLaidDown)
             {
-                // Check if we want to draw from discard stack
-                // Note that players will never discard a card which can be added to an already laid-down meld.
-                // Therefore, no need to check for that case here.
                 Card discardedCard = Tb.I.DiscardStack.TopmostCard();
+                
+                // Check whether the card would enable a combo
                 var hypotheticalHandCards = new List<Card>(HandCardSpot.Objects) { discardedCard };
                 var hypotheticalBestCombo = GetBestCardCombo(hypotheticalHandCards, false);
                 int hypotheticalValue = hypotheticalBestCombo.Value;
@@ -85,6 +86,21 @@ namespace rummy
                 {
                     EmitThought($"Take {discardedCard} from discard pile to finish {hypotheticalBestCombo}");
                     takeFromDiscardStack = true;
+                }
+                else
+                {
+                    // Alternatively, check if the last player overlooked using it as a Single card (AI never do that, but the human might)
+                    var cardSpots = Tb.I.GameMaster.GetAllCardSpots().Where(cs => !cs.IsFull(false));
+                    foreach (var cardSpot in cardSpots)
+                    {
+                        Card joker = null;
+                        List<int> spots = new();
+                        if (cardSpot.CanFit(discardedCard, out joker, out spots))
+                        {
+                            EmitThought($"Take {discardedCard} from discard pile as Single for {cardSpot}");
+                            takeFromDiscardStack = true;
+                        }
+                    }
                 }
             }
 
@@ -105,7 +121,7 @@ namespace rummy
 
             var combos = UpdatePossibleCombos();
             laydownCardCombo = combos.Count > 0 ? combos[0] : new CardCombo();
-            laydownSingles = UpdatePossibleSingles(laydownCardCombo, false);
+            UpdatePossibleSingles(laydownCardCombo);
 
             if (Tb.I.GameMaster.LayingAllowed())
             {
@@ -173,10 +189,7 @@ namespace rummy
 
             // All possible runs/sets/singles have to be calculated again with that new joker
             laydownCardCombo = GetBestCardCombo(HandCardSpot.Objects, true);
-
-            //singleLayDownCards = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards);
-            //PossibleSinglesChanged.Invoke(singleLayDownCards);
-            laydownSingles = UpdatePossibleSingles(laydownCardCombo, false);
+            UpdatePossibleSingles(laydownCardCombo);
 
             if (laydownCardCombo.CardCount == HandCardCount)
                 KeepOneSingleCard();
@@ -195,8 +208,7 @@ namespace rummy
             }
 
             // Check if there are any (more) single cards to lay down
-            laydownSingles = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCardCombo);
-            PossibleSinglesChanged.Invoke(laydownSingles);
+            UpdatePossibleSingles(laydownCardCombo);
 
             if (laydownSingles.Count == HandCardCount)
                 KeepOneSingleCard();
@@ -210,9 +222,14 @@ namespace rummy
                 DiscardCard();
         }
 
+        private void UpdatePossibleSingles(CardCombo laydownCards, bool turnEnded = false)
+        {
+            laydownSingles = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCards, turnEnded);
+            PossibleSinglesChanged.Invoke(laydownSingles);
+        }
+
         /// <summary>
-        /// Choose one card in <see cref="singleLayDownCards"/> which is kept on hand.
-        /// Prioritize cards who do not replace a joker
+        /// Choose one card in <see cref="singleLayDownCards"/> which is kept on hand. Prioritize cards which do not replace a joker
         /// </summary>
         private void KeepOneSingleCard()
         {
@@ -238,8 +255,7 @@ namespace rummy
         {
             // Refresh the list of possible card combos and singles for the UI
             GetBestCardCombo(HandCardSpot.Objects, true);
-            laydownSingles = PlayerUtil.UpdateSingleLaydownCards(HandCardSpot.Objects, laydownCardCombo, true);
-            PossibleSinglesChanged.Invoke(laydownSingles);
+            UpdatePossibleSingles(laydownCardCombo, true);
             base.DiscardCardMoveFinished(card);
         }
     }

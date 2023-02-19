@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 using rummy.Cards;
 
 namespace rummy.Utility
@@ -156,24 +157,21 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Update the list of single cards which can be laid down, <see cref="singleLayDownCards"/>. The first found spot will be used
+        /// Update the list of single cards which can be laid down by the AI. The first found spot will alwas be used
         /// </summary>
         /// <param name="turnEnded">Whether the update happens right after the player has discarded a card and therefore ended their turn</param>
         public static List<Single> UpdateSingleLaydownCards(List<Card> PlayerHandCards, CardCombo laydownCards, bool turnEnded = false)
         {
             var singleLayDownCards = new List<Single>();
-
-            var availableCards = new List<Card>(PlayerHandCards);
-
             // Exclude the cards which will be laid down anyway as melds
-            availableCards = availableCards.Except(laydownCards.GetCards()).ToList();
+            var availableCards = new List<Card>(PlayerHandCards).Except(laydownCards.GetCards()).ToList();
 
             var jokerCards = availableCards.Where(c => c.IsJoker());
-            bool allowedJokers = false;
 
             // Initially do not allow jokers to be laid down as singles
-            availableCards = availableCards.Where(c => !c.IsJoker()).ToList();
+            availableCards = availableCards.Except(jokerCards).ToList();
 
+            bool allowedJokers = false;
             bool canFitCard = false;
             do
             {
@@ -189,7 +187,7 @@ namespace rummy.Utility
 
                     foreach (var cardSpot in cardSpots)
                     {
-                        if (!cardSpot.CanFit(availableCard, out joker))
+                        if (!cardSpot.CanFit(availableCard, out joker, out _))
                             continue;
 
                         // Find all single cards which are already gonna be added to the cardspot in question
@@ -210,7 +208,7 @@ namespace rummy.Utility
 
                         // Try to find a spot with a replacable joker. Single jokers just take the first found spot
                         chosenSpot = cardSpot;
-                        if (joker != null || allowedJokers)
+                        if (joker != null || (allowedJokers && availableCard.IsJoker()))
                             break;
                     }
 
@@ -236,9 +234,9 @@ namespace rummy.Utility
         }
 
         /// <summary>
-        /// Get the full list of possible single cards which can be laid down in any combinatoric fashion (non-mutually exclusive)
+        /// Get the full list of possible single cards which can be laid down
         /// </summary>
-        public static List<Single> UpdateAllSingleLaydownCards(List<Card> PlayerHandCards)
+        public static List<Single> GetAllSingleLaydownCards(List<Card> PlayerHandCards)
         {
             var singleLayDownCards = new List<Single>();
 
@@ -247,8 +245,14 @@ namespace rummy.Utility
             {
                 foreach (var cardSpot in cardSpots)
                 {
-                    if (cardSpot.CanFit(card, out Card joker))
-                        singleLayDownCards.Add(new Single(card, cardSpot, joker));
+                    List<int> spots = new();
+                    if (cardSpot.CanFit(card, out Card joker, out spots))
+                    {
+                        if (spots.Count == 0)
+                            singleLayDownCards.Add(new Single(card, cardSpot, joker));
+                        else
+                            spots.ForEach(s => singleLayDownCards.Add(new Single(card, cardSpot, joker, s)));
+                    }
                 }
             }
             return singleLayDownCards;

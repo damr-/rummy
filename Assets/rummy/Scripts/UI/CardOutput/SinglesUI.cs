@@ -28,7 +28,8 @@ namespace rummy.UI.CardOutput
                     cardValue = 0;
                 else
                     cardValue = single.Card.Value;
-                string msg = "" + single + "->" + single.CardSpot + " (" + cardValue + ")" + (single.Joker != null ? " (SWAP)" : "");
+                string jokerSuffix = single.Joker != null ? " (SWAP)" : "";
+                string msg = $"{single} -> {single.CardSpot} @ {single.Spot} ({cardValue}){jokerSuffix}";
                 outputView.PrintMessage(new ScrollView.Message(msg));
             }
         }

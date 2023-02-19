@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using TMPro;
 using rummy.Cards;
 using rummy.Utility;
 using rummy.UI;
@@ -10,27 +12,32 @@ namespace rummy
 
     public class HumanPlayer : Player
     {
-        private Card hoveredCard = null;
-        private Card hoveredSingleJoker = null;
-        private CardSpot hoveredSingleCardSpot = null;
+        public TextMeshProUGUI selectedCardDisplay;
 
         public UnityEvent<int> ComboSelectionChanged = new();
+
+        /// <summary>All possible combos of melds to lay down</summary>
+        private List<CardCombo> allPossibleCardCombos = new();
+        /// <summary>All possible single cards to lay down</summary>
+        private List<Single> allPossibleSingles = new();
+
+        private bool isDiscarding = false;
+
         /// <summary>Index of the highlit combo when a card is hovered</summary>
         private int selectedVariant = 1;
         private int possibleCombosCount = 0;
         private int possibleSinglesCount = 0;
 
-        private bool isDiscarding = false;
+        private Card hoveredCard = null;
+        private Card hoveredSinglePartner = null;
+        private CardSpot hoveredSingleCardSpot = null;
 
-        /// <summary>
-        /// All possible single cards to lay down
-        /// </summary>
-        private List<Single> allPossibleSingles = new();
-
-        public void EndTurn()
+        public void SwitchStage()
         {
             if (State == PlayerState.PLAYING)
                 State = PlayerState.DISCARDING;
+            else if (State == PlayerState.DISCARDING && !isDiscarding)
+                State = PlayerState.PLAYING;
         }
 
         private Card GetClickedCard()
@@ -46,23 +53,27 @@ namespace rummy
             return clickedCard;
         }
 
-        private bool GetComboToLay(Card clickedCard)
+        private CardCombo GetComboToLay(Card clickedCard)
         {
             var combo = GetSelectedComboVariant(clickedCard);
 
-            if (combo != null && (HasLaidDown || combo.Value >= Tb.I.GameMaster.MinimumLaySum))
+            if (combo != null)
             {
-                combo.GetCards().ForEach(c => c.SetInteractable(false, null));
-                HasLaidDown = true;
+                if (HasLaidDown || combo.Value >= Tb.I.GameMaster.MinimumLaySum)
+                {
+                    combo.GetCards().ForEach(c => c.SetInteractable(false, null));
+                    HasLaidDown = true;
 
-                laydownCardCombo = combo;
-                layStage = laydownCardCombo.Sets.Count == 0 ? LayStage.RUNS : LayStage.SETS;
-                return true;
+                    laydownCardCombo = combo;
+                    layStage = laydownCardCombo.Sets.Count == 0 ? LayStage.RUNS : LayStage.SETS;
+                }
+                else
+                    combo = null;
             }
-            return false;
+            return combo;
         }
 
-        private bool GetSingleToLay(Card clickedCard)
+        private Single GetSingleToLay(Card clickedCard)
         {
             var single = GetSelectedSingleVariant(clickedCard);
 
@@ -72,9 +83,8 @@ namespace rummy
 
                 laydownSingles = new() { single };
                 layStage = LayStage.SINGLES;
-                return true;
             }
-            return false;
+            return single;
         }
 
         protected override void Update()
@@ -92,12 +102,14 @@ namespace rummy
                     Card clickedCard = GetClickedCard();
                     if (clickedCard != null)
                     {
-                        bool clickedCombo = GetComboToLay(clickedCard);
-                        bool clickedSingle = false;
-                        if (!clickedCombo && HasLaidDown)
-                            clickedSingle = GetSingleToLay(clickedCard);
-                        if (clickedCombo || clickedSingle)
+                        CardCombo combo = GetComboToLay(clickedCard);
+                        Single single = null;
+                        if (combo == null && HasLaidDown)
+                            single = GetSingleToLay(clickedCard);
+                        if (combo != null || single != null)
                         {
+                            List<Card> ignoredCards = (single != null) ? new() { single.Card } : combo.GetCards();
+                            UpdatePossibilities(false, ignoredCards);
                             RemoveAllHighlights(true);
                             State = PlayerState.LAYING;
                             isCardBeingLaidDown = false;
@@ -115,8 +127,8 @@ namespace rummy
                 if (clickedCard != null)
                 {
                     isDiscarding = true;
-                    RemoveAllHighlights(true);
                     clickedCard.SetInteractable(false, null);
+                    RemoveAllHighlights(true);
 
                     DiscardCard(clickedCard);
                     UpdatePossibilities(false);
@@ -194,23 +206,50 @@ namespace rummy
                 hoveredCard = null;
             foreach (var c in HandCardSpot.Objects)
                 c.GetComponent<HoverInfo>().SetHovered(false);
-            if (hoveredSingleJoker != null)
+            if (hoveredSinglePartner != null)
             {
-                hoveredSingleJoker.GetComponent<HoverInfo>().SetHovered(false);
-                hoveredSingleJoker = null;
+                hoveredSinglePartner.GetComponent<HoverInfo>().SetHovered(false);
+                hoveredSinglePartner = null;
             }
-            else if(hoveredSingleCardSpot != null)
+            if (hoveredSingleCardSpot != null)
             {
                 hoveredSingleCardSpot.Objects.ForEach(c => c.GetComponent<HoverInfo>().SetHovered(false));
                 hoveredSingleCardSpot = null;
             }
+            selectedCardDisplay.text = "<i>Hover over cards to display combos.</i>";
         }
 
         private void HighlightSelectedCombo()
         {
             var combo = GetSelectedComboVariant(hoveredCard);
             if (combo != null)
-                combo.GetCards().ForEach(c => c.GetComponent<HoverInfo>().SetHovered(true));
+            {
+                string outputText = "<b>";
+                int counter = 0;
+                for (int i = 0; i < combo.Sets.Count; i++, counter++)
+                {
+                    string hexColor = ColorUtility.ToHtmlStringRGBA(HoverInfo.highlightColors[counter]);
+                    outputText += $"<color=#{hexColor}>";
+                    foreach(var card in combo.Sets[i].Cards)
+                    {
+                        card.GetComponent<HoverInfo>().SetHovered(true, counter);
+                        outputText += $"{card}";
+                    }
+                    outputText += "</color> ";
+                }
+                for (int i = 0; i < combo.Runs.Count; i++, counter++)
+                {
+                    string hexColor = ColorUtility.ToHtmlStringRGBA(HoverInfo.highlightColors[counter]);
+                    outputText += $"<color=#{hexColor}>";
+                    foreach(var card in combo.Runs[i].Cards)
+                    {
+                        card.GetComponent<HoverInfo>().SetHovered(true, counter);
+                        outputText += $"{card}";
+                    }
+                    outputText += "</color> ";
+                }
+                selectedCardDisplay.text = outputText + "</b>";
+            }
         }
 
         private CardCombo GetSelectedComboVariant(Card focussedCard)
@@ -231,18 +270,37 @@ namespace rummy
 
         private void HighlightSelectedSingleVariant()
         {
-            var single = GetSelectedSingleVariant(hoveredCard);
+            Single single = GetSelectedSingleVariant(hoveredCard);
             if (single != null)
             {
+                string outputText = "<b>";
+                string hexColor = ColorUtility.ToHtmlStringRGBA(HoverInfo.highlightColors[0]);
+                outputText += $"<color=#{hexColor}>{single.Card}->{single.CardSpot}";
                 single.Card.GetComponent<HoverInfo>().SetHovered(true);
-                hoveredSingleJoker = single.Joker;
-                if (hoveredSingleJoker != null)
-                    hoveredSingleJoker.GetComponent<HoverInfo>().SetHovered(true);
+                if (single.Joker != null)
+                {
+                    hoveredSinglePartner = single.Joker;
+                    outputText += $" (swap)";
+                }
+                else if (single.Spot > -1)
+                {
+                    if (single.Spot == single.CardSpot.Objects.Count)
+                        hoveredSinglePartner = single.CardSpot.Objects[^1];
+                    else
+                        hoveredSinglePartner = single.CardSpot.Objects[0];
+                    outputText += $" @{single.Spot}";
+                }
+
+                if(hoveredSinglePartner != null)
+                {
+                    hoveredSinglePartner.GetComponent<HoverInfo>().SetHovered(true);
+                }
                 else
                 {
                     hoveredSingleCardSpot = single.CardSpot;
                     hoveredSingleCardSpot.Objects.ForEach(c => c.GetComponent<HoverInfo>().SetHovered(true));
                 }
+                selectedCardDisplay.text = outputText + "</color></b>";
             }
         }
 
@@ -273,11 +331,17 @@ namespace rummy
             UpdatePossibilities(true);
         }
 
-        private void UpdatePossibilities(bool setToPlaying)
+        private void UpdatePossibilities(bool setToPlaying, List<Card> ignoredCards = null)
         {
-            allPossibleCardCombos = UpdatePossibleCombos();
-            allPossibleSingles = UpdatePossibleSingles(new CardCombo(), true);
-            if(setToPlaying)
+            allPossibleCardCombos = UpdatePossibleCombos(ignoredCards);
+
+            List<Card> cardPool = HandCardSpot.Objects;
+            if (ignoredCards != null)
+                cardPool = cardPool.Except(ignoredCards).ToList();
+            allPossibleSingles = PlayerUtil.GetAllSingleLaydownCards(cardPool);
+            PossibleSinglesChanged.Invoke(allPossibleSingles);
+
+            if (setToPlaying)
                 State = PlayerState.PLAYING;
         }
 

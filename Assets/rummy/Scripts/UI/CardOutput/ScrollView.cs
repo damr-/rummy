@@ -11,7 +11,7 @@ namespace rummy.UI.CardOutput
         public RectTransform ScrollViewContent;
         public GameObject EntryPrefab;
 
-        public int CharsPerLine = 36;
+        public int CharsPerLine = 42;
         protected List<GameObject> spawnedTaskPanels = new();
 
         private void Start()
@@ -32,7 +32,6 @@ namespace rummy.UI.CardOutput
                 }
                 CreateMessageObj(m, message.color);
             }
-
             UpdateViewSize();
         }
 

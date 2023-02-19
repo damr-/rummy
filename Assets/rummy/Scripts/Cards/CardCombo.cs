@@ -128,7 +128,7 @@ namespace rummy.Cards
                 for (int j = availableJokers.Count - 1; j >= 0; j--)
                 {
                     Card joker = availableJokers[j];
-                    if (!Runs[i].CanFit(joker, out _))
+                    if (!Runs[i].CanFit(joker, out _, out _))
                         continue;
                     (int, int) jokerVal = Runs[i].JokerValue();
                     if (jokerVal.Item1 == 0 && jokerVal.Item2 == 0)
