@@ -13,7 +13,7 @@ namespace rummy.UI.CardOutput
 
         private void UpdateSingles(List<Single> Singles)
         {
-            if (!gameObject.activeInHierarchy)
+            if (!AlwaysUpdate && !gameObject.activeInHierarchy)
                 return;
 
             outputView.ClearMessages();
@@ -28,7 +28,8 @@ namespace rummy.UI.CardOutput
                     cardValue = 0;
                 else
                     cardValue = single.Card.Value;
-                string msg = "" + single + "->" + single.CardSpot + " (" + cardValue + ")" + (single.Joker != null ? " (SWAP)" : "");
+                string jokerSuffix = single.Joker != null ? " (SWAP)" : "";
+                string msg = $"{single} -> {single.CardSpot} @ {single.Spot} ({cardValue}){jokerSuffix}";
                 outputView.PrintMessage(new ScrollView.Message(msg));
             }
         }

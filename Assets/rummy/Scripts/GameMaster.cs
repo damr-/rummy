@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 using rummy.Cards;
 using rummy.UI;
 using rummy.Utility;
@@ -13,32 +14,34 @@ namespace rummy
     {
         public int PlayerCount = 2;
         public Transform PlayersParent;
-        public GameObject PlayerPrefab;
+        [SerializeField]
+        private bool HumanPlayer = true;
+        public void EnableHumanPlayer(bool enable) => HumanPlayer = enable;
+        public GameObject HumanPlayerPrefab;
+        public GameObject AIPlayerPrefab;
         public void ChangePlayerCount(bool increase)
         {
-            if (increase) {
-                if (PlayerCount < 6)
-                    PlayerCount += 1;
-            }
-            else if (PlayerCount > 2)
-                PlayerCount -= 1;
+            if (increase)
+                PlayerCount = Mathf.Min(6, PlayerCount + 1);
+            else
+                PlayerCount = Mathf.Max(2, PlayerCount - 1);
         }
         private static readonly int PLAYER_X = 15;
         private static readonly int PLAYER_Y = 14;
         private static readonly Vector3 LD = new(-PLAYER_X, -PLAYER_Y, 0);
-        private static readonly Vector3 LU = new(-PLAYER_X,  PLAYER_Y, 0);
+        private static readonly Vector3 LU = new(-PLAYER_X, PLAYER_Y, 0);
         private static readonly Vector3 CD = new(0, -PLAYER_Y, 0);
         private static readonly Vector3 CU = new(0, PLAYER_Y, 0);
         private static readonly Vector3 RD = new(PLAYER_X, -PLAYER_Y, 0);
-        private static readonly Vector3 RU = new(PLAYER_X,  PLAYER_Y, 0);
+        private static readonly Vector3 RU = new(PLAYER_X, PLAYER_Y, 0);
 
         private readonly IDictionary<int, List<Vector3>> PlayerPos = new Dictionary<int, List<Vector3>>()
         {
-            {2, new List<Vector3> { CD, CU } },
-            {3, new List<Vector3> { CD, LU, RU } },
-            {4, new List<Vector3> { CD, LU, CU, RU } },
-            {5, new List<Vector3> { CD, LD, LU, RU, RD } },
-            {6, new List<Vector3> { CD, LD, LU, CU, RU, RD } }
+            {2, new List<Vector3> { CD, CU } },
+            {3, new List<Vector3> { CD, LU, RU } },
+            {4, new List<Vector3> { CD, LU, CU, RU } },
+            {5, new List<Vector3> { CD, LD, LU, RU, RD } },
+            {6, new List<Vector3> { CD, LD, LU, CU, RU, RD } }
         };
 
         [SerializeField]
@@ -52,6 +55,8 @@ namespace rummy
         private bool RandomizeSeed = true;
         public int Seed;
         public void SetSeed(int value) => Seed = value;
+        [SerializeField]
+        private int startingPlayer = 0;
 
         private float DefaultGameSpeed; // Stored during pause
         public float GameSpeed { get; private set; } = 1.0f;
@@ -67,12 +72,11 @@ namespace rummy
         public float PlayWaitDuration { get; private set; } = 1f;
         public void SetPlayWaitDuration(float value) => PlayWaitDuration = value;
 
-        [SerializeField]
-        private float PlayCardMoveSpeed = 50f;
-        [SerializeField]
-        private float DealCardMoveSpeed = 200f;
-        public float CurrentCardMoveSpeed { get; private set; }
-        public void SetCurrentCardMoveSpeed(float value) => CurrentCardMoveSpeed = value;
+        public float CurrentCardMoveSpeed => gameState == GameState.DEALING ? DealCardMoveSpeed : PlayCardMoveSpeed;
+        public float PlayCardMoveSpeed { get; private set; } = 30f;
+        public float DealCardMoveSpeed { get; private set; } = 200f;
+        public void SetPlayCardMoveSpeed(float value) => PlayCardMoveSpeed = value;
+        public void SetDealCardMoveSpeed(float value) => DealCardMoveSpeed = value;
 
         public int RoundCount { get; private set; }
         /// <summary> Returns whether laying down cards in the current round is allowed </summary>
@@ -92,7 +96,7 @@ namespace rummy
 
         private bool isCardBeingDealt;
         private int currentPlayerID;
-        private int currentStartingPlayerID = -1;
+        private int currentStartingPlayerID;
 
         [SerializeField]
         private int SkipUntilRound = 0; // Quickly forward until the given round starts. '0': no round is skipped
@@ -111,8 +115,10 @@ namespace rummy
         public class Event_GameOver : UnityEvent<Player> { }
         public Event_GameOver GameOver = new();
 
-        public CardStack CardStack;
-        public DiscardStack DiscardStack;
+        [SerializeField]
+        private CardStack CardStack;
+        [SerializeField]
+        private DiscardStack DiscardStack;
         [SerializeField]
         private CardStack.CardStackType CardStackType = CardStack.CardStackType.DEFAULT;
 
@@ -125,7 +131,6 @@ namespace rummy
 
             if (RandomizeSeed)
                 Seed = Random.Range(0, int.MaxValue);
-            Random.InitState(Seed);
 
             Scoreboard = GetComponentInChildren<Scoreboard>(true);
             StartGame(true);
@@ -133,6 +138,7 @@ namespace rummy
 
         private void StartGame(bool newGame)
         {
+            Random.InitState(Seed);
             CardStack.CreateCardStack(CardStackType);
 
             if (SkipUntilRound > 0)
@@ -154,22 +160,32 @@ namespace rummy
             if (newGame)
             {
                 Players.ClearAndDestroy();
-                currentStartingPlayerID = -1;
+                currentStartingPlayerID = startingPlayer - 1;
                 CreatePlayers();
             }
 
             gameState = GameState.DEALING;
-            CurrentCardMoveSpeed = DealCardMoveSpeed;
+            if (currentStartingPlayerID >= 0)
+                Players[currentStartingPlayerID].IsStarting.Invoke(false);
             currentStartingPlayerID = (currentStartingPlayerID + 1) % Players.Count;
             currentPlayerID = currentStartingPlayerID;
+            CurrentPlayer.IsStarting.Invoke(true);
         }
 
         private void CreatePlayers()
         {
+            if (HumanPlayer)
+            {
+                var humanPlayer = Instantiate(HumanPlayerPrefab, PlayersParent).GetComponent<Player>();
+                Players.Add(humanPlayer);
+                humanPlayer.SetPlayerName("You");
+                GetComponent<GUIScaler>().AddCanvasScaler(humanPlayer.transform.Find("OutputCanvas").GetComponent<CanvasScaler>());
+            }
+
             List<string> usedNames = new();
             while (Players.Count < PlayerCount)
             {
-                var p = Instantiate(PlayerPrefab, PlayersParent).GetComponent<Player>();
+                var p = Instantiate(AIPlayerPrefab, PlayersParent).GetComponent<Player>();
                 Players.Add(p);
 
                 string playerName;
@@ -235,7 +251,6 @@ namespace rummy
                 p.ResetPlayer();
             FindObjectsOfType<Card>().ToList().ClearAndDestroy();
 
-            Random.InitState(Seed);
             StartGame(newGame);
         }
 
@@ -257,12 +272,17 @@ namespace rummy
                     if (currentPlayerID == currentStartingPlayerID &&
                         CurrentPlayer.HandCardCount == CardsPerPlayer)
                     {
-                        gameState = GameState.PLAYING;
-                        CurrentCardMoveSpeed = PlayCardMoveSpeed;
+                        drawWaitStartTime = Time.time;
+                        gameState = GameState.DRAWWAIT;
                         RoundCount = 1;
                         TryStopSkipping();
                     }
                 }
+            }
+            else if (gameState == GameState.DRAWWAIT)
+            {
+                if (Time.time - drawWaitStartTime > DrawWaitDuration)
+                    gameState = GameState.PLAYING;
             }
             else if (gameState == GameState.PLAYING)
             {
@@ -271,11 +291,6 @@ namespace rummy
                     CurrentPlayer.TurnFinished.AddListener(PlayerFinished);
                     CurrentPlayer.BeginTurn();
                 }
-            }
-            else if (gameState == GameState.DRAWWAIT)
-            {
-                if (Time.time - drawWaitStartTime > DrawWaitDuration)
-                    gameState = GameState.PLAYING;
             }
         }
 

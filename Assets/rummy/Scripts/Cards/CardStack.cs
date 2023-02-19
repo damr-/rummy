@@ -97,7 +97,7 @@ namespace rummy.Cards
         public Card DrawCard()
         {
             if (CardCount == 0)
-                throw new RummyException("CardStack is empty!");
+                throw new RummyException("CardStack is empty");
             var card = Cards.Pop();
             if (CardCount > 0)
             {

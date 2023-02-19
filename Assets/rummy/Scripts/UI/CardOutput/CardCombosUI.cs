@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using rummy.Cards;
 using UnityEngine;
+using rummy.Cards;
 using rummy.Utility;
 
 namespace rummy.UI.CardOutput
@@ -9,7 +9,7 @@ namespace rummy.UI.CardOutput
 
     public class CardCombosUI : CardOutputUI
     {
-        private Color notEnoughPointsColor = new(25/255f, 25/255f, 25/255f, 0.5f);
+        private Color notEnoughPointsColor = new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f);
 
         protected override void SetupPlayerSub()
         {
@@ -18,7 +18,7 @@ namespace rummy.UI.CardOutput
 
         private void UpdateCombos(List<CardCombo> cardCombos)
         {
-            if (!gameObject.activeInHierarchy)
+            if (!AlwaysUpdate && !gameObject.activeInHierarchy)
                 return;
 
             outputView.ClearMessages();
@@ -33,11 +33,10 @@ namespace rummy.UI.CardOutput
                     uniqueCombos.Add(combo);
             }
 
-            string poss = " possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
-            string var = " variant" + (cardCombos.Count == 1 ? "" : "s");
-            string header = uniqueCombos.Count + poss + " [" + cardCombos.Count + var + "]:";
+            string poss = "possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
+            string var = "variant" + (cardCombos.Count == 1 ? "" : "s");
+            string header = $"{uniqueCombos.Count} {poss} [{cardCombos.Count} {var}]:";
             outputView.PrintMessage(new ScrollView.Message(header));
-
             for (int i = 0; i < uniqueCombos.Count; i++)
             {
                 CardCombo cardCombo = uniqueCombos[i];
@@ -48,14 +47,14 @@ namespace rummy.UI.CardOutput
                 if (cardCombo.Sets.Count > 0)
                 {
                     foreach (Set set in cardCombo.Sets)
-                        msg += set + ", ";
+                        msg += $"{set}, ";
                 }
                 if (cardCombo.Runs.Count > 0)
                 {
                     foreach (Run run in cardCombo.Runs)
-                        msg += run + ", ";
+                        msg += $"{run}, ";
                 }
-                msg = msg.TrimEnd().TrimEnd(',') + " (" + cardCombo.Value + ")";
+                msg = $"{msg.TrimEnd().TrimEnd(',')} ({cardCombo.Value})";
 
                 Color msgColor = Color.black;
                 if (!player.HasLaidDown)

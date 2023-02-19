@@ -9,7 +9,9 @@ namespace rummy.Cards
     {
         public Card.CardSuit Suit { get; private set; }
         public Card.CardColor Color { get; private set; }
+        /// <summary>Highest rank in this run (incl. jokers)</summary>
         public Card.CardRank HighestRank { get; private set; }
+        /// <summary>Lowest rank in this run (incl. jokers)</summary>
         public Card.CardRank LowestRank { get; private set; }
 
         public Run(Card c1, Card c2, Card c3) : this(new List<Card>() { c1, c2, c3 }) { }
@@ -32,7 +34,7 @@ namespace rummy.Cards
         }
 
         /// <summary>
-        /// Calculate and return the minimum or maximum Rank in this run
+        /// Calculate and return the minimum or maximum Rank in this run (includiing jokers)
         /// </summary>
         /// <param name="maxRank">Whether to look for the highest rank. If false, the lowest rank is returned</param>
         /// <returns></returns>
@@ -156,45 +158,68 @@ namespace rummy.Cards
             return true;
         }
 
-        public bool CanFit(Card card, out Card Joker)
+        public bool CanFit(Card card, out Card Joker, out List<int> spots)
         {
             Joker = null;
-
-            if (card.IsJoker())
-                return card.Color == Color && Cards.Count < 14;
+            spots = new();
 
             var jokers = Cards.Where(c => c.IsJoker());
+            if (Cards.Count == 14 && !jokers.Any())
+                return false;
 
-            if (card.Suit != Suit || (Cards.Count == 14 && !jokers.Any()))
+            if (card.IsJoker())
+            {
+                if (card.Color != Color)
+                    return false;
+
+                if (LowestRank != Card.CardRank.ACE)
+                    spots.Add(0);
+                if (HighestRank != Card.CardRank.ACE)
+                    spots.Add(Cards.Count);
+                return true;
+            }
+            else if (card.Suit != Suit)
                 return false;
 
             // Check whether the new card replaces a joker
             foreach (var joker in jokers)
             {
-                var jokerRank = CardUtil.GetJokerRank(Cards, Cards.IndexOf(joker));
+                int spot = Cards.IndexOf(joker);
+                var jokerRank = CardUtil.GetJokerRank(Cards, spot);
                 if (jokerRank == card.Rank)
                 {
+                    spots = new() { spot };
                     Joker = joker;
                     return true;
                 }
             }
 
-            return (HighestRank != Card.CardRank.ACE && card.Rank == HighestRank + 1) ||
-                    (LowestRank != Card.CardRank.ACE && card.Rank == LowestRank - 1) ||
-                    (LowestRank == Card.CardRank.TWO && card.Rank == Card.CardRank.ACE);
+            bool canFit = false;
+            if (HighestRank != Card.CardRank.ACE && card.Rank == HighestRank + 1)
+            {
+                spots = new() { Cards.Count };
+                canFit = true;
+            }
+            if ((LowestRank != Card.CardRank.ACE && card.Rank == LowestRank - 1) ||
+                (LowestRank == Card.CardRank.TWO && card.Rank == Card.CardRank.ACE))
+            {
+                spots = new() { 0 };
+                canFit = true;
+            }
+            return canFit;
         }
 
         /// <summary>
         /// Return the possible values a joker could have when added to the start/end of this run
         /// </summary>
         /// <returns>A tuple with the possible values for start and end. If a value is 0, a joker cannot be added there</returns>
-        public (int,int) JokerValue()
+        public (int, int) JokerValue()
         {
             int i1 = 0;
             if (LowestRank != Card.CardRank.ACE)
                 i1 = (LowestRank == Card.CardRank.TWO) ? 1 : (int)(LowestRank - 1);
             int i2 = 0;
-            if (HighestRank!= Card.CardRank.ACE)
+            if (HighestRank != Card.CardRank.ACE)
                 i2 = (int)(HighestRank + 1);
             return (i1, i2);
         }

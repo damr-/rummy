@@ -408,7 +408,7 @@ namespace rummy.Utility
         public static Card.CardRank GetJokerRank(List<Card> cards, int jokerIndex)
         {
             if (!cards[jokerIndex].IsJoker())
-                throw new RummyException("The card at the given jokerIndex is not a joker!");
+                throw new RummyException("The card at the given jokerIndex is not a joker");
 
             int nonJokerIdx = cards.GetFirstCardIndex(jokerIndex + 1, true);
             if (nonJokerIdx != -1)
@@ -420,7 +420,7 @@ namespace rummy.Utility
                     return (Card.CardRank)(jokerIndex + 1);
                 return cards[nonJokerIdx].Rank + (jokerIndex - nonJokerIdx);
             }
-            throw new RummyException("Rank of joker card could not be figured out!");
+            throw new RummyException("Rank of joker card could not be figured out");
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using rummy.Cards;
@@ -13,7 +14,7 @@ namespace rummy.Utility
             {
                 var obj = objects[0];
                 objects.RemoveAt(0);
-                Object.Destroy(obj.gameObject);
+                UnityEngine.Object.Destroy(obj.gameObject);
             }
         }
 
@@ -23,8 +24,20 @@ namespace rummy.Utility
             {
                 var obj = objects[0];
                 objects.RemoveAt(0);
-                Object.Destroy(obj);
+                UnityEngine.Object.Destroy(obj);
             }
+        }
+
+        /// <summary>
+        /// Split the string at underscores, capitalize each resulting part, and return them (joined by spaces) as one string
+        /// </summary>
+        public static string FirstCharsToUpper(this string input)
+        {
+            string result = "";
+            var parts = input.Split('_');
+            foreach (var part in parts)
+                result += $"{part[0].ToString().ToUpper()}{part[1..].ToLower()} ";
+            return result.TrimEnd();
         }
 
         /// <summary>
