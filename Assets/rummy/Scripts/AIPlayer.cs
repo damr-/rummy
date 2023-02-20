@@ -84,7 +84,7 @@ namespace rummy
 
                 if (hypotheticalValue > currentValue)
                 {
-                    EmitThought($"Take {discardedCard} from discard pile to finish {hypotheticalBestCombo}");
+                    EmitThought($"Take {discardedCard.ToRichString()} from discard pile to finish {hypotheticalBestCombo}");
                     takeFromDiscardStack = true;
                 }
                 else
@@ -97,7 +97,7 @@ namespace rummy
                         List<int> spots = new();
                         if (cardSpot.CanFit(discardedCard, out joker, out spots))
                         {
-                            EmitThought($"Take {discardedCard} from discard pile as Single for {cardSpot}");
+                            EmitThought($"Take {discardedCard.ToRichString()} from discard pile as Single for {cardSpot}");
                             takeFromDiscardStack = true;
                         }
                     }
@@ -237,7 +237,7 @@ namespace rummy
             if (keptSingle == null)
                 keptSingle = laydownSingles[0];
             laydownSingles.Remove(keptSingle);
-            EmitThought($"Keep single {keptSingle}");
+            EmitThought($"Keep single {keptSingle.Card.ToRichString()}");
         }
 
         protected void DiscardCard()

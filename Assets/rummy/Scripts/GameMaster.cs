@@ -180,6 +180,7 @@ namespace rummy
                 Players.Add(humanPlayer);
                 humanPlayer.SetPlayerName("You");
                 GetComponent<GUIScaler>().AddCanvasScaler(humanPlayer.transform.Find("OutputCanvas").GetComponent<CanvasScaler>());
+                GetComponent<GUIScaler>().AddCanvasScaler(humanPlayer.transform.Find("ShowButtonCanvas").GetComponent<CanvasScaler>());
             }
 
             List<string> usedNames = new();

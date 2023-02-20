@@ -10,11 +10,11 @@ namespace rummy.Cards
         public int Count => Cards.Count;
         public int Value { get; protected set; } = 0;
 
-        public override string ToString()
+        public string ToString(string overrideColor = "")
         {
             string output = "";
             foreach (var card in Cards)
-                output += card + " ";
+                output += $"{card.ToRichString(overrideColor)} ";
             return output.TrimEnd();
         }
 

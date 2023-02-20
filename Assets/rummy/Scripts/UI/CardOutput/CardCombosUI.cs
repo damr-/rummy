@@ -9,7 +9,7 @@ namespace rummy.UI.CardOutput
 
     public class CardCombosUI : CardOutputUI
     {
-        private Color notEnoughPointsColor = new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f);
+        public static readonly Color grey = new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f);
 
         protected override void SetupPlayerSub()
         {
@@ -33,33 +33,31 @@ namespace rummy.UI.CardOutput
                     uniqueCombos.Add(combo);
             }
 
-            string poss = "possibilit" + (uniqueCombos.Count == 1 ? "y" : "ies");
-            string var = "variant" + (cardCombos.Count == 1 ? "" : "s");
+            string poss = $"possibilit{(uniqueCombos.Count == 1 ? "y" : "ies")}";
+            string var = $"variant{(cardCombos.Count == 1 ? "" : "s")}";
             string header = $"{uniqueCombos.Count} {poss} [{cardCombos.Count} {var}]:";
-            outputView.PrintMessage(new ScrollView.Message(header));
+            outputView.PrintMessage(header);
             for (int i = 0; i < uniqueCombos.Count; i++)
             {
                 CardCombo cardCombo = uniqueCombos[i];
                 if (cardCombo.MeldCount == 0)
                     continue;
+                bool greyedOut = !player.HasLaidDown && cardCombo.Value < Tb.I.GameMaster.MinimumLaySum;
+                string overrideColor = greyedOut ? $"#{ColorUtility.ToHtmlStringRGBA(grey)}" : "";
 
                 string msg = "";
                 if (cardCombo.Sets.Count > 0)
                 {
                     foreach (Set set in cardCombo.Sets)
-                        msg += $"{set}, ";
+                        msg += $"{set.ToString(overrideColor)}, ";
                 }
                 if (cardCombo.Runs.Count > 0)
                 {
                     foreach (Run run in cardCombo.Runs)
-                        msg += $"{run}, ";
+                        msg += $"{run.ToString(overrideColor)}, ";
                 }
-                msg = $"{msg.TrimEnd().TrimEnd(',')} ({cardCombo.Value})";
-
-                Color msgColor = Color.black;
-                if (!player.HasLaidDown)
-                    msgColor = cardCombo.Value < Tb.I.GameMaster.MinimumLaySum ? notEnoughPointsColor : Color.black;
-                outputView.PrintMessage(new ScrollView.Message(msg, msgColor));
+                msg = $"{msg.TrimEnd().TrimEnd(',')} <color=#{ColorUtility.ToHtmlStringRGBA(greyedOut ? grey : Color.black)}>({cardCombo.Value})</color>";
+                outputView.PrintMessage(msg);
             }
         }
     }

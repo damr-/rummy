@@ -99,7 +99,7 @@ namespace rummy.Utility
             {
                 thoughts.Add("Cannot keep all cards of the best combo for later");
                 var card = GetLeastImpactfulCard(PlayerHandCards);
-                thoughts.Add("Discard " + card + " for best outcome");
+                thoughts.Add($"Discard {card.ToRichString()} for best outcome");
                 return new List<Card>() { card };
             }
 

@@ -14,14 +14,14 @@ namespace rummy.UI
         private int colorIdx = 0;
 
         private static float alpha = 255 / 255f;
-        private static float dark = 139 / 255f;
+        private static float dark = 200 / 255f;
         public static readonly List<Color> highlightColors = new()
         {
             new( dark,    0, dark, alpha),
             new(    0, dark, dark, alpha),
-            new( dark,    0,    0, alpha),
+            new( dark, 0.5f,    0, alpha),
             new(    0, dark,    0, alpha),
-            new(    0,    0, dark, alpha),
+            new(    0,    0, dark, alpha)
         };
 
         public void OnMouseEnter()

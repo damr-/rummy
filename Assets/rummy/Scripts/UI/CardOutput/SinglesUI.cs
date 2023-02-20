@@ -20,7 +20,7 @@ namespace rummy.UI.CardOutput
             if (Singles.Count == 0)
                 return;
 
-            outputView.PrintMessage(new ScrollView.Message(Singles.Count + " possibilit" + (Singles.Count == 1 ? "y:" : "ies:")));
+            outputView.PrintMessage($"{Singles.Count} possibilit{(Singles.Count == 1 ? "y:" : "ies:")}");
             foreach(var single in Singles)
             {
                 int cardValue;
@@ -28,9 +28,10 @@ namespace rummy.UI.CardOutput
                     cardValue = 0;
                 else
                     cardValue = single.Card.Value;
-                string jokerSuffix = single.Joker != null ? " (SWAP)" : "";
-                string msg = $"{single} -> {single.CardSpot} @ {single.Spot} ({cardValue}){jokerSuffix}";
-                outputView.PrintMessage(new ScrollView.Message(msg));
+                string jokerSuffix = single.Joker != null ? " (JKR)" : "";
+                string spotOutput = single.Spot > -1 ? $" @{single.Spot}" : ""; 
+                string msg = $"{single.Card.ToRichString()} -> {single.CardSpot}{spotOutput} ({cardValue}){jokerSuffix}";
+                outputView.PrintMessage(msg);
             }
         }
     }

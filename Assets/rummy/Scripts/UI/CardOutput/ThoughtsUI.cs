@@ -16,7 +16,7 @@
             if (newThought == "<CLEAR>")
                 outputView.ClearMessages();
             else
-                outputView.PrintMessage(new ScrollView.Message(newThought));
+                outputView.PrintMessage(newThought);
         }
     }
 

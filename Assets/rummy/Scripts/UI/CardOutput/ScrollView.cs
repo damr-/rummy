@@ -11,7 +11,8 @@ namespace rummy.UI.CardOutput
         public RectTransform ScrollViewContent;
         public GameObject EntryPrefab;
 
-        public int CharsPerLine = 42;
+        [SerializeField]
+        protected float lineHeight = 15;
         protected List<GameObject> spawnedTaskPanels = new();
 
         private void Start()
@@ -19,19 +20,9 @@ namespace rummy.UI.CardOutput
             UpdateViewSize();
         }
 
-        public void PrintMessage(Message message)
+        public void PrintMessage(string message)
         {
-            string[] messageparts = message.text.Split("\n".ToCharArray());
-            foreach (string msg in messageparts)
-            {
-                string m = msg;
-                while (m.Length > CharsPerLine)
-                {
-                    CreateMessageObj(m.Substring(0, CharsPerLine), message.color);
-                    m = m[CharsPerLine..];
-                }
-                CreateMessageObj(m, message.color);
-            }
+            CreateMessageObj(message);
             UpdateViewSize();
         }
 
@@ -41,35 +32,18 @@ namespace rummy.UI.CardOutput
             UpdateViewSize();
         }
 
-        private void CreateMessageObj(string message, Color color)
+        private void CreateMessageObj(string message)
         {
             GameObject messageObj = Instantiate(EntryPrefab);
             messageObj.transform.SetParent(ScrollViewContent.transform, false);
-            TextMeshProUGUI text = messageObj.GetComponent<TextMeshProUGUI>();
-            text.text = message;
-            text.color = color;
+            messageObj.GetComponent<TextMeshProUGUI>().text = message;
 
             spawnedTaskPanels.Add(messageObj);
         }
 
         private void UpdateViewSize()
         {
-            ScrollViewContent.sizeDelta = new Vector2(ScrollViewContent.sizeDelta.x, 15 * spawnedTaskPanels.Count + 10);
-        }
-
-        public class Message
-        {
-            public string text;
-            public Color color;
-
-            public Message() : this("", Color.black) { }
-            public Message(string message) : this(message, Color.black) { }
-
-            public Message(string message, Color color)
-            {
-                text = message;
-                this.color = color;
-            }
+            ScrollViewContent.sizeDelta = new Vector2(ScrollViewContent.sizeDelta.x, 10 + spawnedTaskPanels.Count * lineHeight);
         }
     }
 

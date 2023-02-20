@@ -86,17 +86,10 @@ namespace rummy.Cards
 
         public static readonly IDictionary<CardSuit, char> SuitSymbols = new Dictionary<CardSuit, char>
         {
-#if UNITY_WEBGL
-            { CardSuit.HEARTS,   'h' },
-            { CardSuit.DIAMONDS, 'd' },
-            { CardSuit.CLUBS,    'c' },
-            { CardSuit.SPADES,   's' }
-#else
             { CardSuit.HEARTS,   '♥' },
             { CardSuit.DIAMONDS, '♦' },
             { CardSuit.CLUBS,    '♣' },
             { CardSuit.SPADES,   '♠' }
-#endif
         };
 
         private static char GetSuitSymbol(Card card)
@@ -119,7 +112,8 @@ namespace rummy.Cards
 
         public CardRank Rank { get; private set; } = CardRank.TWO;
         public CardSuit Suit { get; private set; } = CardSuit.HEARTS;
-        public void SetType(CardRank rank, CardSuit suit) {
+        public void SetType(CardRank rank, CardSuit suit)
+        {
             Rank = rank;
             Suit = suit;
             TypeChanged.Invoke();
@@ -133,6 +127,7 @@ namespace rummy.Cards
                 return CardColor.BLACK;
             }
         }
+        private string RichColor => Color == CardColor.RED ? "#D22B2B" : "#000000";
 
         public int Value
         {
@@ -171,6 +166,7 @@ namespace rummy.Cards
         public void SendToBackground(bool background) => SentToBackground.Invoke(background);
 
         public override string ToString() => RankLetters[Rank] + GetSuitSymbol(this);
+        public string ToRichString(string overrideColor = "") => $"<color={(overrideColor == "" ? RichColor : overrideColor)}>{ToString()}</color>";
 
         private Collider2D _coll = null;
         private Collider2D Coll
