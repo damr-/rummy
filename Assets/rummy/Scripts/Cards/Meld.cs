@@ -14,7 +14,7 @@ namespace rummy.Cards
         {
             string output = "";
             foreach (var card in Cards)
-                output += $"{card.ToRichString(overrideColor)} ";
+                output += $"{card.ToRichString(overrideColor)}";
             return output.TrimEnd();
         }
 

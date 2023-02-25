@@ -17,6 +17,12 @@ namespace rummy
         [SerializeField]
         private bool HumanPlayer = true;
         public void EnableHumanPlayer(bool enable) => HumanPlayer = enable;
+        private bool showOpponentCards = false;
+        public void ShowOpponentCards(bool show)
+        {
+            Players.Skip(1).ToList().ForEach(p => p.SetCardsVisible(show));
+            showOpponentCards = show;
+        }
         public GameObject HumanPlayerPrefab;
         public GameObject AIPlayerPrefab;
         public void ChangePlayerCount(bool increase)
@@ -211,6 +217,8 @@ namespace rummy
 
             Scoreboard.Clear();
             Scoreboard.AddLine(Players, true);
+            
+            ShowOpponentCards(showOpponentCards);
         }
 
         /// <summary>

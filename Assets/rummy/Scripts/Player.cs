@@ -44,6 +44,11 @@ namespace rummy
         #region PlayerCardSpot
         [SerializeField]
         protected bool CardsVisible = false;
+        public void SetCardsVisible(bool visible)
+        {
+            CardsVisible = visible;
+            HandCardSpot.Objects.ForEach(c => c.SetTurned(!visible));
+        }
 
         [SerializeField]
         protected HandCardSpot HandCardSpot;

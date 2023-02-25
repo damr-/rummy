@@ -9,7 +9,17 @@ namespace rummy.UI.CardOutput
 
     public class CardCombosUI : CardOutputUI
     {
-        public static readonly Color grey = new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f);
+        public static readonly string grey = ColorUtility.ToHtmlStringRGBA(new(25 / 255f, 25 / 255f, 25 / 255f, 0.5f));
+        private static float alpha = 255 / 255f;
+        private static float dark = 200 / 255f;
+        public static readonly List<Color> highlightColors = new()
+        {
+            new( dark,    0, dark, alpha),
+            new(    0, dark, dark, alpha),
+            new( dark, 0.5f,    0, alpha),
+            new(    0, dark,    0, alpha),
+            new(    0,    0, dark, alpha)
+        };
 
         protected override void SetupPlayerSub()
         {
@@ -35,30 +45,44 @@ namespace rummy.UI.CardOutput
 
             string poss = $"possibilit{(uniqueCombos.Count == 1 ? "y" : "ies")}";
             string var = $"variant{(cardCombos.Count == 1 ? "" : "s")}";
-            string header = $"{uniqueCombos.Count} {poss} [{cardCombos.Count} {var}]:";
-            outputView.PrintMessage(header);
-            for (int i = 0; i < uniqueCombos.Count; i++)
+            outputView.PrintMessage($"{uniqueCombos.Count} {poss} [{cardCombos.Count} {var}]:");
+            foreach (CardCombo cardCombo in uniqueCombos)
             {
-                CardCombo cardCombo = uniqueCombos[i];
-                if (cardCombo.MeldCount == 0)
-                    continue;
-                bool greyedOut = !player.HasLaidDown && cardCombo.Value < Tb.I.GameMaster.MinimumLaySum;
-                string overrideColor = greyedOut ? $"#{ColorUtility.ToHtmlStringRGBA(grey)}" : "";
-
-                string msg = "";
-                if (cardCombo.Sets.Count > 0)
+                if (cardCombo.MeldCount > 0)
                 {
-                    foreach (Set set in cardCombo.Sets)
-                        msg += $"{set.ToString(overrideColor)}, ";
+                    bool greyedOut = !player.HasLaidDown && cardCombo.Value < Tb.I.GameMaster.MinimumLaySum;
+                    string msg = GetComboOutput(cardCombo, greyedOut);
+                    outputView.PrintMessage(msg);
                 }
-                if (cardCombo.Runs.Count > 0)
-                {
-                    foreach (Run run in cardCombo.Runs)
-                        msg += $"{run.ToString(overrideColor)}, ";
-                }
-                msg = $"{msg.TrimEnd().TrimEnd(',')} <color=#{ColorUtility.ToHtmlStringRGBA(greyedOut ? grey : Color.black)}>({cardCombo.Value})</color>";
-                outputView.PrintMessage(msg);
             }
+        }
+
+        public static string GetComboOutput(CardCombo combo, bool greyedOut, bool addBrackets = false)
+        {
+            string output = "";
+            int counter = 0;
+            foreach (var set in combo.Sets)
+            {
+                string setOutput = set.ToString(greyedOut ? $"#{grey}" : "");
+                if (addBrackets)
+                {
+                    string bracketColor = greyedOut ? grey : ColorUtility.ToHtmlStringRGBA(highlightColors[counter++]);
+                    setOutput = $"<color=#{bracketColor}>[</color>{setOutput}<color=#{bracketColor}>]</color>";
+                }
+                output += $"{setOutput} ";
+            }
+            foreach (var run in combo.Runs)
+            {
+                string runOutput = run.ToString(greyedOut ? $"#{grey}" : "");
+                if (addBrackets)
+                {
+                    string bracketColor = greyedOut ? grey : ColorUtility.ToHtmlStringRGBA(highlightColors[counter++]);
+                    runOutput = $"<color=#{bracketColor}>[</color>{runOutput}<color=#{bracketColor}>]</color>";
+                }
+                output += $"{runOutput} ";
+            }
+            output += $"<color=#{(greyedOut ? grey : "000")}>({combo.Value})</color>";
+            return output;
         }
     }
 

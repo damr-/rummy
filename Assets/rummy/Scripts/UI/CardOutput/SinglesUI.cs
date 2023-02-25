@@ -17,22 +17,21 @@ namespace rummy.UI.CardOutput
                 return;
 
             outputView.ClearMessages();
-            if (Singles.Count == 0)
-                return;
-
-            outputView.PrintMessage($"{Singles.Count} possibilit{(Singles.Count == 1 ? "y:" : "ies:")}");
-            foreach(var single in Singles)
+            if (Singles.Count > 0)
             {
-                int cardValue;
-                if(single.Card.IsJoker())
-                    cardValue = 0;
-                else
-                    cardValue = single.Card.Value;
-                string jokerSuffix = single.Joker != null ? " (JKR)" : "";
-                string spotOutput = single.Spot > -1 ? $" @{single.Spot}" : ""; 
-                string msg = $"{single.Card.ToRichString()} -> {single.CardSpot}{spotOutput} ({cardValue}){jokerSuffix}";
-                outputView.PrintMessage(msg);
+                outputView.PrintMessage($"{Singles.Count} possibilit{(Singles.Count == 1 ? "y:" : "ies:")}");
+                Singles.ForEach(single => outputView.PrintMessage(GetSingleOutput(single)));
             }
+        }
+
+        public static string GetSingleOutput(Single single)
+        {
+            string output = $"{single.Card.ToRichString()} -> {single.CardSpot}";
+            if (single.Joker != null)
+                output += $" (JKR)";
+            else if (single.Spot > -1)
+                output += $" @{single.Spot}";
+            return output;
         }
     }
 

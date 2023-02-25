@@ -1936,7 +1936,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 2768082343147355982}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.26666668
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2632,7 +2632,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 7191294791744211994}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.16666667
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2998,7 +2998,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Play <--> Discard
+  m_text: Play <> Discard
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

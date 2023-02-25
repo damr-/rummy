@@ -176,7 +176,7 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 6693671369617983552}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 60
+  lineHeight: 15
 --- !u!114 &8724135574287151886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1422,7 +1422,7 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 8881899960494093267}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 45
+  lineHeight: 15
 --- !u!114 &5124394926666263549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1563,7 +1563,7 @@ MonoBehaviour:
   ScrollViewContent: {fileID: 1554910360796275609}
   EntryPrefab: {fileID: 1262660829257350, guid: 3edb631e5a20c47ab8d8cd6d9074f00b,
     type: 3}
-  CharsPerLine: 45
+  lineHeight: 15
 --- !u!114 &7953975042126800022
 MonoBehaviour:
   m_ObjectHideFlags: 0

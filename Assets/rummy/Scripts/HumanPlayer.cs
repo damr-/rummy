@@ -229,36 +229,25 @@ namespace rummy
         private void HighlightSelectedCombo()
         {
             var combo = GetSelectedComboVariant(hoveredCard);
-            bool greyedOut = !HasLaidDown && combo.Value < Tb.I.GameMaster.MinimumLaySum;
-            string overrideColor = greyedOut ? $"#{ColorUtility.ToHtmlStringRGBA(CardCombosUI.grey)}" : "";
             if (combo != null)
             {
-                string outputText = "<b>";
                 int counter = 0;
-                for (int i = 0; i < combo.Sets.Count; i++, counter++)
+                foreach (Set set in combo.Sets)
                 {
-                    string hexColor = ColorUtility.ToHtmlStringRGBA(greyedOut ? CardCombosUI.grey : HoverInfo.highlightColors[counter]);
-                    outputText += $"<color=#{hexColor}>[</color>";
-                    foreach(var card in combo.Sets[i].Cards)
-                    {
-                        card.GetComponent<HoverInfo>().SetHovered(true, counter);
-                        outputText += $"{card.ToRichString(overrideColor)}";
-                    }
-                    outputText += $"<color=#{hexColor}>]</color> ";
+                    foreach (var card in set.Cards)
+                        card.GetComponent<HoverInfo>().SetHovered(true, CardCombosUI.highlightColors[counter]);
+                    counter++;
                 }
-                for (int i = 0; i < combo.Runs.Count; i++, counter++)
+                foreach (Run run in combo.Runs)
                 {
-                    string hexColor = ColorUtility.ToHtmlStringRGBA(greyedOut ? CardCombosUI.grey : HoverInfo.highlightColors[counter]);
-                    outputText += $"<color=#{hexColor}>[</color>";
-                    foreach(var card in combo.Runs[i].Cards)
-                    {
-                        card.GetComponent<HoverInfo>().SetHovered(true, counter);
-                        outputText += $"{card.ToRichString(overrideColor)}";
-                    }
-                    outputText += $"<color=#{hexColor}>]</color> ";
+                    foreach (var card in run.Cards)
+                        card.GetComponent<HoverInfo>().SetHovered(true, CardCombosUI.highlightColors[counter]);
+                    counter++;
                 }
-                var valueColor = ColorUtility.ToHtmlStringRGBA(greyedOut ? CardCombosUI.grey : Color.black);
-                selectedCardDisplay.text = outputText + $" <color=#{valueColor}>({combo.Value})</color></b>";
+
+                bool greyedOut = !HasLaidDown && combo.Value < Tb.I.GameMaster.MinimumLaySum;
+                string outputText = CardCombosUI.GetComboOutput(combo, greyedOut, true);
+                selectedCardDisplay.text = $"<b>{outputText}</b>";
             }
         }
 
@@ -283,14 +272,10 @@ namespace rummy
             Single single = GetSelectedSingleVariant(hoveredCard);
             if (single != null)
             {
-                string outputText = "<b>";
-                string hexColor = ColorUtility.ToHtmlStringRGBA(HoverInfo.highlightColors[0]);
-                outputText += $"<color=#{hexColor}>[</color>{single.Card.ToRichString()}->{single.CardSpot}";
                 single.Card.GetComponent<HoverInfo>().SetHovered(true);
                 if (single.Joker != null)
                 {
                     hoveredSinglePartner = single.Joker;
-                    outputText += $" (JKR)";
                 }
                 else if (single.Spot > -1)
                 {
@@ -298,10 +283,9 @@ namespace rummy
                         hoveredSinglePartner = single.CardSpot.Objects[^1];
                     else
                         hoveredSinglePartner = single.CardSpot.Objects[0];
-                    outputText += $" @{single.Spot}";
                 }
 
-                if(hoveredSinglePartner != null)
+                if (hoveredSinglePartner != null)
                 {
                     hoveredSinglePartner.GetComponent<HoverInfo>().SetHovered(true);
                 }
@@ -310,7 +294,8 @@ namespace rummy
                     hoveredSingleCardSpot = single.CardSpot;
                     hoveredSingleCardSpot.Objects.ForEach(c => c.GetComponent<HoverInfo>().SetHovered(true));
                 }
-                selectedCardDisplay.text = outputText + $"<color=#{hexColor}>]</color></b>";
+
+                selectedCardDisplay.text = $"<b>{SinglesUI.GetSingleOutput(single)}</b>";
             }
         }
 
